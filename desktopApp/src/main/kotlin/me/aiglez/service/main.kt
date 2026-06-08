@@ -9,7 +9,7 @@ fun main() = application {
     Window(
         onCloseRequest = ::exitApplication,
         state = WindowState(placement = WindowPlacement.Maximized),
-        title = "service",
+        title = "Service",
     ) {
         App()
     }

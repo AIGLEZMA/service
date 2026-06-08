@@ -1,8 +1,5 @@
-package me.aiglez.me.aiglez.service.data.dynamicdata
+package me.aiglez.service.data.dynamicdata
 
-import me.aiglez.service.data.dynamicdata.DynamicData
-import me.aiglez.service.data.dynamicdata.DynamicDataField
-import me.aiglez.service.data.dynamicdata.DynamicDataFieldType
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse

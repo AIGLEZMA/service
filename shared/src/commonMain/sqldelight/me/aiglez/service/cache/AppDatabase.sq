@@ -1,0 +1,48 @@
+import kotlin.Boolean;
+
+CREATE TABLE dynamic_data (
+  id INTEGER NOT NULL PRIMARY KEY,
+  name TEXT NOT NULL
+);
+
+CREATE TABLE dynamic_data_field (
+  id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+  dynamic_data_id INTEGER NOT NULL REFERENCES dynamic_data(id) ON DELETE CASCADE,
+  position INTEGER NOT NULL,
+  name TEXT NOT NULL,
+  optional INTEGER AS Boolean NOT NULL,
+  type TEXT NOT NULL,
+  UNIQUE(dynamic_data_id, position)
+);
+
+selectDynamicData:
+SELECT *
+FROM dynamic_data
+ORDER BY name;
+
+selectDynamicDataById:
+SELECT *
+FROM dynamic_data
+WHERE id = ?;
+
+upsertDynamicData:
+INSERT OR REPLACE INTO dynamic_data(id, name)
+VALUES (?, ?);
+
+selectFieldsForDynamicData:
+SELECT *
+FROM dynamic_data_field
+WHERE dynamic_data_id = ?
+ORDER BY position;
+
+insertDynamicDataField:
+INSERT INTO dynamic_data_field(dynamic_data_id, position, name, optional, type)
+VALUES (?, ?, ?, ?, ?);
+
+deleteFieldsForDynamicData:
+DELETE FROM dynamic_data_field
+WHERE dynamic_data_id = ?;
+
+deleteDynamicData:
+DELETE FROM dynamic_data
+WHERE id = ?;
