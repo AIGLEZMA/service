@@ -1,41 +1,25 @@
 package me.aiglez.service.ui.components
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.AutoAwesome
-import androidx.compose.material.icons.filled.Dataset
-import androidx.compose.material3.AssistChip
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import androidx.compose.material.icons.filled.Newspaper
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.width
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Newspaper
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.HorizontalDivider
 
 @Composable
 fun WorkspaceTopBar(
     title: String,
-    dynamicDataCount: Int,
+    description: String?,
+    templatesCount: Int,
     onBackClick: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
@@ -68,18 +52,20 @@ fun WorkspaceTopBar(
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface,
                 )
-                Text(
-                    text = "Espace opérationnel pour la configuration des modèles.",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
+                description?.let {
+                    Text(
+                        text = description,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
             }
         }
 
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             AssistChip(
                 onClick = {},
-                label = { Text(text = "2 Templates") },
+                label = { Text(text = "${templatesCount} Templates") },
                 shape = RoundedCornerShape(4.dp),
                 leadingIcon = {
                     Icon(
