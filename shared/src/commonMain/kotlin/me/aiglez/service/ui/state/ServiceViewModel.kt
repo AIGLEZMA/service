@@ -20,6 +20,14 @@ class ServiceViewModel : ViewModel() {
             currentState.copy(selectedDynamicDataId = id)
         }
     }
+
+    fun addDynamicData(name: String, fields: List<DynamicDataField>) {
+        _uiState.update { currentState ->
+            val newId = (currentState.dynamicData.maxOfOrNull { it.id } ?: 0L) + 1L
+            val newData = DynamicData(id = newId, name = name, fields = fields)
+            currentState.copy(dynamicData = currentState.dynamicData + newData)
+        }
+    }
 }
 
 private fun sampleDynamicData(): List<DynamicData> = List(18) { index ->
