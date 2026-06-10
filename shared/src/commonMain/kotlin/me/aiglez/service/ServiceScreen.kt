@@ -28,7 +28,9 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.modules.polymorphic
 import me.aiglez.service.data.dynamicdata.DynamicData
+import me.aiglez.service.ui.AddDynamicDataScreen
 import me.aiglez.service.ui.CreateDynamicDataScreen
+import me.aiglez.service.ui.DynamicDataEntriesScreen
 import me.aiglez.service.ui.components.*
 import me.aiglez.service.ui.state.ServiceViewModel
 
@@ -57,6 +59,22 @@ private data object CreateDynamicDataRoute : ServiceRoute {
 }
 
 @Serializable
+private data class AddDynamicDataRoute(val dynamicDataId: Long) : ServiceRoute {
+    override val title: String = "Nouvelle entrée"
+    override val description: String = "Renseignez les valeurs du modèle de données"
+    override val showDynamicDataPane: Boolean = true
+    override val showFab: Boolean = false
+}
+
+@Serializable
+private data class DynamicDataEntriesRoute(val dynamicDataId: Long) : ServiceRoute {
+    override val title: String = "Entrées"
+    override val description: String = "Consultez les données enregistrées pour ce modèle"
+    override val showDynamicDataPane: Boolean = true
+    override val showFab: Boolean = false
+}
+
+@Serializable
 private data object CreateTemplateRoute : ServiceRoute {
     override val title: String = "Nouvelle template"
     override val description: String = "Configurez une nouvelle template de rapport"
@@ -69,6 +87,8 @@ private val serviceRouteSavedStateConfiguration = SavedStateConfiguration {
         polymorphic(NavKey::class) {
             subclass(TemplatesHomeRoute::class, TemplatesHomeRoute.serializer())
             subclass(CreateDynamicDataRoute::class, CreateDynamicDataRoute.serializer())
+            subclass(AddDynamicDataRoute::class, AddDynamicDataRoute.serializer())
+            subclass(DynamicDataEntriesRoute::class, DynamicDataEntriesRoute.serializer())
             subclass(CreateTemplateRoute::class, CreateTemplateRoute.serializer())
         }
     }
@@ -98,13 +118,9 @@ fun ServiceApp(
         onMaximizeRequest = onMaximizeRequest,
         titleBar = titleBar,
         showFAB = currentRoute.showFab,
-        onBackClick = if (backStack.size > 1 || uiState.selectedDynamicDataId != null) {
+        onBackClick = if (backStack.size > 1) {
             {
-                if (uiState.selectedDynamicDataId != null) {
-                    viewModel.selectDynamicData(null)
-                } else if (backStack.size > 1) {
-                    backStack.removeAt(backStack.size - 1)
-                }
+                backStack.removeAt(backStack.size - 1)
             }
         } else null,
         onCreateDynamicDataClick = {
@@ -113,7 +129,30 @@ fun ServiceApp(
         onCreateTemplateClick = {
             backStack.add(CreateTemplateRoute)
         },
-        onDynamicDataClick = { },
+        onHomeClick = {
+            viewModel.selectDynamicData(null)
+            while (backStack.size > 1) {
+                backStack.removeAt(backStack.size - 1)
+            }
+        },
+        onDynamicDataClick = { id ->
+            viewModel.selectDynamicData(id)
+            while (backStack.size > 1) {
+                backStack.removeAt(backStack.size - 1)
+            }
+            backStack.add(DynamicDataEntriesRoute(id))
+        },
+        onAddDataClick = { id ->
+            viewModel.selectDynamicData(id)
+            backStack.add(AddDynamicDataRoute(id))
+        },
+        onDeleteDynamicDataClick = { id ->
+            viewModel.deleteDynamicData(id)
+            backStack.removeAll { route ->
+                (route is AddDynamicDataRoute && route.dynamicDataId == id) ||
+                    (route is DynamicDataEntriesRoute && route.dynamicDataId == id)
+            }
+        },
     ) {
         when (currentRoute) {
             TemplatesHomeRoute -> TemplateGrid(dynamicDataCount = uiState.dynamicData.size)
@@ -124,6 +163,37 @@ fun ServiceApp(
                     backStack.removeAt(backStack.size - 1)
                 }
             )
+
+            is AddDynamicDataRoute -> {
+                val dynamicData = uiState.dynamicData.firstOrNull { it.id == currentRoute.dynamicDataId }
+                if (dynamicData == null) {
+                    EmptyRoutePlaceholder(title = "Modèle introuvable")
+                } else {
+                    AddDynamicDataScreen(
+                        dynamicData = dynamicData,
+                        onSave = { instance ->
+                            viewModel.addDynamicDataInstance(instance)
+                            backStack.removeAt(backStack.size - 1)
+                        },
+                    )
+                }
+            }
+
+            is DynamicDataEntriesRoute -> {
+                val dynamicData = uiState.dynamicData.firstOrNull { it.id == currentRoute.dynamicDataId }
+                if (dynamicData == null) {
+                    EmptyRoutePlaceholder(title = "Modèle introuvable")
+                } else {
+                    DynamicDataEntriesScreen(
+                        dynamicData = dynamicData,
+                        instances = uiState.dynamicDataInstances.filter { it.dynamicDataId == dynamicData.id },
+                        onAddEntryClick = {
+                            viewModel.selectDynamicData(dynamicData.id)
+                            backStack.add(AddDynamicDataRoute(dynamicData.id))
+                        },
+                    )
+                }
+            }
 
             CreateTemplateRoute -> EmptyRoutePlaceholder(title = currentRoute.title)
         }
@@ -143,9 +213,12 @@ private fun ServiceScaffold(
     onMaximizeRequest: () -> Unit,
     titleBar: @Composable () -> Unit,
     onBackClick: (() -> Unit)?,
+    onHomeClick: () -> Unit,
     onCreateDynamicDataClick: () -> Unit,
     onCreateTemplateClick: () -> Unit,
     onDynamicDataClick: (Long) -> Unit,
+    onAddDataClick: (Long) -> Unit,
+    onDeleteDynamicDataClick: (Long) -> Unit,
     content: @Composable BoxScope.() -> Unit,
 ) {
     Scaffold(
@@ -240,8 +313,11 @@ private fun ServiceScaffold(
                         dynamicData = dynamicData,
                         selectedDynamicDataId = selectedDynamicDataId,
                         glassmorphismIntensity = glassmorphismIntensity,
+                        onHomeClick = onHomeClick,
                         onCreateDynamicDataClick = onCreateDynamicDataClick,
                         onDynamicDataClick = onDynamicDataClick,
+                        onAddDataClick = onAddDataClick,
+                        onDeleteDynamicDataClick = onDeleteDynamicDataClick,
                     )
 
                     Surface(

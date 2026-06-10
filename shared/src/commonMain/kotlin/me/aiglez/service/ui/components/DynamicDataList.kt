@@ -26,6 +26,8 @@ fun DynamicDataList(
     items: List<DynamicData>,
     selectedItemId: Long?,
     onItemClick: (Long) -> Unit,
+    onAddDataClick: (Long) -> Unit,
+    onDeleteClick: (Long) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier) {
@@ -73,6 +75,8 @@ fun DynamicDataList(
                     item = item,
                     selected = item.id == selectedItemId,
                     onClick = { onItemClick(item.id) },
+                    onAddDataClick = { onAddDataClick(item.id) },
+                    onDeleteClick = { onDeleteClick(item.id) },
                 )
             }
         }
@@ -84,6 +88,8 @@ fun DynamicDataListItem(
     item: DynamicData,
     selected: Boolean,
     onClick: () -> Unit,
+    onAddDataClick: () -> Unit,
+    onDeleteClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val containerColor = if (selected) {
@@ -146,7 +152,7 @@ fun DynamicDataListItem(
             Row(verticalAlignment = Alignment.CenterVertically) {
                 PlatformTooltip(tooltip = "Ajouter données") {
                     IconButton(
-                        onClick = { /* TODO */ },
+                        onClick = onAddDataClick,
                         modifier = Modifier.size(24.dp)
                     ) {
                         Icon(
@@ -159,7 +165,7 @@ fun DynamicDataListItem(
                 }
                 PlatformTooltip(tooltip = "Supprimer modèle") {
                     IconButton(
-                        onClick = { /* TODO */ },
+                        onClick = onDeleteClick,
                         modifier = Modifier.size(24.dp)
                     ) {
                         Icon(
@@ -174,5 +180,4 @@ fun DynamicDataListItem(
         }
     }
 }
-
 

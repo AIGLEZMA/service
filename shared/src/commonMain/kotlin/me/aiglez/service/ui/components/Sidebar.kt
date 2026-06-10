@@ -24,8 +24,11 @@ fun Sidebar(
     dynamicData: List<DynamicData>,
     selectedDynamicDataId: Long?,
     glassmorphismIntensity: Float,
+    onHomeClick: () -> Unit,
     onCreateDynamicDataClick: () -> Unit,
     onDynamicDataClick: (Long) -> Unit,
+    onAddDataClick: (Long) -> Unit,
+    onDeleteDynamicDataClick: (Long) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val containerColor = if (glassmorphismIntensity > 0f) {
@@ -69,12 +72,14 @@ fun Sidebar(
                 .padding(18.dp),
             verticalArrangement = Arrangement.spacedBy(18.dp),
         ) {
-            AppBrandHeader()
+            AppBrandHeader(onClick = onHomeClick)
             QuickActionCard(onCreateDynamicDataClick = onCreateDynamicDataClick)
             DynamicDataList(
                 items = dynamicData,
                 selectedItemId = selectedDynamicDataId,
                 onItemClick = onDynamicDataClick,
+                onAddDataClick = onAddDataClick,
+                onDeleteClick = onDeleteDynamicDataClick,
                 modifier = Modifier.weight(1f),
             )
         }

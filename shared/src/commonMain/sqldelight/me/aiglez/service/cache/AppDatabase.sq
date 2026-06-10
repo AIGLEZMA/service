@@ -15,6 +15,20 @@ CREATE TABLE dynamic_data_field (
   UNIQUE(dynamic_data_id, position)
 );
 
+CREATE TABLE dynamic_data_instance (
+  id INTEGER NOT NULL PRIMARY KEY,
+  dynamic_data_id INTEGER NOT NULL REFERENCES dynamic_data(id) ON DELETE CASCADE
+);
+
+CREATE TABLE dynamic_data_instance_value (
+  id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+  instance_id INTEGER NOT NULL REFERENCES dynamic_data_instance(id) ON DELETE CASCADE,
+  field_name TEXT NOT NULL,
+  value_type TEXT NOT NULL,
+  value_payload TEXT,
+  UNIQUE(instance_id, field_name)
+);
+
 selectDynamicData:
 SELECT *
 FROM dynamic_data
@@ -45,4 +59,41 @@ WHERE dynamic_data_id = ?;
 
 deleteDynamicData:
 DELETE FROM dynamic_data
+WHERE id = ?;
+
+selectDynamicDataInstances:
+SELECT *
+FROM dynamic_data_instance
+WHERE dynamic_data_id = ?
+ORDER BY id;
+
+selectDynamicDataInstanceById:
+SELECT *
+FROM dynamic_data_instance
+WHERE id = ?;
+
+upsertDynamicDataInstance:
+INSERT OR REPLACE INTO dynamic_data_instance(id, dynamic_data_id)
+VALUES (?, ?);
+
+selectValuesForDynamicDataInstance:
+SELECT *
+FROM dynamic_data_instance_value
+WHERE instance_id = ?
+ORDER BY field_name;
+
+insertDynamicDataInstanceValue:
+INSERT INTO dynamic_data_instance_value(instance_id, field_name, value_type, value_payload)
+VALUES (?, ?, ?, ?);
+
+deleteValuesForDynamicDataInstance:
+DELETE FROM dynamic_data_instance_value
+WHERE instance_id = ?;
+
+deleteInstancesForDynamicData:
+DELETE FROM dynamic_data_instance
+WHERE dynamic_data_id = ?;
+
+deleteDynamicDataInstance:
+DELETE FROM dynamic_data_instance
 WHERE id = ?;

@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.update
 import me.aiglez.service.data.dynamicdata.DynamicData
 import me.aiglez.service.data.dynamicdata.DynamicDataField
 import me.aiglez.service.data.dynamicdata.DynamicDataFieldType
+import me.aiglez.service.data.dynamicdata.DynamicDataInstance
 
 class ServiceViewModel : ViewModel() {
     private val _uiState = MutableStateFlow(
@@ -26,6 +27,26 @@ class ServiceViewModel : ViewModel() {
             val newId = (currentState.dynamicData.maxOfOrNull { it.id } ?: 0L) + 1L
             val newData = DynamicData(id = newId, name = name, fields = fields)
             currentState.copy(dynamicData = currentState.dynamicData + newData)
+        }
+    }
+
+    fun deleteDynamicData(id: Long) {
+        _uiState.update { currentState ->
+            currentState.copy(
+                dynamicData = currentState.dynamicData.filterNot { it.id == id },
+                dynamicDataInstances = currentState.dynamicDataInstances.filterNot { it.dynamicDataId == id },
+                selectedDynamicDataId = currentState.selectedDynamicDataId.takeIf { it != id },
+            )
+        }
+    }
+
+    fun addDynamicDataInstance(instance: DynamicDataInstance) {
+        _uiState.update { currentState ->
+            val newId = (currentState.dynamicDataInstances.maxOfOrNull { it.id } ?: 0L) + 1L
+            currentState.copy(
+                dynamicDataInstances = currentState.dynamicDataInstances + instance.copy(id = newId),
+                selectedDynamicDataId = instance.dynamicDataId,
+            )
         }
     }
 }
