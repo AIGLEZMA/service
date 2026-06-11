@@ -146,12 +146,6 @@ fun CreateDynamicDataScreen(
                 verticalArrangement = Arrangement.spacedBy(0.dp),
                 contentPadding = PaddingValues(vertical = 2.dp),
             ) {
-                if (fields.isEmpty()) {
-                    item {
-                        EmptyFieldsState(onAddClick = { fields.add(FieldState()) })
-                    }
-                }
-
                 items(fields, key = { it.hashCode() }) { field ->
                     FieldDefinitionRow(
                         field = field,
@@ -340,45 +334,6 @@ private fun ComplexTypeConfiguration(
         }
 
         else -> Unit
-    }
-}
-
-@Composable
-private fun EmptyFieldsState(onAddClick: () -> Unit) {
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(8.dp),
-        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f),
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(18.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                Text(
-                    text = "Aucun champ défini",
-                    style = MaterialTheme.typography.labelLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface,
-                )
-                Text(
-                    text = "Ajoutez au moins un champ pour créer le modèle.",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-
-            OutlinedButton(
-                onClick = onAddClick,
-                shape = RoundedCornerShape(4.dp),
-            ) {
-                Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(18.dp))
-                Spacer(Modifier.width(8.dp))
-                Text("Ajouter")
-            }
-        }
     }
 }
 

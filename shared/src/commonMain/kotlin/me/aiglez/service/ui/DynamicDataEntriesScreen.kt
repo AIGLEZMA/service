@@ -40,6 +40,7 @@ fun DynamicDataEntriesScreen(
     dynamicData: DynamicData,
     instances: List<DynamicDataInstance>,
     onAddEntryClick: () -> Unit,
+    onImportCsvClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Box(
@@ -53,25 +54,33 @@ fun DynamicDataEntriesScreen(
             EntriesHeader(
                 dynamicData = dynamicData,
                 entriesCount = instances.size,
-                onAddEntryClick = onAddEntryClick,
             )
 
-            if (instances.isEmpty()) {
-                EmptyEntriesState(onAddEntryClick = onAddEntryClick)
-            } else {
-                LazyColumn(
-                    modifier = Modifier.weight(1f).fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                    contentPadding = PaddingValues(bottom = 4.dp),
-                ) {
-                    items(instances, key = { it.id }) { instance ->
-                        EntryRow(
-                            dynamicData = dynamicData,
-                            instance = instance,
-                        )
+            Box(
+                modifier = Modifier.weight(1f).fillMaxWidth(),
+            ) {
+                if (instances.isEmpty()) {
+                    EmptyEntriesState()
+                } else {
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                        contentPadding = PaddingValues(bottom = 4.dp),
+                    ) {
+                        items(instances, key = { it.id }) { instance ->
+                            EntryRow(
+                                dynamicData = dynamicData,
+                                instance = instance,
+                            )
+                        }
                     }
                 }
             }
+
+            EntriesActionsBar(
+                onAddEntryClick = onAddEntryClick,
+                onImportCsvClick = onImportCsvClick,
+            )
         }
     }
 }
@@ -80,7 +89,6 @@ fun DynamicDataEntriesScreen(
 private fun EntriesHeader(
     dynamicData: DynamicData,
     entriesCount: Int,
-    onAddEntryClick: () -> Unit,
 ) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
@@ -114,24 +122,47 @@ private fun EntriesHeader(
                 )
             }
 
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically,
+            AssistChip(
+                onClick = {},
+                label = { Text("$entriesCount entrées") },
+                shape = RoundedCornerShape(4.dp),
+            )
+        }
+    }
+}
+
+@Composable
+private fun EntriesActionsBar(
+    onAddEntryClick: () -> Unit,
+    onImportCsvClick: () -> Unit,
+) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(8.dp),
+        color = MaterialTheme.colorScheme.surface,
+        tonalElevation = 2.dp,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(14.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            OutlinedButton(
+                onClick = onImportCsvClick,
+                shape = RoundedCornerShape(4.dp),
+                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 10.dp),
             ) {
-                AssistChip(
-                    onClick = {},
-                    label = { Text("$entriesCount entrées") },
-                    shape = RoundedCornerShape(4.dp),
-                )
-                Button(
-                    onClick = onAddEntryClick,
-                    shape = RoundedCornerShape(4.dp),
-                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 10.dp),
-                ) {
-                    Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(18.dp))
-                    Spacer(Modifier.width(8.dp))
-                    Text("Nouvelle entrée")
-                }
+                Text("Importer CSV")
+            }
+            Button(
+                onClick = onAddEntryClick,
+                shape = RoundedCornerShape(4.dp),
+                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 10.dp),
+            ) {
+                Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(18.dp))
+                Spacer(Modifier.width(8.dp))
+                Text("Nouvelle entrée")
             }
         }
     }
@@ -214,7 +245,7 @@ private fun ValueLine(
 }
 
 @Composable
-private fun EmptyEntriesState(onAddEntryClick: () -> Unit) {
+private fun EmptyEntriesState() {
     Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(8.dp),
@@ -238,15 +269,6 @@ private fun EmptyEntriesState(onAddEntryClick: () -> Unit) {
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
-            }
-
-            OutlinedButton(
-                onClick = onAddEntryClick,
-                shape = RoundedCornerShape(4.dp),
-            ) {
-                Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(18.dp))
-                Spacer(Modifier.width(8.dp))
-                Text("Ajouter")
             }
         }
     }

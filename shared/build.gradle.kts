@@ -23,6 +23,7 @@ kotlin {
             implementation(libs.androidx.lifecycle.runtimeCompose)
             implementation(libs.jetbrains.navigation3.ui)
             implementation(libs.kotlinx.serialization.core)
+            implementation(libs.kotlin.csv)
             implementation(libs.runtime)
         }
         commonTest.dependencies {

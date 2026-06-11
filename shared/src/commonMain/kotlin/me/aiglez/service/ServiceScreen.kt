@@ -31,6 +31,7 @@ import me.aiglez.service.data.dynamicdata.DynamicData
 import me.aiglez.service.ui.AddDynamicDataScreen
 import me.aiglez.service.ui.CreateDynamicDataScreen
 import me.aiglez.service.ui.DynamicDataEntriesScreen
+import me.aiglez.service.ui.ImportDynamicDataCsvScreen
 import me.aiglez.service.ui.components.*
 import me.aiglez.service.ui.state.ServiceViewModel
 
@@ -75,6 +76,14 @@ private data class DynamicDataEntriesRoute(val dynamicDataId: Long) : ServiceRou
 }
 
 @Serializable
+private data class ImportDynamicDataCsvRoute(val dynamicDataId: Long) : ServiceRoute {
+    override val title: String = "Import CSV"
+    override val description: String = "Associez les colonnes CSV aux champs dynamiques"
+    override val showDynamicDataPane: Boolean = true
+    override val showFab: Boolean = false
+}
+
+@Serializable
 private data object CreateTemplateRoute : ServiceRoute {
     override val title: String = "Nouvelle template"
     override val description: String = "Configurez une nouvelle template de rapport"
@@ -89,6 +98,7 @@ private val serviceRouteSavedStateConfiguration = SavedStateConfiguration {
             subclass(CreateDynamicDataRoute::class, CreateDynamicDataRoute.serializer())
             subclass(AddDynamicDataRoute::class, AddDynamicDataRoute.serializer())
             subclass(DynamicDataEntriesRoute::class, DynamicDataEntriesRoute.serializer())
+            subclass(ImportDynamicDataCsvRoute::class, ImportDynamicDataCsvRoute.serializer())
             subclass(CreateTemplateRoute::class, CreateTemplateRoute.serializer())
         }
     }
@@ -150,7 +160,8 @@ fun ServiceApp(
             viewModel.deleteDynamicData(id)
             backStack.removeAll { route ->
                 (route is AddDynamicDataRoute && route.dynamicDataId == id) ||
-                    (route is DynamicDataEntriesRoute && route.dynamicDataId == id)
+                    (route is DynamicDataEntriesRoute && route.dynamicDataId == id) ||
+                    (route is ImportDynamicDataCsvRoute && route.dynamicDataId == id)
             }
         },
     ) {
@@ -190,6 +201,25 @@ fun ServiceApp(
                         onAddEntryClick = {
                             viewModel.selectDynamicData(dynamicData.id)
                             backStack.add(AddDynamicDataRoute(dynamicData.id))
+                        },
+                        onImportCsvClick = {
+                            viewModel.selectDynamicData(dynamicData.id)
+                            backStack.add(ImportDynamicDataCsvRoute(dynamicData.id))
+                        },
+                    )
+                }
+            }
+
+            is ImportDynamicDataCsvRoute -> {
+                val dynamicData = uiState.dynamicData.firstOrNull { it.id == currentRoute.dynamicDataId }
+                if (dynamicData == null) {
+                    EmptyRoutePlaceholder(title = "Modèle introuvable")
+                } else {
+                    ImportDynamicDataCsvScreen(
+                        dynamicData = dynamicData,
+                        onImport = { instances ->
+                            viewModel.addDynamicDataInstances(dynamicData.id, instances)
+                            backStack.removeAt(backStack.size - 1)
                         },
                     )
                 }
