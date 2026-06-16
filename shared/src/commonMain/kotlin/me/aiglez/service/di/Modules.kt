@@ -6,22 +6,17 @@ import co.touchlab.kermit.platformLogWriter
 import me.aiglez.service.data.database.elementsAdapter
 import me.aiglez.service.data.database.fieldsAdapter
 import me.aiglez.service.data.database.valuesMapAdapter
+import me.aiglez.service.data.repository.SqlDelightRecordRepository
+import me.aiglez.service.data.repository.SqlDelightTemplateRepository
 import me.aiglez.service.database.AppDatabase
 import me.aiglez.service.database.RecordEntity
 import me.aiglez.service.database.SchemaEntity
 import me.aiglez.service.database.TemplateEntity
-import me.aiglez.service.data.repository.SqlDelightRecordRepository
-import me.aiglez.service.data.repository.SqlDelightTemplateRepository
 import me.aiglez.service.domain.repository.RecordRepository
 import me.aiglez.service.domain.repository.TemplateRepository
-import me.aiglez.service.ui.records.DashboardViewModel
-import me.aiglez.service.ui.records.RecordCreateViewModel
-import me.aiglez.service.ui.records.RecordListViewModel
-import me.aiglez.service.ui.records.SchemaCreateViewModel
-import me.aiglez.service.ui.records.SchemaManagementViewModel
+import me.aiglez.service.ui.records.*
 import me.aiglez.service.ui.shell.SidebarViewModel
 import me.aiglez.service.ui.templates.CompileViewModel
-
 import org.koin.core.module.Module
 import org.koin.dsl.module
 

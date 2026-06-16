@@ -2,15 +2,7 @@ package me.aiglez.service.ui.records
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import me.aiglez.service.domain.models.DataRecord
 import me.aiglez.service.domain.models.DataSchema
@@ -65,6 +57,7 @@ class RecordCreateViewModel(
             FieldType.DOUBLE -> value.filterIndexed { index, char ->
                 char.isDigit() || (char == '.' && value.indexOf('.') == index)
             }
+
             else -> value
         }
         values.update { it + (fieldSlug to filtered) }

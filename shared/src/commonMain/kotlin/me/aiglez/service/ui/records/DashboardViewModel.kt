@@ -2,13 +2,7 @@ package me.aiglez.service.ui.records
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.*
 import me.aiglez.service.domain.models.Template
 import me.aiglez.service.domain.repository.RecordRepository
 import me.aiglez.service.domain.repository.TemplateRepository
