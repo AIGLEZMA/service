@@ -1,0 +1,60 @@
+import kotlin.Boolean;
+import kotlin.String;
+import kotlin.collections.List;
+import kotlin.collections.Map;
+import me.aiglez.service.domain.models.SchemaField;
+import me.aiglez.service.domain.models.TemplateElement;
+
+-- 1. Schema Definition Table
+CREATE TABLE SchemaEntity (
+    id TEXT NOT NULL PRIMARY KEY,
+    name TEXT NOT NULL,
+    fields TEXT AS List<SchemaField> NOT NULL,
+    isArchived INTEGER AS Boolean NOT NULL DEFAULT 0
+);
+
+-- 2. Records Entry Table
+CREATE TABLE RecordEntity (
+    id TEXT NOT NULL PRIMARY KEY,
+    schemaId TEXT NOT NULL,
+    valuesMap TEXT AS Map<String, String> NOT NULL,
+    isArchived INTEGER AS Boolean NOT NULL DEFAULT 0,
+    FOREIGN KEY(schemaId) REFERENCES SchemaEntity(id) ON DELETE RESTRICT
+);
+
+-- 3. Presentation Template Table
+CREATE TABLE TemplateEntity (
+    id TEXT NOT NULL PRIMARY KEY,
+    name TEXT NOT NULL,
+    targetSchemaId TEXT NOT NULL,
+    pageSize TEXT NOT NULL DEFAULT 'A4',
+    elements TEXT AS List<TemplateElement> NOT NULL,
+    isArchived INTEGER AS Boolean NOT NULL DEFAULT 0
+);
+
+getActiveSchemas:
+SELECT * FROM SchemaEntity WHERE isArchived = 0;
+
+insertSchema:
+INSERT OR REPLACE INTO SchemaEntity(id, name, fields, isArchived)
+VALUES (?, ?, ?, ?);
+
+archiveSchema:
+UPDATE SchemaEntity SET isArchived = 1 WHERE id = ?;
+
+getActiveRecordsBySchema:
+SELECT * FROM RecordEntity WHERE schemaId = ? AND isArchived = 0;
+
+insertRecord:
+INSERT OR REPLACE INTO RecordEntity(id, schemaId, valuesMap, isArchived)
+VALUES (?, ?, ?, ?);
+
+archiveRecord:
+UPDATE RecordEntity SET isArchived = 1 WHERE id = ?;
+
+getActiveTemplatesBySchema:
+SELECT * FROM TemplateEntity WHERE targetSchemaId = ? AND isArchived = 0;
+
+insertTemplate:
+INSERT OR REPLACE INTO TemplateEntity(id, name, targetSchemaId, pageSize, elements, isArchived)
+VALUES (?, ?, ?, ?, ?, ?);

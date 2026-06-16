@@ -15,12 +15,6 @@ fun App(
     titleBar: @Composable () -> Unit = {},
 ) {
     ServiceTheme(darkTheme = false) {
-        ServiceApp(
-            glassmorphismIntensity = GLASSMORPHISM_INTENSITY,
-            onCloseRequest = onCloseRequest,
-            onMinimizeRequest = onMinimizeRequest,
-            onMaximizeRequest = onMaximizeRequest,
-            titleBar = titleBar,
-        )
+
     }
 }
