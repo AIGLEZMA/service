@@ -10,6 +10,17 @@ import me.aiglez.service.database.AppDatabase
 import me.aiglez.service.database.RecordEntity
 import me.aiglez.service.database.SchemaEntity
 import me.aiglez.service.database.TemplateEntity
+import me.aiglez.service.data.repository.SqlDelightRecordRepository
+import me.aiglez.service.data.repository.SqlDelightTemplateRepository
+import me.aiglez.service.domain.repository.RecordRepository
+import me.aiglez.service.domain.repository.TemplateRepository
+import me.aiglez.service.ui.records.DashboardViewModel
+import me.aiglez.service.ui.records.RecordCreateViewModel
+import me.aiglez.service.ui.records.RecordListViewModel
+import me.aiglez.service.ui.records.SchemaCreateViewModel
+import me.aiglez.service.ui.records.SchemaManagementViewModel
+import me.aiglez.service.ui.shell.SidebarViewModel
+import me.aiglez.service.ui.templates.CompileViewModel
 
 import org.koin.core.module.Module
 import org.koin.dsl.module
@@ -34,11 +45,23 @@ val dataModule = module {
             TemplateEntityAdapter = TemplateEntity.Adapter(elementsAdapter)
         )
     }
+    single<RecordRepository> { SqlDelightRecordRepository(get(), get()) }
+    single<TemplateRepository> { SqlDelightTemplateRepository(get(), get()) }
+}
+
+val uiModule = module {
+    factory { SidebarViewModel(get()) }
+    factory { DashboardViewModel(get(), get()) }
+    factory { SchemaManagementViewModel(get()) }
+    factory { (schemaId: String) -> SchemaCreateViewModel(schemaId, get()) }
+    factory { (schemaId: String) -> RecordListViewModel(schemaId, get(), get()) }
+    factory { (schemaId: String) -> RecordCreateViewModel(schemaId, get()) }
+    factory { (templateId: String) -> CompileViewModel(templateId, get(), get(), get()) }
 }
 
 fun initKoin(additionalModules: List<Module> = emptyList()) {
     org.koin.core.context.startKoin {
-        modules(coreModule, platformModule, dataModule)
+        modules(coreModule, platformModule, dataModule, uiModule)
         modules(additionalModules)
     }
 }
