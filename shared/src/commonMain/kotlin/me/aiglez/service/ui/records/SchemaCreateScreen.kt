@@ -55,7 +55,7 @@ private fun SchemaCreateContent(
     var fieldPendingDelete by remember { mutableStateOf<SchemaField?>(null) }
     Column(
         verticalArrangement = Arrangement.spacedBy(18.dp),
-        modifier = Modifier.fillMaxSize().padding(24.dp),
+        modifier = Modifier.fillMaxSize(),
     ) {
         Text(
             text = if (state.isEditing) "Modify Schema Blueprint" else "Create Schema Blueprint",

@@ -43,7 +43,7 @@ private fun RecordCreateContent(
 ) {
     Column(
         verticalArrangement = Arrangement.spacedBy(18.dp),
-        modifier = Modifier.fillMaxSize().padding(24.dp),
+        modifier = Modifier.fillMaxSize(),
     ) {
         Text(
             text = "Add ${state.schema?.name ?: "Record"} Entry",

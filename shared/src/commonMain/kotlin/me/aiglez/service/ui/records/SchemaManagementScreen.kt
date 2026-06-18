@@ -75,7 +75,7 @@ private fun SchemaManagementContent(
 ) {
     Column(
         verticalArrangement = Arrangement.spacedBy(18.dp),
-        modifier = Modifier.fillMaxSize().padding(24.dp),
+        modifier = Modifier.fillMaxSize(),
     ) {
         Text("Schema Management Ledger", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
         Row(

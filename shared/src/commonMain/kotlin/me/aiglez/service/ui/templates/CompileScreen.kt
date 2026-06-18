@@ -45,7 +45,7 @@ private fun CompileContent(
     onSelectRecord: (String) -> Unit,
     onExportPdf: () -> Unit,
 ) {
-    Row(modifier = Modifier.fillMaxSize().padding(24.dp), horizontalArrangement = Arrangement.spacedBy(24.dp)) {
+    Row(modifier = Modifier.fillMaxSize(), horizontalArrangement = Arrangement.spacedBy(24.dp)) {
         Box(
             contentAlignment = Alignment.Center,
             modifier = Modifier.weight(1f).fillMaxHeight().background(MaterialTheme.colorScheme.surfaceVariant),

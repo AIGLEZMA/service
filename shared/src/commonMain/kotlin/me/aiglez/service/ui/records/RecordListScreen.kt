@@ -89,7 +89,7 @@ private fun RecordListContent(
     ) { padding ->
         Column(
             verticalArrangement = Arrangement.spacedBy(18.dp),
-            modifier = Modifier.fillMaxSize().padding(padding).padding(24.dp),
+            modifier = Modifier.fillMaxSize().padding(padding),
         ) {
             Row(
                 horizontalArrangement = Arrangement.SpaceBetween,

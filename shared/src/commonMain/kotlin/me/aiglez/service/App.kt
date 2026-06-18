@@ -9,13 +9,8 @@ const val GLASSMORPHISM_INTENSITY = 0.6f
 
 @Composable
 @Preview
-fun App(
-    onCloseRequest: () -> Unit = {},
-    onMinimizeRequest: () -> Unit = {},
-    onMaximizeRequest: () -> Unit = {},
-    titleBar: @Composable () -> Unit = {},
-) {
+fun App() {
     ServiceTheme(darkTheme = false) {
-        AppShell(onExitApplication = onCloseRequest)
+        AppShell()
     }
 }

@@ -15,8 +15,6 @@ fun main() = application {
         state = windowState,
         title = "Service",
     ) {
-        App(
-            onCloseRequest = ::exitApplication
-        )
+        App()
     }
 }
