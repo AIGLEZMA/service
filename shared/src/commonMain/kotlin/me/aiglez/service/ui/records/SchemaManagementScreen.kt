@@ -45,8 +45,8 @@ fun SchemaManagementScreen(
     if (schema != null) {
         AlertDialog(
             onDismissRequest = { pendingArchive = null },
-            title = { Text("Archive schema?") },
-            text = { Text("Archiving ${schema.name} hides it and its active navigation entry. Existing records remain in storage.") },
+            title = { Text("Archiver le Schéma de donnée ?") },
+            text = { Text("L'archivage de ${schema.name} le masque ainsi que son élément de navigation actif. Les Données existantes restent stockées.") },
             confirmButton = {
                 Button(
                     onClick = {
@@ -54,12 +54,12 @@ fun SchemaManagementScreen(
                         pendingArchive = null
                     },
                 ) {
-                    Text("Archive Schema")
+                    Text("Archiver le Schéma de donnée")
                 }
             },
             dismissButton = {
                 TextButton(onClick = { pendingArchive = null }) {
-                    Text("Cancel")
+                    Text("Annuler")
                 }
             },
         )
@@ -77,16 +77,16 @@ private fun SchemaManagementContent(
         verticalArrangement = Arrangement.spacedBy(18.dp),
         modifier = Modifier.fillMaxSize(),
     ) {
-        Text("Schema Management Ledger", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+        Text("Registre des Schémas de donnée", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .background(MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.shapes.small)
                 .padding(horizontal = 16.dp, vertical = 12.dp),
         ) {
-            Text("Schema Name", modifier = Modifier.weight(2f), fontWeight = FontWeight.SemiBold)
-            Text("Total Configured Fields", modifier = Modifier.weight(1f), fontWeight = FontWeight.SemiBold)
-            Text("Row Actions", modifier = Modifier.weight(2f), fontWeight = FontWeight.SemiBold)
+            Text("Nom du Schéma de donnée", modifier = Modifier.weight(2f), fontWeight = FontWeight.SemiBold)
+            Text("Champs configurés", modifier = Modifier.weight(1f), fontWeight = FontWeight.SemiBold)
+            Text("Actions", modifier = Modifier.weight(2f), fontWeight = FontWeight.SemiBold)
         }
         Box(modifier = Modifier.fillMaxSize()) {
             val listState = rememberLazyListState()
@@ -135,17 +135,17 @@ private fun SchemaRow(
             OutlinedButton(onClick = { onEditSchema(schema.id) }) {
                 Icon(Icons.Default.Edit, contentDescription = null)
                 Spacer(Modifier.width(6.dp))
-                Text("Modify Blueprint")
+                Text("Modifier le Schéma de donnée")
             }
             OutlinedButton(onClick = { onOpenRecords(schema.id) }) {
                 Icon(Icons.Default.TableRows, contentDescription = null)
                 Spacer(Modifier.width(6.dp))
-                Text("View Captured Records")
+                Text("Voir les Données")
             }
             TextButton(onClick = { onArchiveRequested(schema) }) {
                 Icon(Icons.Default.Archive, contentDescription = null)
                 Spacer(Modifier.width(6.dp))
-                Text("Archive Schema")
+                Text("Archiver le Schéma de donnée")
             }
         }
     }

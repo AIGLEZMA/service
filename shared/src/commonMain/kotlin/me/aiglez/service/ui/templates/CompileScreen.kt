@@ -57,7 +57,7 @@ private fun CompileContent(
             modifier = Modifier.width(360.dp).fillMaxHeight(),
         ) {
             Text(
-                text = state.template?.name ?: "Template Compiler",
+                text = state.template?.name ?: "Compilation de Template",
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold,
             )
@@ -66,7 +66,7 @@ private fun CompileContent(
                 selectedRecordId = state.selectedRecordId,
                 onSelectRecord = onSelectRecord,
             )
-            Text("Token Translations", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+            Text("Substitutions de jetons", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
             Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
                 val listState = rememberLazyListState()
                 LazyColumn(
@@ -98,7 +98,7 @@ private fun CompileContent(
             Button(onClick = onExportPdf, enabled = state.template != null, modifier = Modifier.fillMaxWidth()) {
                 Icon(Icons.Default.PictureAsPdf, contentDescription = null)
                 Spacer(Modifier.width(8.dp))
-                Text("Export PDF Document")
+                Text("Exporter le document PDF")
             }
         }
     }
@@ -151,7 +151,7 @@ private fun RecordSelector(
     Box(modifier = Modifier.fillMaxWidth()) {
         OutlinedButton(onClick = { expanded = true }, modifier = Modifier.fillMaxWidth()) {
             val selected = records.firstOrNull { it.id == selectedRecordId }
-            Text(selected?.values?.values?.firstOrNull().orEmpty().ifBlank { "Select data record" })
+            Text(selected?.values?.values?.firstOrNull().orEmpty().ifBlank { "Sélectionner une Donnée" })
         }
         DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
             records.forEach { record ->

@@ -46,7 +46,7 @@ private fun RecordCreateContent(
         modifier = Modifier.fillMaxSize(),
     ) {
         Text(
-            text = "Add ${state.schema?.name ?: "Record"} Entry",
+            text = "Ajouter une Donnée ${state.schema?.name ?: ""}".trim(),
             style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.Bold,
         )
@@ -76,7 +76,7 @@ private fun RecordCreateContent(
                 onClick = onSave,
                 enabled = state.schema != null && !state.isSaving,
             ) {
-                Text(if (state.isSaving) "Saving..." else "Save Entry")
+                Text(if (state.isSaving) "Sauvegarde..." else "Enregistrer la Donnée")
             }
         }
     }

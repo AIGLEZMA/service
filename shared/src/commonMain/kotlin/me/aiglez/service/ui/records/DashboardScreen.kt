@@ -61,20 +61,20 @@ private fun DashboardContent(
             modifier = Modifier.fillMaxWidth(),
         ) {
             MetricCard("TEMPLATES", state.stats.totalTemplates.toString(), null, Modifier.weight(1f))
-            MetricCard("DATA SCHEMAS", state.stats.totalSchemas.toString(), null, Modifier.weight(1f))
-            MetricCard("DATA RECORDS", state.stats.totalRecords.toString(), null, Modifier.weight(1f))
-            MetricCard("GENERATED PDFS", state.stats.generatedPdfs.toString(), null, Modifier.weight(1f))
+            MetricCard("SCHÉMAS DE DONNÉE", state.stats.totalSchemas.toString(), null, Modifier.weight(1f))
+            MetricCard("DONNÉES", state.stats.totalRecords.toString(), null, Modifier.weight(1f))
+            MetricCard("PDF GÉNÉRÉS", state.stats.generatedPdfs.toString(), null, Modifier.weight(1f))
         }
         Text(
-            text = "Saved Template Layouts",
+            text = "Templates sauvegardés",
             style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.SemiBold,
         )
         if (state.templates.isEmpty()) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 EmptyRoutePlaceholder(
-                    title = "No templates yet",
-                    detail = "Create a template to begin compiling data-backed documents.",
+                    title = "Aucune template pour le moment",
+                    detail = "Créez une template pour commencer à compiler des documents alimentés par vos données.",
                 )
             }
         } else {

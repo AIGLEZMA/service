@@ -50,8 +50,8 @@ fun RecordListScreen(
     if (record != null) {
         AlertDialog(
             onDismissRequest = { pendingArchive = null },
-            title = { Text("Archive record?") },
-            text = { Text("This will hide the selected record from the active ledger.") },
+            title = { Text("Archiver la Donnée ?") },
+            text = { Text("Cela masquera la Donnée sélectionnée dans le registre actif.") },
             confirmButton = {
                 Button(
                     onClick = {
@@ -59,12 +59,12 @@ fun RecordListScreen(
                         pendingArchive = null
                     },
                 ) {
-                    Text("Archive Record")
+                    Text("Archiver la Donnée")
                 }
             },
             dismissButton = {
                 TextButton(onClick = { pendingArchive = null }) {
-                    Text("Cancel")
+                    Text("Annuler")
                 }
             },
         )
@@ -83,7 +83,7 @@ private fun RecordListContent(
             ExtendedFloatingActionButton(
                 onClick = onCreateRecord,
                 icon = { Icon(Icons.Default.Add, contentDescription = null) },
-                text = { Text("Add Entry") },
+                text = { Text("Ajouter une Donnée") },
             )
         },
     ) { padding ->
@@ -98,19 +98,19 @@ private fun RecordListContent(
             ) {
                 Column {
                     Text(
-                        text = state.schema?.name ?: "Records",
+                        text = state.schema?.name ?: "Données",
                         style = MaterialTheme.typography.headlineSmall,
                         fontWeight = FontWeight.Bold,
                     )
                     Text(
-                        text = "${state.records.size} active entries",
+                        text = "${state.records.size} Données actives",
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
                 OutlinedButton(onClick = onImportCsv) {
                     Icon(Icons.Default.UploadFile, contentDescription = null)
                     Spacer(Modifier.width(6.dp))
-                    Text("Import CSV Dataset")
+                    Text("Importer des Données CSV")
                 }
             }
             RecordTable(
@@ -191,7 +191,7 @@ private fun RecordRow(
         TextButton(onClick = { onArchiveRecord(record) }, modifier = Modifier.width(128.dp)) {
             Icon(Icons.Default.Delete, contentDescription = null)
             Spacer(Modifier.width(4.dp))
-            Text("Archive")
+            Text("Archiver")
         }
     }
 }

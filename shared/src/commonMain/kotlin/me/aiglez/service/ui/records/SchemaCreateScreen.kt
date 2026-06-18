@@ -58,13 +58,13 @@ private fun SchemaCreateContent(
         modifier = Modifier.fillMaxSize(),
     ) {
         Text(
-            text = if (state.isEditing) "Modify Schema Blueprint" else "Create Schema Blueprint",
+            text = if (state.isEditing) "Modifier le schéma de donnée" else "Créer un schéma de donnée",
             style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.Bold,
         )
         if (state.hasExistingRecords) {
             Text(
-                text = "Existing records detected. Existing field types and deletions are locked; append new fields at the end.",
+                text = "Des données existantes ont été détectées. Les types de champs existants et les suppressions sont verrouillés ; ajoutez les nouveaux champs à la fin.",
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 style = MaterialTheme.typography.bodyMedium,
             )
@@ -72,7 +72,7 @@ private fun SchemaCreateContent(
         OutlinedTextField(
             value = state.schemaName,
             onValueChange = onNameChange,
-            label = { Text("Schema Name") },
+            label = { Text("Nom du schéma de donnée") },
             singleLine = true,
             modifier = Modifier.fillMaxWidth(),
         )
@@ -80,13 +80,13 @@ private fun SchemaCreateContent(
             OutlinedButton(onClick = onAddField) {
                 Icon(Icons.Default.Add, contentDescription = null)
                 Spacer(Modifier.width(6.dp))
-                Text("Append Field")
+                Text("Ajouter un champ")
             }
             Button(
                 onClick = onSave,
                 enabled = state.schemaName.isNotBlank() && state.fields.isNotEmpty() && !state.isSaving,
             ) {
-                Text(if (state.isSaving) "Saving..." else "Save Blueprint")
+                Text(if (state.isSaving) "Sauvegarde..." else "Enregistrer le Schéma de donnée")
             }
         }
         Box(modifier = Modifier.fillMaxSize()) {
@@ -118,8 +118,8 @@ private fun SchemaCreateContent(
     if (deleting != null) {
         AlertDialog(
             onDismissRequest = { fieldPendingDelete = null },
-            title = { Text("Remove field?") },
-            text = { Text("Removing ${deleting.name} changes the schema blueprint before it is saved.") },
+            title = { Text("Supprimer le champ ?") },
+            text = { Text("La suppression de ${deleting.name} modifie le Schéma de donnée avant sa sauvegarde.") },
             confirmButton = {
                 Button(
                     onClick = {
@@ -127,12 +127,12 @@ private fun SchemaCreateContent(
                         fieldPendingDelete = null
                     },
                 ) {
-                    Text("Remove Field")
+                    Text("Supprimer le champ")
                 }
             },
             dismissButton = {
                 TextButton(onClick = { fieldPendingDelete = null }) {
-                    Text("Cancel")
+                    Text("Annuler")
                 }
             },
         )
@@ -155,7 +155,7 @@ private fun FieldEditorRow(
         OutlinedTextField(
             value = field.name,
             onValueChange = onNameChange,
-            label = { Text("Field Name") },
+            label = { Text("Nom du champ") },
             singleLine = true,
             modifier = Modifier.weight(1f),
         )
@@ -166,10 +166,10 @@ private fun FieldEditorRow(
             modifier = Modifier.width(180.dp),
         )
         if (locked) {
-            Icon(Icons.Default.Lock, contentDescription = "Locked existing field")
+            Icon(Icons.Default.Lock, contentDescription = "Champ existant verrouillé")
         } else {
             IconButton(onClick = onRemove) {
-                Icon(Icons.Default.Delete, contentDescription = "Remove field")
+                Icon(Icons.Default.Delete, contentDescription = "Supprimer le champ")
             }
         }
     }
@@ -189,7 +189,7 @@ private fun FieldTypeSelector(
             onClick = { expanded = true },
             modifier = Modifier.fillMaxWidth(),
         ) {
-            Text(selected.name)
+            Text(selected.labelFr())
         }
         DropdownMenu(
             expanded = expanded,
@@ -197,7 +197,7 @@ private fun FieldTypeSelector(
         ) {
             FieldType.entries.forEach { type ->
                 DropdownMenuItem(
-                    text = { Text(type.name) },
+                    text = { Text(type.labelFr()) },
                     onClick = {
                         onSelected(type)
                         expanded = false
@@ -206,4 +206,12 @@ private fun FieldTypeSelector(
             }
         }
     }
+}
+
+private fun FieldType.labelFr(): String = when (this) {
+    FieldType.TEXT -> "Texte"
+    FieldType.NUMBER -> "Nombre"
+    FieldType.DOUBLE -> "Nombre décimal"
+    FieldType.REFERENCE -> "Référence"
+    FieldType.LIST -> "Liste"
 }

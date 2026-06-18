@@ -2,42 +2,18 @@ package me.aiglez.service.ui.components
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Dataset
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.TableRows
-import androidx.compose.material.icons.filled.Tune
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -47,7 +23,6 @@ import me.aiglez.service.domain.models.DataSchema
 fun WorkspaceSidebar(
     schemas: List<DataSchema>,
     selectedSchemaId: String?,
-    glassmorphismIntensity: Float,
     onHomeClick: () -> Unit,
     onCreateSchemaClick: () -> Unit,
     onSchemaClick: (String) -> Unit,
@@ -56,37 +31,12 @@ fun WorkspaceSidebar(
     onManageSchemasClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val containerColor = if (glassmorphismIntensity > 0f) {
-        val baseAlpha = 0.28f
-        val alpha = baseAlpha + (1f - baseAlpha) * (1f - glassmorphismIntensity)
-        MaterialTheme.colorScheme.surface.copy(alpha = alpha)
-    } else {
-        MaterialTheme.colorScheme.surface
-    }
-
-    val borderModifier = if (glassmorphismIntensity > 0f) {
-        Modifier.border(
-            width = 1.dp,
-            brush = Brush.verticalGradient(
-                listOf(
-                    androidx.compose.ui.graphics.Color.White.copy(alpha = 0.35f * glassmorphismIntensity),
-                    androidx.compose.ui.graphics.Color.White.copy(alpha = 0.1f * glassmorphismIntensity),
-                ),
-            ),
-            shape = RoundedCornerShape(12.dp),
-        )
-    } else {
-        Modifier
-    }
-
     Surface(
         modifier = modifier
             .width(320.dp)
-            .fillMaxHeight()
-            .then(borderModifier),
-        color = containerColor,
-        tonalElevation = if (glassmorphismIntensity > 0f) 0.dp else 3.dp,
-        shadowElevation = if (glassmorphismIntensity > 0f) 0.dp else 10.dp,
+            .fillMaxHeight(),
+        tonalElevation = 3.dp,
+        shadowElevation = 10.dp,
     ) {
         Column(
             modifier = Modifier
@@ -95,7 +45,6 @@ fun WorkspaceSidebar(
             verticalArrangement = Arrangement.spacedBy(18.dp),
         ) {
             AppBrandHeader(onClick = onHomeClick)
-            QuickActionCard(onCreateSchemaClick = onCreateSchemaClick)
             SchemaList(
                 schemas = schemas,
                 selectedSchemaId = selectedSchemaId,
@@ -104,48 +53,6 @@ fun WorkspaceSidebar(
                 onEditSchemaClick = onEditSchemaClick,
                 onManageSchemasClick = onManageSchemasClick,
                 modifier = Modifier.weight(1f),
-            )
-        }
-    }
-}
-
-@Composable
-fun QuickActionCard(
-    onCreateSchemaClick: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    Card(
-        modifier = modifier,
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f),
-        ),
-        shape = RoundedCornerShape(8.dp),
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)),
-    ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Dataset,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(18.dp),
-                )
-                Text(
-                    text = "Data Library",
-                    style = MaterialTheme.typography.labelLarge,
-                    fontWeight = FontWeight.SemiBold,
-                )
-            }
-            Text(
-                text = "Manage reusable data schemas for consistent document generation.",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             Button(
                 onClick = onCreateSchemaClick,
@@ -159,7 +66,7 @@ fun QuickActionCard(
                 )
                 Spacer(modifier = Modifier.width(6.dp))
                 Text(
-                    text = "Add Schema",
+                    text = "Ajouter un schéma de donnée",
                     style = MaterialTheme.typography.labelMedium,
                 )
             }
@@ -185,13 +92,13 @@ private fun SchemaList(
         ) {
             Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Text(
-                    text = "Data Models",
+                    text = "Schémas de donnée",
                     style = MaterialTheme.typography.labelLarge,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface,
                 )
                 Text(
-                    text = "${schemas.size} active schemas",
+                    text = "${schemas.size} actifs",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -199,7 +106,7 @@ private fun SchemaList(
             IconButton(onClick = onManageSchemasClick, modifier = Modifier.size(32.dp)) {
                 Icon(
                     imageVector = Icons.Default.Tune,
-                    contentDescription = "Manage schemas",
+                    contentDescription = "Gérer les schémas de donnée",
                     modifier = Modifier.size(18.dp),
                 )
             }
@@ -286,7 +193,7 @@ private fun SchemaListItem(
                     overflow = TextOverflow.Ellipsis,
                 )
                 Text(
-                    text = "${schema.fields.size} configured fields",
+                    text = "${schema.fields.size} champs configurés",
                     style = MaterialTheme.typography.bodySmall,
                     color = contentColor.copy(alpha = 0.7f),
                     maxLines = 1,
@@ -301,7 +208,7 @@ private fun SchemaListItem(
                 ) {
                     Icon(
                         imageVector = Icons.Default.Add,
-                        contentDescription = "Add record",
+                        contentDescription = "Ajouter une donnée",
                         tint = contentColor.copy(alpha = 0.6f),
                         modifier = Modifier.size(16.dp),
                     )
@@ -312,7 +219,7 @@ private fun SchemaListItem(
                 ) {
                     Icon(
                         imageVector = Icons.Default.Edit,
-                        contentDescription = "Edit schema",
+                        contentDescription = "Modifier le schéma de donnée",
                         tint = contentColor.copy(alpha = 0.6f),
                         modifier = Modifier.size(16.dp),
                     )

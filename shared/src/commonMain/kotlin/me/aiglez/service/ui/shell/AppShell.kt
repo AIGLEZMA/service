@@ -1,7 +1,5 @@
 package me.aiglez.service.ui.shell
 
-import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -9,14 +7,10 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.blur
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.ui.NavDisplay
-import me.aiglez.service.GLASSMORPHISM_INTENSITY
 import me.aiglez.service.domain.models.DataSchema
 import me.aiglez.service.ui.components.WorkspaceSidebar
 import me.aiglez.service.ui.components.WorkspaceTopBar
@@ -129,7 +123,7 @@ private fun WorkspaceScaffold(
         floatingActionButton = {
             if (showFab) {
                 ExtendedFloatingActionButton(
-                    text = { Text(text = "Create Template") },
+                    text = { Text(text = "Créer une template") },
                     icon = {
                         Icon(
                             imageVector = Icons.Default.Add,
@@ -148,18 +142,14 @@ private fun WorkspaceScaffold(
                 .padding(paddingValues)
                 .fillMaxSize()
         ) {
-            WorkspaceBackdrop(glassmorphismIntensity = GLASSMORPHISM_INTENSITY)
-
             Column(modifier = Modifier.fillMaxSize()) {
                 Row(
                     modifier = Modifier
                         .fillMaxSize(),
-                    horizontalArrangement = Arrangement.spacedBy(2.dp),
                 ) {
                     WorkspaceSidebar(
                         schemas = schemas,
                         selectedSchemaId = selectedSchemaId,
-                        glassmorphismIntensity = GLASSMORPHISM_INTENSITY,
                         onHomeClick = onHomeClick,
                         onCreateSchemaClick = onCreateSchemaClick,
                         onSchemaClick = onSchemaClick,
@@ -172,7 +162,6 @@ private fun WorkspaceScaffold(
                         modifier = Modifier
                             .weight(1f)
                             .fillMaxHeight(),
-                        //shape = RoundedCornerShape(12.dp),
                         color = MaterialTheme.colorScheme.surface,
                         tonalElevation = 2.dp,
                         shadowElevation = 6.dp,
@@ -182,7 +171,7 @@ private fun WorkspaceScaffold(
                                 title = currentRoute.title,
                                 description = currentRoute.description,
                                 count = schemas.size,
-                                countLabel = if (schemas.size == 1) "Schema" else "Schemas",
+                                countLabel = if (schemas.size == 1) "Schéma de donnée" else "Schémas de donnée",
                                 onBackClick = onBackClick,
                             )
                             Box(
@@ -197,58 +186,6 @@ private fun WorkspaceScaffold(
                 }
             }
         }
-    }
-}
-
-@Composable
-private fun WorkspaceBackdrop(glassmorphismIntensity: Float) {
-    if (glassmorphismIntensity > 0f) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(
-                    MaterialTheme.colorScheme.background.copy(
-                        alpha = 0.75f + (1f - 0.75f) * (1f - glassmorphismIntensity),
-                    ),
-                ),
-        ) {
-            Box(modifier = Modifier.fillMaxSize().blur(100.dp)) {
-                val primaryColor = MaterialTheme.colorScheme.primary
-                val tertiaryColor = MaterialTheme.colorScheme.tertiary
-                Canvas(modifier = Modifier.fillMaxSize()) {
-                    drawCircle(
-                        brush = Brush.radialGradient(
-                            colors = listOf(
-                                primaryColor.copy(alpha = 0.35f * glassmorphismIntensity),
-                                Color.Transparent,
-                            ),
-                            center = Offset(size.width * 0.15f, size.height * 0.25f),
-                            radius = size.width * 0.5f,
-                        ),
-                        center = Offset(size.width * 0.15f, size.height * 0.25f),
-                        radius = size.width * 0.5f,
-                    )
-                    drawCircle(
-                        brush = Brush.radialGradient(
-                            colors = listOf(
-                                tertiaryColor.copy(alpha = 0.3f * glassmorphismIntensity),
-                                Color.Transparent,
-                            ),
-                            center = Offset(size.width * 0.85f, size.height * 0.75f),
-                            radius = size.width * 0.6f,
-                        ),
-                        center = Offset(size.width * 0.85f, size.height * 0.75f),
-                        radius = size.width * 0.6f,
-                    )
-                }
-            }
-        }
-    } else {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(MaterialTheme.colorScheme.background),
-        )
     }
 }
 
@@ -268,37 +205,37 @@ private val AppScreen.selectedSchemaId: String?
 private fun AppScreen.chrome(schemas: List<DataSchema>): RouteChrome = when (this) {
     AppScreen.Dashboard -> RouteChrome(
         title = "Templates",
-        description = "Manage document templates and their data sources",
+        description = "Gérez les templates et leurs schémas de donnée",
     )
 
     AppScreen.SchemaManagement -> RouteChrome(
-        title = "Data Schemas",
-        description = "Review, modify, and archive reusable data models",
+        title = "Schémas de donnée",
+        description = "Consultez, modifiez et archivez les schémas de donnée réutilisables",
     )
 
     AppScreen.SchemaCreate -> RouteChrome(
-        title = "Data Schemas",
-        description = "Create a reusable data model for generated documents",
+        title = "Schémas de donnée",
+        description = "Créez un schéma de donnée réutilisable pour les templates",
     )
 
     is AppScreen.SchemaEdit -> RouteChrome(
-        title = schemaTitle(schemas, schemaId, fallback = "Schema Blueprint"),
-        description = "Modify this schema blueprint",
+        title = schemaTitle(schemas, schemaId, fallback = "Schéma de donnée"),
+        description = "Modifiez ce schéma de donnée",
     )
 
     is AppScreen.RecordList -> RouteChrome(
-        title = schemaTitle(schemas, schemaId, fallback = "Records"),
-        description = "Review captured entries for this data model",
+        title = schemaTitle(schemas, schemaId, fallback = "Données"),
+        description = "Consultez les données saisies pour ce schéma de donnée",
     )
 
     is AppScreen.RecordCreate -> RouteChrome(
-        title = schemaTitle(schemas, schemaId, fallback = "New Entry"),
-        description = "Capture a new record for this data model",
+        title = schemaTitle(schemas, schemaId, fallback = "Nouvelle Donnée"),
+        description = "Saisissez une nouvelle donnée pour ce schéma de donnée",
     )
 
     is AppScreen.Compile -> RouteChrome(
-        title = "Template Compiler",
-        description = "Preview token translations and export a PDF document",
+        title = "Compilation de template",
+        description = "Prévisualisez et exportez un document PDF",
     )
 }
 

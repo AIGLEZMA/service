@@ -75,7 +75,7 @@ class SchemaCreateViewModel(
 
     fun addField() {
         val ordinal = _uiState.value.fields.size + 1
-        val name = "Field $ordinal"
+        val name = "Champ $ordinal"
         _uiState.update {
             it.copy(
                 fields = it.fields + SchemaField(
