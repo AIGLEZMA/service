@@ -45,6 +45,7 @@ fun WorkspaceSidebar(
             verticalArrangement = Arrangement.spacedBy(18.dp),
         ) {
             AppBrandHeader(onClick = onHomeClick)
+            QuickActionCard(onCreateSchemaClick = onCreateSchemaClick)
             SchemaList(
                 schemas = schemas,
                 selectedSchemaId = selectedSchemaId,
@@ -54,6 +55,7 @@ fun WorkspaceSidebar(
                 onManageSchemasClick = onManageSchemasClick,
                 modifier = Modifier.weight(1f),
             )
+            /*
             Button(
                 onClick = onCreateSchemaClick,
                 modifier = Modifier.fillMaxWidth(),
@@ -70,6 +72,7 @@ fun WorkspaceSidebar(
                     style = MaterialTheme.typography.labelMedium,
                 )
             }
+             */
         }
     }
 }
@@ -224,6 +227,65 @@ private fun SchemaListItem(
                         modifier = Modifier.size(16.dp),
                     )
                 }
+            }
+        }
+    }
+}
+
+@Composable
+fun QuickActionCard(
+    onCreateSchemaClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier,
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f),
+        ),
+        shape = RoundedCornerShape(8.dp),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)),
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Dataset,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(18.dp),
+                )
+                Text(
+                    text = "Bibliothèque de données",
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.SemiBold,
+                )
+            }
+            Text(
+                text = "Gérez les schémas de données pour une génération cohérente.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Button(
+                onClick = onCreateSchemaClick,
+                modifier = Modifier.fillMaxWidth(),
+                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
+                shape = RoundedCornerShape(4.dp),
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Add,
+                    contentDescription = null,
+                    modifier = Modifier.size(16.dp),
+                )
+                Spacer(modifier = Modifier.width(6.dp))
+                Text(
+                    text = "Ajouter un schéma",
+                    style = MaterialTheme.typography.labelMedium,
+                )
             }
         }
     }
