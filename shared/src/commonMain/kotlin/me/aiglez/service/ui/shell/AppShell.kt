@@ -68,6 +68,7 @@ fun AppShell(
                     SchemaManagementScreen(
                         onEditSchema = { navigate(AppScreen.SchemaEdit(it)) },
                         onOpenRecords = { navigate(AppScreen.RecordList(it)) },
+                        onCreateSchema = { navigate(AppScreen.SchemaCreate) },
                     )
                 }
                 entry<AppScreen.SchemaCreate> {
