@@ -22,6 +22,7 @@ data class SchemaCreateUiState(
     val hasExistingRecords: Boolean = false,
     val isEditing: Boolean = false,
     val isSaving: Boolean = false,
+    val availableSchemas: List<DataSchema> = emptyList(),
 )
 
 class SchemaCreateViewModel(
@@ -33,25 +34,30 @@ class SchemaCreateViewModel(
     val uiState: StateFlow<SchemaCreateUiState> = _uiState.asStateFlow()
 
     init {
-        if (schemaId.isNotBlank()) {
-            viewModelScope.launch {
-                recordRepository.getActiveSchemas().collect { schemas ->
-                    val schema = schemas.firstOrNull { it.id == schemaId } ?: return@collect
-                    _uiState.update { current ->
-                        if (current.isEditing && current.schemaName.isNotBlank()) {
-                            current
-                        } else {
-                            current.copy(
+        viewModelScope.launch {
+            recordRepository.getActiveSchemas().collect { schemas ->
+                _uiState.update { current ->
+                    val next = current.copy(availableSchemas = schemas)
+                    if (schemaId.isNotBlank() && !next.isEditing) {
+                        val schema = schemas.firstOrNull { it.id == schemaId }
+                        if (schema != null) {
+                            next.copy(
                                 schemaId = schema.id,
                                 schemaName = schema.name,
                                 fields = schema.fields,
                                 lockedExistingFieldIds = schema.fields.map { it.id }.toSet(),
                                 isEditing = true,
                             )
+                        } else {
+                            next
                         }
+                    } else {
+                        next
                     }
                 }
             }
+        }
+        if (schemaId.isNotBlank()) {
             viewModelScope.launch {
                 recordRepository.getActiveRecords(schemaId).collect { records ->
                     _uiState.update {
@@ -109,7 +115,28 @@ class SchemaCreateViewModel(
             } else {
                 state.copy(
                     fields = state.fields.map { field ->
-                        if (field.id == fieldId) field.copy(type = type) else field
+                        if (field.id == fieldId) {
+                            val defaultRefId = if (type == FieldType.REFERENCE) {
+                                state.availableSchemas.firstOrNull { it.id != state.schemaId }?.id ?: ""
+                            } else null
+                            field.copy(type = type, referenceSchemaId = defaultRefId)
+                        } else {
+                            field
+                        }
+                    },
+                )
+            }
+        }
+    }
+
+    fun updateFieldReference(fieldId: String, referenceSchemaId: String) {
+        _uiState.update { state ->
+            if (state.hasExistingRecords && fieldId in state.lockedExistingFieldIds) {
+                state
+            } else {
+                state.copy(
+                    fields = state.fields.map { field ->
+                        if (field.id == fieldId) field.copy(referenceSchemaId = referenceSchemaId) else field
                     },
                 )
             }
