@@ -95,7 +95,7 @@ private fun SchemaList(
         ) {
             Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Text(
-                    text = "Schémas de donnée",
+                    text = "Modèles de données",
                     style = MaterialTheme.typography.labelLarge,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface,
@@ -109,7 +109,7 @@ private fun SchemaList(
             IconButton(onClick = onManageSchemasClick, modifier = Modifier.size(32.dp)) {
                 Icon(
                     imageVector = Icons.Default.Tune,
-                    contentDescription = "Gérer les schémas de donnée",
+                    contentDescription = "Gérer les modèles de données",
                     modifier = Modifier.size(18.dp),
                 )
             }

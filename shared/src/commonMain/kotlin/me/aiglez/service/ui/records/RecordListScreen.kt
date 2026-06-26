@@ -1,6 +1,10 @@
 package me.aiglez.service.ui.records
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.ContextMenuArea
+import androidx.compose.foundation.ContextMenuItem
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.TooltipArea
 import androidx.compose.foundation.VerticalScrollbar
 import androidx.compose.foundation.hoverable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -11,6 +15,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollbarAdapter
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Clear
@@ -21,13 +27,44 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import me.aiglez.service.domain.models.DataRecord
 import me.aiglez.service.domain.models.DataSchema
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
+
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+private fun AppTooltip(
+    text: String,
+    content: @Composable () -> Unit
+) {
+    TooltipArea(
+        tooltip = {
+            Surface(
+                shape = RoundedCornerShape(4.dp),
+                color = MaterialTheme.colorScheme.inverseSurface,
+                tonalElevation = 4.dp,
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+            ) {
+                Text(
+                    text = text,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.inverseOnSurface,
+                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                )
+            }
+        },
+        delayMillis = 500,
+        content = content
+    )
+}
 
 @Composable
 fun RecordListScreen(
@@ -84,6 +121,7 @@ private fun RecordListContent(
     onImportCsv: () -> Unit,
     onArchiveRecord: (DataRecord) -> Unit,
 ) {
+    val focusManager = LocalFocusManager.current
     var searchQuery by remember { mutableStateOf("") }
     val filteredRecords = remember(state.records, searchQuery) {
         if (searchQuery.isBlank()) {
@@ -131,34 +169,42 @@ private fun RecordListContent(
                         },
                         trailingIcon = {
                             if (searchQuery.isNotEmpty()) {
-                                IconButton(onClick = { searchQuery = "" }) {
-                                    Icon(Icons.Default.Clear, contentDescription = "Effacer")
+                                AppTooltip(text = "Effacer la recherche") {
+                                    IconButton(onClick = { searchQuery = "" }) {
+                                        Icon(Icons.Default.Clear, contentDescription = "Effacer")
+                                    }
                                 }
                             }
                         },
                         modifier = Modifier.weight(1f),
                         singleLine = true,
                         shape = RoundedCornerShape(8.dp),
+                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                        keyboardActions = KeyboardActions(onSearch = { focusManager.clearFocus() }),
                     )
 
-                    OutlinedButton(
-                        onClick = onImportCsv,
-                        shape = RoundedCornerShape(4.dp),
-                        contentPadding = PaddingValues(horizontal = 14.dp, vertical = 10.dp),
-                    ) {
-                        Icon(Icons.Default.UploadFile, contentDescription = null, modifier = Modifier.size(18.dp))
-                        Spacer(Modifier.width(8.dp))
-                        Text("Importer CSV")
+                    AppTooltip(text = "Importer des données depuis un fichier CSV") {
+                        OutlinedButton(
+                            onClick = onImportCsv,
+                            shape = RoundedCornerShape(4.dp),
+                            contentPadding = PaddingValues(horizontal = 14.dp, vertical = 10.dp),
+                        ) {
+                            Icon(Icons.Default.UploadFile, contentDescription = null, modifier = Modifier.size(18.dp))
+                            Spacer(Modifier.width(8.dp))
+                            Text("Importer CSV")
+                        }
                     }
 
-                    Button(
-                        onClick = onCreateRecord,
-                        shape = RoundedCornerShape(4.dp),
-                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
-                    ) {
-                        Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(18.dp))
-                        Spacer(Modifier.width(8.dp))
-                        Text("Ajouter")
+                    AppTooltip(text = "Ajouter une nouvelle entrée à ce modèle") {
+                        Button(
+                            onClick = onCreateRecord,
+                            shape = RoundedCornerShape(4.dp),
+                            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
+                        ) {
+                            Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(18.dp))
+                            Spacer(Modifier.width(8.dp))
+                            Text("Ajouter")
+                        }
                     }
                 }
 
@@ -228,7 +274,7 @@ private fun RecordHeader(
                     color = MaterialTheme.colorScheme.onSurface,
                 )
                 Text(
-                    text = "Consultez, recherchez et gérez les données associées à cette structure.",
+                    text = "Consultez, recherchez et gérez les données associées à ce modèle.",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -303,6 +349,7 @@ private fun RecordTable(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun RecordRow(
     schema: DataSchema?,
@@ -311,45 +358,62 @@ private fun RecordRow(
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val hovered by interactionSource.collectIsHoveredAsState()
+    val clipboardManager = LocalClipboardManager.current
 
-    Surface(
-        modifier = Modifier
-            .fillMaxWidth()
-            .hoverable(interactionSource),
-        shape = RoundedCornerShape(8.dp),
-        color = if (hovered) MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.25f) else MaterialTheme.colorScheme.surface,
-        border = BorderStroke(1.dp, if (hovered) MaterialTheme.colorScheme.primary.copy(alpha = 0.5f) else MaterialTheme.colorScheme.outlineVariant),
-        tonalElevation = if (hovered) 2.dp else 1.dp,
+    ContextMenuArea(
+        items = {
+            listOf(
+                ContextMenuItem("Copier les valeurs") {
+                    val textToCopy = schema?.fields.orEmpty().joinToString(", ") { field ->
+                        "${field.name}: ${record.values[field.slug] ?: record.values[field.id].orEmpty()}"
+                    }
+                    clipboardManager.setText(AnnotatedString(textToCopy))
+                },
+                ContextMenuItem("Archiver la donnée") { onArchiveRecord(record) },
+            )
+        }
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
-            verticalAlignment = Alignment.CenterVertically,
+        Surface(
+            modifier = Modifier
+                .fillMaxWidth()
+                .hoverable(interactionSource),
+            shape = RoundedCornerShape(8.dp),
+            color = if (hovered) MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.25f) else MaterialTheme.colorScheme.surface,
+            border = BorderStroke(1.dp, if (hovered) MaterialTheme.colorScheme.primary.copy(alpha = 0.5f) else MaterialTheme.colorScheme.outlineVariant),
+            tonalElevation = if (hovered) 2.dp else 1.dp,
         ) {
-            schema?.fields.orEmpty().forEachIndexed { index, field ->
-                val value = record.values[field.slug] ?: record.values[field.id].orEmpty()
-                Text(
-                    text = value,
-                    modifier = Modifier.weight(1f),
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = if (index == 0) FontWeight.Bold else FontWeight.Normal,
-                    color = if (index == 0) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            }
-
-            IconButton(
-                onClick = { onArchiveRecord(record) },
-                colors = IconButtonDefaults.iconButtonColors(
-                    contentColor = MaterialTheme.colorScheme.onSurfaceVariant
-                ),
-                modifier = Modifier.size(36.dp)
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically,
             ) {
-                Icon(
-                    imageVector = Icons.Default.Delete,
-                    contentDescription = "Archiver",
-                    modifier = Modifier.size(20.dp)
-                )
+                schema?.fields.orEmpty().forEachIndexed { index, field ->
+                    val value = record.values[field.slug] ?: record.values[field.id].orEmpty()
+                    Text(
+                        text = value,
+                        modifier = Modifier.weight(1f),
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = if (index == 0) FontWeight.Bold else FontWeight.Normal,
+                        color = if (index == 0) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+
+                AppTooltip(text = "Archiver cette ligne de donnée") {
+                    IconButton(
+                        onClick = { onArchiveRecord(record) },
+                        colors = IconButtonDefaults.iconButtonColors(
+                            contentColor = MaterialTheme.colorScheme.onSurfaceVariant
+                        ),
+                        modifier = Modifier.size(36.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Delete,
+                            contentDescription = "Archiver",
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                }
             }
         }
     }

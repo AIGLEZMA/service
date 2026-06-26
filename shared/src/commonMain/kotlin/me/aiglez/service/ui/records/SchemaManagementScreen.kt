@@ -1,6 +1,10 @@
 package me.aiglez.service.ui.records
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.ContextMenuArea
+import androidx.compose.foundation.ContextMenuItem
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.TooltipArea
 import androidx.compose.foundation.VerticalScrollbar
 import androidx.compose.foundation.hoverable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -11,18 +15,54 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollbarAdapter
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Archive
+import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.TableRows
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import me.aiglez.service.domain.models.DataSchema
 import me.aiglez.service.domain.models.FieldType
 import org.koin.compose.viewmodel.koinViewModel
+
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+private fun AppTooltip(
+    text: String,
+    content: @Composable () -> Unit
+) {
+    TooltipArea(
+        tooltip = {
+            Surface(
+                shape = RoundedCornerShape(4.dp),
+                color = MaterialTheme.colorScheme.inverseSurface,
+                tonalElevation = 4.dp,
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+            ) {
+                Text(
+                    text = text,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.inverseOnSurface,
+                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                )
+            }
+        },
+        delayMillis = 500,
+        content = content
+    )
+}
 
 @Composable
 fun SchemaManagementScreen(
@@ -53,7 +93,8 @@ fun SchemaManagementScreen(
                     onClick = {
                         viewModel.archiveSchema(schema.id)
                         pendingArchive = null
-                    }, colors = ButtonDefaults.buttonColors(
+                    },
+                    colors = ButtonDefaults.buttonColors(
                         containerColor = MaterialTheme.colorScheme.error,
                         contentColor = MaterialTheme.colorScheme.onError
                     )
@@ -78,16 +119,15 @@ private fun SchemaManagementContent(
     onCreateSchema: () -> Unit,
     onArchiveRequested: (DataSchema) -> Unit,
 ) {
+    val focusManager = LocalFocusManager.current
     var searchQuery by remember { mutableStateOf("") }
     val filteredSchemas = remember(schemas, searchQuery) {
         if (searchQuery.isBlank()) {
             schemas
         } else {
             schemas.filter { schema ->
-                schema.name.contains(
-                    searchQuery,
-                    ignoreCase = true
-                ) || schema.fields.any { it.name.contains(searchQuery, ignoreCase = true) }
+                schema.name.contains(searchQuery, ignoreCase = true) ||
+                        schema.fields.any { it.name.contains(searchQuery, ignoreCase = true) }
             }
         }
     }
@@ -131,24 +171,30 @@ private fun SchemaManagementContent(
                         },
                         trailingIcon = {
                             if (searchQuery.isNotEmpty()) {
-                                IconButton(onClick = { searchQuery = "" }) {
-                                    Icon(Icons.Default.Clear, contentDescription = "Effacer")
+                                AppTooltip(text = "Effacer la recherche") {
+                                    IconButton(onClick = { searchQuery = "" }) {
+                                        Icon(Icons.Default.Clear, contentDescription = "Effacer")
+                                    }
                                 }
                             }
                         },
                         modifier = Modifier.weight(1f),
                         singleLine = true,
                         shape = RoundedCornerShape(8.dp),
+                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                        keyboardActions = KeyboardActions(onSearch = { focusManager.clearFocus() }),
                     )
 
-                    Button(
-                        onClick = onCreateSchema,
-                        shape = RoundedCornerShape(4.dp),
-                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
-                    ) {
-                        Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(18.dp))
-                        Spacer(Modifier.width(8.dp))
-                        Text("Nouveau modèle")
+                    AppTooltip(text = "Créer un nouveau modèle de données") {
+                        Button(
+                            onClick = onCreateSchema,
+                            shape = RoundedCornerShape(4.dp),
+                            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
+                        ) {
+                            Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(18.dp))
+                            Spacer(Modifier.width(8.dp))
+                            Text("Nouveau modèle")
+                        }
                     }
                 }
 
@@ -157,7 +203,8 @@ private fun SchemaManagementContent(
                         EmptyState(
                             isSearchActive = searchQuery.isNotEmpty(),
                             onCreateClick = onCreateSchema,
-                            onClearSearch = { searchQuery = "" })
+                            onClearSearch = { searchQuery = "" }
+                        )
                     } else {
                         LazyColumn(
                             state = listState,
@@ -243,6 +290,7 @@ private fun ManagementHeader(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun SchemaCard(
     schema: DataSchema,
@@ -253,125 +301,141 @@ private fun SchemaCard(
     val interactionSource = remember { MutableInteractionSource() }
     val hovered by interactionSource.collectIsHoveredAsState()
 
-    Surface(
-        modifier = Modifier.fillMaxWidth().hoverable(interactionSource),
-        shape = RoundedCornerShape(8.dp),
-        color = if (hovered) MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.25f) else MaterialTheme.colorScheme.surface,
-        border = BorderStroke(
-            1.dp,
-            if (hovered) MaterialTheme.colorScheme.primary.copy(alpha = 0.5f) else MaterialTheme.colorScheme.outlineVariant
-        ),
-        tonalElevation = if (hovered) 2.dp else 1.dp,
+    ContextMenuArea(
+        items = {
+            listOf(
+                ContextMenuItem("Consulter les données") { onOpenRecords(schema.id) },
+                ContextMenuItem("Modifier le modèle") { onEditSchema(schema.id) },
+                ContextMenuItem("Archiver le modèle") { onArchiveRequested(schema) },
+            )
+        }
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
+        Surface(
+            modifier = Modifier
+                .fillMaxWidth()
+                .hoverable(interactionSource),
+            shape = RoundedCornerShape(8.dp),
+            color = if (hovered) MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.25f) else MaterialTheme.colorScheme.surface,
+            border = BorderStroke(1.dp, if (hovered) MaterialTheme.colorScheme.primary.copy(alpha = 0.5f) else MaterialTheme.colorScheme.outlineVariant),
+            tonalElevation = if (hovered) 2.dp else 1.dp,
         ) {
-            Column(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Text(
-                        text = schema.name,
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-
-                    AssistChip(
-                        onClick = {},
-                        label = { Text("${schema.fields.size} champs") },
-                        shape = RoundedCornerShape(4.dp),
-                        modifier = Modifier.height(24.dp)
-                    )
-                }
-
-                if (schema.fields.isNotEmpty()) {
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(6.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text(
-                            text = "Champs :",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            fontWeight = FontWeight.SemiBold
-                        )
-
-                        val maxPreviewFields = 4
-                        val previewFields = schema.fields.take(maxPreviewFields)
-                        previewFields.forEachIndexed { index, field ->
-                            Text(
-                                text = "${field.name} (${getTypeLabelAbbrev(field.type)})",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.primary,
-                            )
-                            if (index < previewFields.size - 1 || schema.fields.size > maxPreviewFields) {
-                                Text(
-                                    text = "•",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
-                                )
-                            }
-                        }
-                        if (schema.fields.size > maxPreviewFields) {
-                            Text(
-                                text = "+${schema.fields.size - maxPreviewFields} autres",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                fontWeight = FontWeight.Medium
-                            )
-                        }
-                    }
-                } else {
-                    Text(
-                        text = "Aucun champ configuré",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-            }
-
-            Spacer(Modifier.width(16.dp))
-
             Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.fillMaxWidth().padding(16.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Button(
-                    onClick = { onOpenRecords(schema.id) },
-                    shape = RoundedCornerShape(4.dp),
-                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
+                Column(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
-                    Icon(Icons.Default.TableRows, contentDescription = null, modifier = Modifier.size(16.dp))
-                    Spacer(Modifier.width(6.dp))
-                    Text("Données", style = MaterialTheme.typography.labelMedium)
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Text(
+                            text = schema.name,
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+
+                        AssistChip(
+                            onClick = {},
+                            label = { Text("${schema.fields.size} champs") },
+                            shape = RoundedCornerShape(4.dp),
+                            modifier = Modifier.height(24.dp)
+                        )
+                    }
+
+                    if (schema.fields.isNotEmpty()) {
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text(
+                                text = "Champs :",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                fontWeight = FontWeight.SemiBold
+                            )
+
+                            val maxPreviewFields = 4
+                            val previewFields = schema.fields.take(maxPreviewFields)
+                            previewFields.forEachIndexed { index, field ->
+                                Text(
+                                    text = "${field.name} (${getTypeLabelAbbrev(field.type)})",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.primary,
+                                )
+                                if (index < previewFields.size - 1 || schema.fields.size > maxPreviewFields) {
+                                    Text(
+                                        text = "•",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+                                    )
+                                }
+                            }
+                            if (schema.fields.size > maxPreviewFields) {
+                                Text(
+                                    text = "+${schema.fields.size - maxPreviewFields} autres",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    fontWeight = FontWeight.Medium
+                               )
+                            }
+                        }
+                    } else {
+                        Text(
+                            text = "Aucun champ configuré",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
                 }
 
-                OutlinedButton(
-                    onClick = { onEditSchema(schema.id) },
-                    shape = RoundedCornerShape(4.dp),
-                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
-                ) {
-                    Icon(Icons.Default.Edit, contentDescription = null, modifier = Modifier.size(16.dp))
-                    Spacer(Modifier.width(6.dp))
-                    Text("Modifier", style = MaterialTheme.typography.labelMedium)
-                }
+                Spacer(Modifier.width(16.dp))
 
-                IconButton(
-                    onClick = { onArchiveRequested(schema) },
-                    colors = IconButtonDefaults.iconButtonColors(
-                        contentColor = MaterialTheme.colorScheme.onSurfaceVariant
-                    ),
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Icon(Icons.Default.Archive, contentDescription = "Archiver", modifier = Modifier.size(20.dp))
+                    AppTooltip(text = "Consulter les données de ce modèle") {
+                        Button(
+                            onClick = { onOpenRecords(schema.id) },
+                            shape = RoundedCornerShape(4.dp),
+                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
+                        ) {
+                            Icon(Icons.Default.TableRows, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Spacer(Modifier.width(6.dp))
+                            Text("Données", style = MaterialTheme.typography.labelMedium)
+                        }
+                    }
+
+                    AppTooltip(text = "Modifier ce modèle de données") {
+                        OutlinedButton(
+                            onClick = { onEditSchema(schema.id) },
+                            shape = RoundedCornerShape(4.dp),
+                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
+                        ) {
+                            Icon(Icons.Default.Edit, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Spacer(Modifier.width(6.dp))
+                            Text("Modifier", style = MaterialTheme.typography.labelMedium)
+                        }
+                    }
+
+                    AppTooltip(text = "Archiver ce modèle de données") {
+                        IconButton(
+                            onClick = { onArchiveRequested(schema) },
+                            colors = IconButtonDefaults.iconButtonColors(
+                                contentColor = MaterialTheme.colorScheme.onSurfaceVariant
+                            ),
+                        ) {
+                            Icon(Icons.Default.Archive, contentDescription = "Archiver", modifier = Modifier.size(20.dp))
+                        }
+                    }
                 }
             }
         }

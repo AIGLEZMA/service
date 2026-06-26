@@ -1,26 +1,59 @@
 package me.aiglez.service.ui.records
 
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.VerticalScrollbar
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.TooltipArea
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollbarAdapter
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusDirection
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import me.aiglez.service.domain.models.DataRecord
 import me.aiglez.service.domain.models.FieldType
 import me.aiglez.service.domain.models.SchemaField
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
+
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+private fun AppTooltip(
+    text: String,
+    content: @Composable () -> Unit
+) {
+    TooltipArea(
+        tooltip = {
+            Surface(
+                shape = RoundedCornerShape(4.dp),
+                color = MaterialTheme.colorScheme.inverseSurface,
+                tonalElevation = 4.dp,
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+            ) {
+                Text(
+                    text = text,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.inverseOnSurface,
+                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                )
+            }
+        },
+        delayMillis = 500,
+        content = content
+    )
+}
 
 @Composable
 fun RecordCreateScreen(
@@ -92,8 +125,8 @@ private fun RecordCreateContent(
             }
 
             if (state.schema?.fields.orEmpty().isNotEmpty()) {
-                VerticalScrollbar(
-                    adapter = rememberScrollbarAdapter(listState),
+                androidx.compose.foundation.VerticalScrollbar(
+                    adapter = androidx.compose.foundation.rememberScrollbarAdapter(listState),
                     modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight(),
                 )
             }
@@ -197,6 +230,8 @@ private fun DynamicFieldInput(
     referenceOptions: List<DataRecord>,
     onValueChange: (String) -> Unit,
 ) {
+    val focusManager = LocalFocusManager.current
+
     when (field.type) {
         FieldType.REFERENCE -> ReferenceDropdown(
             field = field,
@@ -211,6 +246,8 @@ private fun DynamicFieldInput(
             singleLine = field.type != FieldType.LIST,
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(8.dp),
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+            keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Down) }),
             placeholder = {
                 Text(
                     when (field.type) {
@@ -280,6 +317,7 @@ private fun ReferenceDropdown(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun SaveBar(
     canSave: Boolean,
@@ -306,21 +344,23 @@ private fun SaveBar(
                     color = if (canSave && !isSaving) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 Text(
-                    text = "La donnée sera ajoutée au registre de cette structure.",
+                    text = "La donnée sera ajoutée au registre de ce modèle.",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
 
-            Button(
-                onClick = onSave,
-                enabled = canSave && !isSaving,
-                shape = RoundedCornerShape(4.dp),
-                contentPadding = PaddingValues(horizontal = 20.dp, vertical = 12.dp),
-            ) {
-                Icon(Icons.Default.Save, contentDescription = null, modifier = Modifier.size(18.dp))
-                Spacer(Modifier.width(8.dp))
-                Text(if (isSaving) "Sauvegarde..." else "Enregistrer")
+            AppTooltip(text = "Enregistrer les modifications de cette entrée") {
+                Button(
+                    onClick = onSave,
+                    enabled = canSave && !isSaving,
+                    shape = RoundedCornerShape(4.dp),
+                    contentPadding = PaddingValues(horizontal = 20.dp, vertical = 12.dp),
+                ) {
+                    Icon(Icons.Default.Save, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(Modifier.width(8.dp))
+                    Text(if (isSaving) "Sauvegarde..." else "Enregistrer")
+                }
             }
         }
     }

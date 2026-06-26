@@ -1,27 +1,98 @@
 package me.aiglez.service.ui.records
 
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.ContextMenuArea
+import androidx.compose.foundation.ContextMenuItem
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.TooltipArea
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Save
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.AssistChip
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuAnchorType
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusDirection
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import me.aiglez.service.domain.models.DataSchema
 import me.aiglez.service.domain.models.FieldType
 import me.aiglez.service.domain.models.SchemaField
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
+
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+private fun AppTooltip(
+    text: String,
+    content: @Composable () -> Unit
+) {
+    TooltipArea(
+        tooltip = {
+            Surface(
+                shape = RoundedCornerShape(4.dp),
+                color = MaterialTheme.colorScheme.inverseSurface,
+                tonalElevation = 4.dp,
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+            ) {
+                Text(
+                    text = text,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.inverseOnSurface,
+                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                )
+            }
+        },
+        delayMillis = 500,
+        content = content
+    )
+}
 
 @Composable
 fun SchemaCreateScreen(
@@ -52,6 +123,7 @@ fun SchemaCreateScreen(
     )
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun SchemaCreateContent(
     state: SchemaCreateUiState,
@@ -63,6 +135,7 @@ private fun SchemaCreateContent(
     onRemoveField: (String) -> Unit,
     onSave: () -> Unit,
 ) {
+    val focusManager = LocalFocusManager.current
     var fieldPendingDelete by remember { mutableStateOf<SchemaField?>(null) }
     val canSave = state.schemaName.isNotBlank() &&
             state.fields.isNotEmpty() &&
@@ -110,6 +183,9 @@ private fun SchemaCreateContent(
                             modifier = Modifier.fillMaxWidth(),
                             singleLine = true,
                             placeholder = { Text("ex: Client, Facture, Intervention") },
+                            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+                            keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Down) }),
+                            shape = RoundedCornerShape(8.dp),
                         )
                     }
                 }
@@ -133,14 +209,16 @@ private fun SchemaCreateContent(
                         )
                     }
 
-                    OutlinedButton(
-                        onClick = onAddField,
-                        shape = RoundedCornerShape(4.dp),
-                        contentPadding = PaddingValues(horizontal = 14.dp, vertical = 10.dp),
-                    ) {
-                        Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(18.dp))
-                        Spacer(Modifier.width(8.dp))
-                        Text("Ajouter")
+                    AppTooltip(text = "Ajouter un nouveau champ à ce modèle") {
+                        OutlinedButton(
+                            onClick = onAddField,
+                            shape = RoundedCornerShape(4.dp),
+                            contentPadding = PaddingValues(horizontal = 14.dp, vertical = 10.dp),
+                        ) {
+                            Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(18.dp))
+                            Spacer(Modifier.width(8.dp))
+                            Text("Ajouter")
+                        }
                     }
                 }
 
@@ -151,6 +229,12 @@ private fun SchemaCreateContent(
                         verticalArrangement = Arrangement.spacedBy(8.dp),
                         contentPadding = PaddingValues(vertical = 2.dp),
                     ) {
+                        if (state.fields.isEmpty()) {
+                            item {
+                                EmptyFieldsState(onAddClick = onAddField)
+                            }
+                        }
+
                         items(state.fields, key = { it.id }) { field ->
                             val locked = state.hasExistingRecords && field.id in state.lockedExistingFieldIds
                             FieldDefinitionRow(
@@ -188,15 +272,19 @@ private fun SchemaCreateContent(
         AlertDialog(
             onDismissRequest = { fieldPendingDelete = null },
             title = { Text("Supprimer le champ ?") },
-            text = { Text("La suppression de ${deleting.name} modifie le Schéma de donnée avant sa sauvegarde.") },
+            text = { Text("La suppression de \"${deleting.name}\" modifie le modèle de données avant sa sauvegarde.") },
             confirmButton = {
                 Button(
                     onClick = {
                         onRemoveField(deleting.id)
                         fieldPendingDelete = null
                     },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error,
+                        contentColor = MaterialTheme.colorScheme.onError
+                    )
                 ) {
-                    Text("Supprimer le champ")
+                    Text("Supprimer")
                 }
             },
             dismissButton = {
@@ -263,6 +351,7 @@ private fun StructureHeader(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun FieldDefinitionRow(
     field: SchemaField,
@@ -273,55 +362,75 @@ private fun FieldDefinitionRow(
     onReferenceSchemaSelected: (String) -> Unit,
     onRemove: () -> Unit,
 ) {
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        color = MaterialTheme.colorScheme.surface,
+    val focusManager = LocalFocusManager.current
+    ContextMenuArea(
+        items = {
+            if (locked) {
+                emptyList()
+            } else {
+                listOf(
+                    ContextMenuItem("Supprimer le champ") { onRemove() }
+                )
+            }
+        }
     ) {
-        Column(modifier = Modifier.fillMaxWidth().padding(vertical = 10.dp)) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                OutlinedTextField(
-                    value = field.name,
-                    onValueChange = onNameChange,
-                    modifier = Modifier.weight(1.4f),
-                    singleLine = true,
-                    placeholder = { Text("Nom du champ") },
-                    readOnly = locked,
-                )
-
-                TypeSelector(
-                    selectedType = field.type,
-                    onTypeSelected = onTypeChange,
-                    enabled = !locked,
-                    modifier = Modifier.weight(1f),
-                )
-
-                if (locked) {
-                    Icon(
-                        imageVector = Icons.Default.Lock,
-                        contentDescription = "Verrouillé",
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.size(24.dp)
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            color = MaterialTheme.colorScheme.surface,
+        ) {
+            Column(modifier = Modifier.fillMaxWidth().padding(vertical = 10.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    OutlinedTextField(
+                        value = field.name,
+                        onValueChange = onNameChange,
+                        modifier = Modifier.weight(1.4f),
+                        singleLine = true,
+                        placeholder = { Text("Nom du champ") },
+                        readOnly = locked,
+                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+                        keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Down) }),
+                        shape = RoundedCornerShape(8.dp),
                     )
-                } else {
-                    IconButton(onClick = onRemove) {
-                        Icon(
-                            imageVector = Icons.Default.Delete,
-                            contentDescription = "Supprimer",
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
+
+                    TypeSelector(
+                        selectedType = field.type,
+                        onTypeSelected = onTypeChange,
+                        enabled = !locked,
+                        modifier = Modifier.weight(1f),
+                    )
+
+                    if (locked) {
+                        AppTooltip(text = "Champ existant verrouillé") {
+                            Icon(
+                                imageVector = Icons.Default.Lock,
+                                contentDescription = "Verrouillé",
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
+                    } else {
+                        AppTooltip(text = "Supprimer ce champ") {
+                            IconButton(onClick = onRemove) {
+                                Icon(
+                                    imageVector = Icons.Default.Delete,
+                                    contentDescription = "Supprimer",
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            }
+                        }
                     }
                 }
-            }
 
-            ComplexTypeConfiguration(
-                field = field,
-                availableSchemas = availableSchemas,
-                onReferenceSchemaSelected = onReferenceSchemaSelected,
-            )
+                ComplexTypeConfiguration(
+                    field = field,
+                    availableSchemas = availableSchemas,
+                    onReferenceSchemaSelected = onReferenceSchemaSelected,
+                )
+            }
         }
     }
 }
@@ -415,6 +524,7 @@ private fun TypeSelector(
             colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
             modifier = Modifier.menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable).fillMaxWidth(),
             singleLine = true,
+            shape = RoundedCornerShape(8.dp),
         )
 
         ExposedDropdownMenu(
@@ -467,6 +577,7 @@ private fun RefSelector(
             colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
             modifier = Modifier.menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable).widthIn(min = 240.dp),
             singleLine = true,
+            shape = RoundedCornerShape(8.dp),
         )
 
         ExposedDropdownMenu(
@@ -483,6 +594,7 @@ private fun RefSelector(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun SaveStructureBar(
     canSave: Boolean,
@@ -516,21 +628,23 @@ private fun SaveStructureBar(
                     color = if (canSave && !isSaving) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 Text(
-                    text = "Le modèle sera disponible dans la liste des données dynamiques.",
+                    text = "Le modèle sera disponible dans la liste des modèles de données.",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
 
-            Button(
-                onClick = onSave,
-                enabled = canSave && !isSaving,
-                shape = RoundedCornerShape(4.dp),
-                contentPadding = PaddingValues(horizontal = 20.dp, vertical = 12.dp),
-            ) {
-                Icon(Icons.Default.Save, contentDescription = null, modifier = Modifier.size(18.dp))
-                Spacer(Modifier.width(8.dp))
-                Text(if (isSaving) "Sauvegarde..." else "Enregistrer")
+            AppTooltip(text = if (canSave) "Sauvegarder les modifications de ce modèle" else "Complétez les champs requis avant de sauvegarder") {
+                Button(
+                    onClick = onSave,
+                    enabled = canSave && !isSaving,
+                    shape = RoundedCornerShape(4.dp),
+                    contentPadding = PaddingValues(horizontal = 20.dp, vertical = 12.dp),
+                ) {
+                    Icon(Icons.Default.Save, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(Modifier.width(8.dp))
+                    Text(if (isSaving) "Sauvegarde..." else "Enregistrer")
+                }
             }
         }
     }

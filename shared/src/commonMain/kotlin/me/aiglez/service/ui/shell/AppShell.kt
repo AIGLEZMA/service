@@ -172,7 +172,7 @@ private fun WorkspaceScaffold(
                                 title = currentRoute.title,
                                 description = currentRoute.description,
                                 count = schemas.size,
-                                countLabel = if (schemas.size == 1) "Schéma de donnée" else "Schémas de donnée",
+                                countLabel = if (schemas.size == 1) "Modèle de données" else "Modèles de données",
                                 onBackClick = onBackClick,
                             )
                             Box(
@@ -210,28 +210,28 @@ private fun AppScreen.chrome(schemas: List<DataSchema>): RouteChrome = when (thi
     )
 
     AppScreen.SchemaManagement -> RouteChrome(
-        title = "Schémas de donnée",
-        description = "Consultez, modifiez et archivez les schémas de donnée réutilisables",
+        title = "Modèles de données",
+        description = "Consultez, modifiez et archivez les modèles de données réutilisables",
     )
 
     AppScreen.SchemaCreate -> RouteChrome(
-        title = "Schémas de donnée",
-        description = "Créez un schéma de donnée réutilisable pour les templates",
+        title = "Modèles de données",
+        description = "Créez un modèle de données réutilisable pour les templates",
     )
 
     is AppScreen.SchemaEdit -> RouteChrome(
-        title = schemaTitle(schemas, schemaId, fallback = "Schéma de donnée"),
-        description = "Modifiez ce schéma de donnée",
+        title = schemaTitle(schemas, schemaId, fallback = "Modèle de données"),
+        description = "Modifiez ce modèle de données",
     )
 
     is AppScreen.RecordList -> RouteChrome(
         title = schemaTitle(schemas, schemaId, fallback = "Données"),
-        description = "Consultez les données saisies pour ce schéma de donnée",
+        description = "Consultez les données saisies pour ce modèle de données",
     )
 
     is AppScreen.RecordCreate -> RouteChrome(
-        title = schemaTitle(schemas, schemaId, fallback = "Nouvelle Donnée"),
-        description = "Saisissez une nouvelle donnée pour ce schéma de donnée",
+        title = schemaTitle(schemas, schemaId, fallback = "Nouvelle donnée"),
+        description = "Saisissez une nouvelle donnée pour ce modèle de données",
     )
 
     is AppScreen.Compile -> RouteChrome(
