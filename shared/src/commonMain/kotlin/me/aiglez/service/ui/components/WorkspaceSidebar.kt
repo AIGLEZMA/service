@@ -222,7 +222,7 @@ private fun SchemaListItem(
                 ) {
                     Icon(
                         imageVector = Icons.Default.Edit,
-                        contentDescription = "Modifier le schéma de donnée",
+                        contentDescription = "Modifier le modèle de donnée",
                         tint = contentColor.copy(alpha = 0.6f),
                         modifier = Modifier.size(16.dp),
                     )
@@ -266,7 +266,7 @@ fun QuickActionCard(
                 )
             }
             Text(
-                text = "Gérez les schémas de données pour une génération cohérente.",
+                text = "Gérez les modèles de données pour une génération cohérente.",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -283,7 +283,7 @@ fun QuickActionCard(
                 )
                 Spacer(modifier = Modifier.width(6.dp))
                 Text(
-                    text = "Ajouter un schéma",
+                    text = "Ajouter un modèle",
                     style = MaterialTheme.typography.labelMedium,
                 )
             }

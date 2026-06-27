@@ -206,7 +206,7 @@ private val AppScreen.selectedSchemaId: String?
 private fun AppScreen.chrome(schemas: List<DataSchema>): RouteChrome = when (this) {
     AppScreen.Dashboard -> RouteChrome(
         title = "Templates",
-        description = "Gérez les templates et leurs schémas de donnée",
+        description = "Gérez les templates et leurs modèles de donnée",
     )
 
     AppScreen.SchemaManagement -> RouteChrome(

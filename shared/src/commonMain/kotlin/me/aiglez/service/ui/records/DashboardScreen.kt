@@ -61,7 +61,7 @@ private fun DashboardContent(
             modifier = Modifier.fillMaxWidth(),
         ) {
             MetricCard("TEMPLATES", state.stats.totalTemplates.toString(), null, Modifier.weight(1f))
-            MetricCard("SCHÉMAS DE DONNÉE", state.stats.totalSchemas.toString(), null, Modifier.weight(1f))
+            MetricCard("MODÈLES DE DONNÉE", state.stats.totalSchemas.toString(), null, Modifier.weight(1f))
             MetricCard("DONNÉES", state.stats.totalRecords.toString(), null, Modifier.weight(1f))
             MetricCard("PDF GÉNÉRÉS", state.stats.generatedPdfs.toString(), null, Modifier.weight(1f))
         }
