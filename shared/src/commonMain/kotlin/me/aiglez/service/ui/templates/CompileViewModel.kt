@@ -126,6 +126,11 @@ class CompileViewModel(
     private val _uiState = MutableStateFlow(TemplateEditorState())
     val uiState = _uiState
     private var clipboardElements: List<TemplateElement> = emptyList()
+    private val propertyActions = TemplateEditorPropertyActions(
+        selectedElement = { _uiState.value.selectedElement },
+        executeCommand = ::execute,
+        replaceSelection = ::replaceSelected,
+    )
 
     init {
         viewModelScope.launch {
@@ -545,504 +550,80 @@ class CompileViewModel(
         execute(ReplaceElementCommand(originalElement, nextElement))
     }
 
-    fun updateSelectedBounds(bounds: PageRect) {
-        val element = _uiState.value.selectedElement ?: return
-        if (element.locked) return
-        val nextElement = element.withBounds(bounds.normalized())
-        execute(ReplaceElementCommand(element, nextElement))
-    }
-
-    fun updateSelectedCommonProperty(property: CommonProperty, value: String) {
-        val element = _uiState.value.selectedElement ?: return
-        val nextElement = element.withCommonProperty(property, value)
-        if (nextElement != element) execute(ReplaceElementCommand(element, nextElement))
-    }
-
-    fun updateSelectedText(value: String) {
-        val element = _uiState.value.selectedElement ?: return
-        val nextElement = element.withTextValue(value)
-        if (nextElement != element) execute(ReplaceElementCommand(element, nextElement))
-    }
-
-    fun updateSelectedTextColor(value: String) {
-        val element = _uiState.value.selectedElement ?: return
-        val nextElement = element.withTextColor(value)
-        if (nextElement != element) execute(ReplaceElementCommand(element, nextElement))
-    }
-
-    fun updateSelectedTextFontSize(value: Float) {
-        val element = _uiState.value.selectedElement ?: return
-        val nextElement = element.withTextFontSize(value)
-        if (nextElement != element) execute(ReplaceElementCommand(element, nextElement))
-    }
-
-    fun adjustSelectedTextFontSize(delta: Float) {
-        replaceSelected { element, _ ->
-            when (element) {
-                is TemplateElement.Text -> element.copy(fontSize = (element.fontSize + delta).coerceAtLeast(1f))
-                else -> element
-            }
-        }
-    }
-
-    fun updateSelectedTextFontFamily(value: String) {
-        val element = _uiState.value.selectedElement ?: return
-        val nextElement = element.withTextFontFamily(value)
-        if (nextElement != element) execute(ReplaceElementCommand(element, nextElement))
-    }
-
-    fun updateSelectedTextFontStyle(value: TemplateTextStyle) {
-        val element = _uiState.value.selectedElement ?: return
-        val nextElement = element.withTextFontStyle(value)
-        if (nextElement != element) execute(ReplaceElementCommand(element, nextElement))
-    }
-
-    fun toggleSelectedTextBold() {
-        replaceSelected { element, _ ->
-            when (element) {
-                is TemplateElement.Text -> element.copy(fontWeight = if (element.fontWeight >= 600) 400 else 700)
-                else -> element
-            }
-        }
-    }
-
-    fun toggleSelectedTextItalic() {
-        replaceSelected { element, _ ->
-            when (element) {
-                is TemplateElement.Text -> {
-                    val italic = element.fontStyle != TemplateTextStyle.Italic
-                    element.copy(
-                        fontStyle = if (italic) TemplateTextStyle.Italic else TemplateTextStyle.Normal,
-                        italic = italic,
-                    )
-                }
-                else -> element
-            }
-        }
-    }
-
-    fun toggleSelectedTextUnderline() {
-        replaceSelected { element, _ ->
-            when (element) {
-                is TemplateElement.Text -> element.copy(underline = !element.underline)
-                else -> element
-            }
-        }
-    }
-
-    fun updateSelectedTextLineHeight(value: Float) {
-        val element = _uiState.value.selectedElement ?: return
-        val nextElement = element.withTextLineHeight(value)
-        if (nextElement != element) execute(ReplaceElementCommand(element, nextElement))
-    }
-
-    fun updateSelectedTextLetterSpacing(value: Float) {
-        val element = _uiState.value.selectedElement ?: return
-        val nextElement = element.withTextLetterSpacing(value)
-        if (nextElement != element) execute(ReplaceElementCommand(element, nextElement))
-    }
-
-    fun updateSelectedTextVerticalAlign(value: String) {
-        val element = _uiState.value.selectedElement ?: return
-        val nextElement = element.withTextVerticalAlign(value)
-        if (nextElement != element) execute(ReplaceElementCommand(element, nextElement))
-    }
-
-    fun updateSelectedTextAlign(value: String) {
-        val element = _uiState.value.selectedElement ?: return
-        val nextElement = element.withTextAlign(value)
-        if (nextElement != element) execute(ReplaceElementCommand(element, nextElement))
-    }
-
-    fun alignSelectedText(value: String) {
-        replaceSelected { element, _ ->
-            when (element) {
-                is TemplateElement.Text -> element.copy(textAlign = value)
-                else -> element
-            }
-        }
-    }
-
-    fun updateSelectedTextDirection(value: TemplateTextDirection) {
-        val element = _uiState.value.selectedElement ?: return
-        val nextElement = element.withTextDirection(value)
-        if (nextElement != element) execute(ReplaceElementCommand(element, nextElement))
-    }
-
-    fun updateSelectedTextBackground(value: String) {
-        val element = _uiState.value.selectedElement ?: return
-        val nextElement = element.withTextBackground(value)
-        if (nextElement != element) execute(ReplaceElementCommand(element, nextElement))
-    }
-
-    fun updateSelectedTextPadding(value: Float) {
-        val element = _uiState.value.selectedElement ?: return
-        val nextElement = element.withTextPadding(value)
-        if (nextElement != element) execute(ReplaceElementCommand(element, nextElement))
-    }
-
-    fun updateSelectedTextBorderColor(value: String) {
-        val element = _uiState.value.selectedElement ?: return
-        val nextElement = element.withTextBorderColor(value)
-        if (nextElement != element) execute(ReplaceElementCommand(element, nextElement))
-    }
-
-    fun updateSelectedTextBorderWidth(value: Float) {
-        val element = _uiState.value.selectedElement ?: return
-        val nextElement = element.withTextBorderWidth(value)
-        if (nextElement != element) execute(ReplaceElementCommand(element, nextElement))
-    }
-
-    fun updateSelectedTextBorderStyle(value: TemplateBorderStyle) {
-        val element = _uiState.value.selectedElement ?: return
-        val nextElement = element.withTextBorderStyle(value)
-        if (nextElement != element) execute(ReplaceElementCommand(element, nextElement))
-    }
-
-    fun updateSelectedTextBorderRadius(value: Float) {
-        val element = _uiState.value.selectedElement ?: return
-        val nextElement = element.withTextBorderRadius(value)
-        if (nextElement != element) execute(ReplaceElementCommand(element, nextElement))
-    }
-
-    fun updateSelectedRectangleFill(value: String) {
-        val element = _uiState.value.selectedElement ?: return
-        val nextElement = element.withRectangleFill(value)
-        if (nextElement != element) execute(ReplaceElementCommand(element, nextElement))
-    }
-
-    fun updateSelectedRectangleBorderColor(value: String) {
-        val element = _uiState.value.selectedElement ?: return
-        val nextElement = element.withRectangleBorderColor(value)
-        if (nextElement != element) execute(ReplaceElementCommand(element, nextElement))
-    }
-
-    fun updateSelectedRectangleBorderWidth(value: Float) {
-        val element = _uiState.value.selectedElement ?: return
-        val nextElement = element.withRectangleBorderWidth(value)
-        if (nextElement != element) execute(ReplaceElementCommand(element, nextElement))
-    }
-
-    fun updateSelectedRectangleBorderStyle(value: TemplateBorderStyle) {
-        val element = _uiState.value.selectedElement ?: return
-        val nextElement = element.withRectangleBorderStyle(value)
-        if (nextElement != element) execute(ReplaceElementCommand(element, nextElement))
-    }
-
-    fun updateSelectedRectangleBorderRadius(value: Float) {
-        val element = _uiState.value.selectedElement ?: return
-        val nextElement = element.withRectangleBorderRadius(value)
-        if (nextElement != element) execute(ReplaceElementCommand(element, nextElement))
-    }
-
-    fun updateSelectedCircleFill(value: String) {
-        val element = _uiState.value.selectedElement ?: return
-        val nextElement = element.withCircleFill(value)
-        if (nextElement != element) execute(ReplaceElementCommand(element, nextElement))
-    }
-
-    fun updateSelectedCircleBorderColor(value: String) {
-        val element = _uiState.value.selectedElement ?: return
-        val nextElement = element.withCircleBorderColor(value)
-        if (nextElement != element) execute(ReplaceElementCommand(element, nextElement))
-    }
-
-    fun updateSelectedCircleBorderWidth(value: Float) {
-        val element = _uiState.value.selectedElement ?: return
-        val nextElement = element.withCircleBorderWidth(value)
-        if (nextElement != element) execute(ReplaceElementCommand(element, nextElement))
-    }
-
-    fun updateSelectedCircleBorderStyle(value: TemplateBorderStyle) {
-        val element = _uiState.value.selectedElement ?: return
-        val nextElement = element.withCircleBorderStyle(value)
-        if (nextElement != element) execute(ReplaceElementCommand(element, nextElement))
-    }
-
-    fun chooseImageForSelected() {
-        val element = _uiState.value.selectedElement as? TemplateElement.Image ?: return
-        val imageFile = chooseTemplateImageFile() ?: return
-        val nextSource = element.withImageSource(
-            path = imageFile.path,
-            name = imageFile.name,
-            intrinsicWidth = imageFile.width,
-            intrinsicHeight = imageFile.height,
-        )
-        val nextElement = if (
-            element.sourcePath.isBlank() &&
-            imageFile.width > 0 &&
-            imageFile.height > 0 &&
-            element.width == 180f &&
-            element.height == 120f
-        ) {
-            val aspect = imageFile.width.toFloat() / imageFile.height.toFloat()
-            nextSource.withBounds(
-                GeometryService.getElementBounds(element).copy(
-                    height = (element.width / aspect).coerceAtLeast(GeometryService.MinElementSize),
-                ),
-            )
-        } else {
-            nextSource
-        }
-        if (nextElement != element) execute(ReplaceElementCommand(element, nextElement))
-    }
-
-    fun resizeSelectedImageToIntrinsic() {
-        val element = _uiState.value.selectedElement as? TemplateElement.Image ?: return
-        if (element.intrinsicWidth <= 0 || element.intrinsicHeight <= 0) return
-        val nextElement = element.withBounds(
-            GeometryService.getElementBounds(element).copy(
-                width = element.intrinsicWidth.toFloat(),
-                height = element.intrinsicHeight.toFloat(),
-            ).normalized(),
-        )
-        if (nextElement != element) execute(ReplaceElementCommand(element, nextElement))
-    }
-
-    fun fitSelectedImageFrameToAspect() {
-        val element = _uiState.value.selectedElement as? TemplateElement.Image ?: return
-        if (element.intrinsicWidth <= 0 || element.intrinsicHeight <= 0) return
-        val aspect = element.intrinsicWidth.toFloat() / element.intrinsicHeight.toFloat()
-        val bounds = GeometryService.getElementBounds(element)
-        val nextElement = element.withBounds(
-            bounds.copy(height = (bounds.width / aspect).coerceAtLeast(GeometryService.MinElementSize)).normalized(),
-        )
-        if (nextElement != element) execute(ReplaceElementCommand(element, nextElement))
-    }
-
-    fun updateSelectedImageContentMode(value: TemplateImageContentMode) {
-        val element = _uiState.value.selectedElement ?: return
-        val nextElement = element.withImageContentMode(value)
-        if (nextElement != element) execute(ReplaceElementCommand(element, nextElement))
-    }
-
-    fun updateSelectedImageAlignment(value: TemplateImageAlignment) {
-        val element = _uiState.value.selectedElement ?: return
-        val nextElement = element.withImageAlignment(value)
-        if (nextElement != element) execute(ReplaceElementCommand(element, nextElement))
-    }
-
-    fun updateSelectedImageBackground(value: String) {
-        val element = _uiState.value.selectedElement ?: return
-        val nextElement = element.withImageBackground(value)
-        if (nextElement != element) execute(ReplaceElementCommand(element, nextElement))
-    }
-
-    fun updateSelectedImageBorderColor(value: String) {
-        val element = _uiState.value.selectedElement ?: return
-        val nextElement = element.withImageBorderColor(value)
-        if (nextElement != element) execute(ReplaceElementCommand(element, nextElement))
-    }
-
-    fun updateSelectedImageBorderWidth(value: Float) {
-        val element = _uiState.value.selectedElement ?: return
-        val nextElement = element.withImageBorderWidth(value)
-        if (nextElement != element) execute(ReplaceElementCommand(element, nextElement))
-    }
-
-    fun updateSelectedImageBorderRadius(value: Float) {
-        val element = _uiState.value.selectedElement ?: return
-        val nextElement = element.withImageBorderRadius(value)
-        if (nextElement != element) execute(ReplaceElementCommand(element, nextElement))
-    }
-
-    fun updateSelectedQrText(value: String) {
-        val element = _uiState.value.selectedElement ?: return
-        val nextElement = element.withQrText(value)
-        if (nextElement != element) execute(ReplaceElementCommand(element, nextElement))
-    }
-
-    fun updateSelectedQrForeground(value: String) {
-        val element = _uiState.value.selectedElement ?: return
-        val nextElement = element.withQrForeground(value)
-        if (nextElement != element) execute(ReplaceElementCommand(element, nextElement))
-    }
-
-    fun updateSelectedQrBackground(value: String) {
-        val element = _uiState.value.selectedElement ?: return
-        val nextElement = element.withQrBackground(value)
-        if (nextElement != element) execute(ReplaceElementCommand(element, nextElement))
-    }
-
-    fun updateSelectedQrQuietZone(value: Float) {
-        val element = _uiState.value.selectedElement ?: return
-        val nextElement = element.withQrQuietZone(value.roundToInt())
-        if (nextElement != element) execute(ReplaceElementCommand(element, nextElement))
-    }
-
-    fun updateSelectedQrBorderColor(value: String) {
-        val element = _uiState.value.selectedElement ?: return
-        val nextElement = element.withQrBorderColor(value)
-        if (nextElement != element) execute(ReplaceElementCommand(element, nextElement))
-    }
-
-    fun updateSelectedQrBorderWidth(value: Float) {
-        val element = _uiState.value.selectedElement ?: return
-        val nextElement = element.withQrBorderWidth(value)
-        if (nextElement != element) execute(ReplaceElementCommand(element, nextElement))
-    }
-
-    fun updateSelectedBarcodeText(value: String) {
-        val element = _uiState.value.selectedElement ?: return
-        val nextElement = element.withBarcodeText(value)
-        if (nextElement != element) execute(ReplaceElementCommand(element, nextElement))
-    }
-
-    fun updateSelectedBarcodeFormat(value: TemplateBarcodeFormat) {
-        val element = _uiState.value.selectedElement ?: return
-        val nextElement = element.withBarcodeFormat(value)
-        if (nextElement != element) execute(ReplaceElementCommand(element, nextElement))
-    }
-
-    fun updateSelectedBarcodeForeground(value: String) {
-        val element = _uiState.value.selectedElement ?: return
-        val nextElement = element.withBarcodeForeground(value)
-        if (nextElement != element) execute(ReplaceElementCommand(element, nextElement))
-    }
-
-    fun updateSelectedBarcodeBackground(value: String) {
-        val element = _uiState.value.selectedElement ?: return
-        val nextElement = element.withBarcodeBackground(value)
-        if (nextElement != element) execute(ReplaceElementCommand(element, nextElement))
-    }
-
-    fun updateSelectedBarcodeQuietZone(value: Float) {
-        val element = _uiState.value.selectedElement ?: return
-        val nextElement = element.withBarcodeQuietZone(value.roundToInt())
-        if (nextElement != element) execute(ReplaceElementCommand(element, nextElement))
-    }
-
-    fun updateSelectedBarcodeShowText(value: Boolean) {
-        val element = _uiState.value.selectedElement ?: return
-        val nextElement = element.withBarcodeShowText(value)
-        if (nextElement != element) execute(ReplaceElementCommand(element, nextElement))
-    }
-
-    fun updateSelectedBarcodeFontSize(value: Float) {
-        val element = _uiState.value.selectedElement ?: return
-        val nextElement = element.withBarcodeFontSize(value)
-        if (nextElement != element) execute(ReplaceElementCommand(element, nextElement))
-    }
-
-    fun updateSelectedBarcodeBorderColor(value: String) {
-        val element = _uiState.value.selectedElement ?: return
-        val nextElement = element.withBarcodeBorderColor(value)
-        if (nextElement != element) execute(ReplaceElementCommand(element, nextElement))
-    }
-
-    fun updateSelectedBarcodeBorderWidth(value: Float) {
-        val element = _uiState.value.selectedElement ?: return
-        val nextElement = element.withBarcodeBorderWidth(value)
-        if (nextElement != element) execute(ReplaceElementCommand(element, nextElement))
-    }
-
-    fun updateSelectedListFieldSlug(value: String) {
-        val element = _uiState.value.selectedElement ?: return
-        val nextElement = element.withListFieldSlug(value)
-        if (nextElement != element) execute(ReplaceElementCommand(element, nextElement))
-    }
-
-    fun updateSelectedListPrefix(value: String) {
-        val element = _uiState.value.selectedElement ?: return
-        val nextElement = element.withListPrefix(value)
-        if (nextElement != element) execute(ReplaceElementCommand(element, nextElement))
-    }
-
-    fun updateSelectedListSuffix(value: String) {
-        val element = _uiState.value.selectedElement ?: return
-        val nextElement = element.withListSuffix(value)
-        if (nextElement != element) execute(ReplaceElementCommand(element, nextElement))
-    }
-
-    fun updateSelectedListItemSeparator(value: String) {
-        val element = _uiState.value.selectedElement ?: return
-        val nextElement = element.withListItemSeparator(value)
-        if (nextElement != element) execute(ReplaceElementCommand(element, nextElement))
-    }
-
-    fun updateSelectedListMaxItems(value: Float) {
-        val element = _uiState.value.selectedElement ?: return
-        val nextElement = element.withListMaxItems(value.roundToInt())
-        if (nextElement != element) execute(ReplaceElementCommand(element, nextElement))
-    }
-
-    fun updateSelectedListMaxItemLength(value: Float) {
-        val element = _uiState.value.selectedElement ?: return
-        val nextElement = element.withListMaxItemLength(value.roundToInt())
-        if (nextElement != element) execute(ReplaceElementCommand(element, nextElement))
-    }
-
-    fun updateSelectedListColumns(value: Float) {
-        val element = _uiState.value.selectedElement ?: return
-        val nextElement = element.withListColumns(value.roundToInt())
-        if (nextElement != element) execute(ReplaceElementCommand(element, nextElement))
-    }
-
-    fun updateSelectedListColumnGap(value: Float) {
-        val element = _uiState.value.selectedElement ?: return
-        val nextElement = element.withListColumnGap(value)
-        if (nextElement != element) execute(ReplaceElementCommand(element, nextElement))
-    }
-
-    fun updateSelectedListItemSpacing(value: Float) {
-        val element = _uiState.value.selectedElement ?: return
-        val nextElement = element.withListItemSpacing(value)
-        if (nextElement != element) execute(ReplaceElementCommand(element, nextElement))
-    }
-
-    fun updateSelectedListPadding(value: Float) {
-        val element = _uiState.value.selectedElement ?: return
-        val nextElement = element.withListPadding(value)
-        if (nextElement != element) execute(ReplaceElementCommand(element, nextElement))
-    }
-
-    fun updateSelectedListFontFamily(value: String) {
-        val element = _uiState.value.selectedElement ?: return
-        val nextElement = element.withListFontFamily(value)
-        if (nextElement != element) execute(ReplaceElementCommand(element, nextElement))
-    }
-
-    fun updateSelectedListFontSize(value: Float) {
-        val element = _uiState.value.selectedElement ?: return
-        val nextElement = element.withListFontSize(value)
-        if (nextElement != element) execute(ReplaceElementCommand(element, nextElement))
-    }
-
-    fun updateSelectedListColor(value: String) {
-        val element = _uiState.value.selectedElement ?: return
-        val nextElement = element.withListColor(value)
-        if (nextElement != element) execute(ReplaceElementCommand(element, nextElement))
-    }
-
-    fun updateSelectedListBackground(value: String) {
-        val element = _uiState.value.selectedElement ?: return
-        val nextElement = element.withListBackground(value)
-        if (nextElement != element) execute(ReplaceElementCommand(element, nextElement))
-    }
-
-    fun updateSelectedListBorderColor(value: String) {
-        val element = _uiState.value.selectedElement ?: return
-        val nextElement = element.withListBorderColor(value)
-        if (nextElement != element) execute(ReplaceElementCommand(element, nextElement))
-    }
-
-    fun updateSelectedListBorderWidth(value: Float) {
-        val element = _uiState.value.selectedElement ?: return
-        val nextElement = element.withListBorderWidth(value)
-        if (nextElement != element) execute(ReplaceElementCommand(element, nextElement))
-    }
-
-    fun updateSelectedListBorderStyle(value: TemplateBorderStyle) {
-        val element = _uiState.value.selectedElement ?: return
-        val nextElement = element.withListBorderStyle(value)
-        if (nextElement != element) execute(ReplaceElementCommand(element, nextElement))
-    }
-
-    fun updateSelectedListBorderRadius(value: Float) {
-        val element = _uiState.value.selectedElement ?: return
-        val nextElement = element.withListBorderRadius(value)
-        if (nextElement != element) execute(ReplaceElementCommand(element, nextElement))
-    }
+    fun updateSelectedBounds(bounds: PageRect) = propertyActions.updateSelectedBounds(bounds)
+    fun updateSelectedCommonProperty(property: CommonProperty, value: String) = propertyActions.updateSelectedCommonProperty(property, value)
+    fun updateSelectedText(value: String) = propertyActions.updateSelectedText(value)
+    fun updateSelectedTextColor(value: String) = propertyActions.updateSelectedTextColor(value)
+    fun updateSelectedTextFontSize(value: Float) = propertyActions.updateSelectedTextFontSize(value)
+    fun adjustSelectedTextFontSize(delta: Float) = propertyActions.adjustSelectedTextFontSize(delta)
+    fun updateSelectedTextFontFamily(value: String) = propertyActions.updateSelectedTextFontFamily(value)
+    fun updateSelectedTextFontStyle(value: TemplateTextStyle) = propertyActions.updateSelectedTextFontStyle(value)
+    fun toggleSelectedTextBold() = propertyActions.toggleSelectedTextBold()
+    fun toggleSelectedTextItalic() = propertyActions.toggleSelectedTextItalic()
+    fun toggleSelectedTextUnderline() = propertyActions.toggleSelectedTextUnderline()
+    fun updateSelectedTextLineHeight(value: Float) = propertyActions.updateSelectedTextLineHeight(value)
+    fun updateSelectedTextLetterSpacing(value: Float) = propertyActions.updateSelectedTextLetterSpacing(value)
+    fun updateSelectedTextVerticalAlign(value: String) = propertyActions.updateSelectedTextVerticalAlign(value)
+    fun updateSelectedTextAlign(value: String) = propertyActions.updateSelectedTextAlign(value)
+    fun alignSelectedText(value: String) = propertyActions.alignSelectedText(value)
+    fun updateSelectedTextDirection(value: TemplateTextDirection) = propertyActions.updateSelectedTextDirection(value)
+    fun updateSelectedTextBackground(value: String) = propertyActions.updateSelectedTextBackground(value)
+    fun updateSelectedTextPadding(value: Float) = propertyActions.updateSelectedTextPadding(value)
+    fun updateSelectedTextBorderColor(value: String) = propertyActions.updateSelectedTextBorderColor(value)
+    fun updateSelectedTextBorderWidth(value: Float) = propertyActions.updateSelectedTextBorderWidth(value)
+    fun updateSelectedTextBorderStyle(value: TemplateBorderStyle) = propertyActions.updateSelectedTextBorderStyle(value)
+    fun updateSelectedTextBorderRadius(value: Float) = propertyActions.updateSelectedTextBorderRadius(value)
+    fun updateSelectedRectangleFill(value: String) = propertyActions.updateSelectedRectangleFill(value)
+    fun updateSelectedRectangleBorderColor(value: String) = propertyActions.updateSelectedRectangleBorderColor(value)
+    fun updateSelectedRectangleBorderWidth(value: Float) = propertyActions.updateSelectedRectangleBorderWidth(value)
+    fun updateSelectedRectangleBorderStyle(value: TemplateBorderStyle) = propertyActions.updateSelectedRectangleBorderStyle(value)
+    fun updateSelectedRectangleBorderRadius(value: Float) = propertyActions.updateSelectedRectangleBorderRadius(value)
+    fun updateSelectedCircleFill(value: String) = propertyActions.updateSelectedCircleFill(value)
+    fun updateSelectedCircleBorderColor(value: String) = propertyActions.updateSelectedCircleBorderColor(value)
+    fun updateSelectedCircleBorderWidth(value: Float) = propertyActions.updateSelectedCircleBorderWidth(value)
+    fun updateSelectedCircleBorderStyle(value: TemplateBorderStyle) = propertyActions.updateSelectedCircleBorderStyle(value)
+    fun chooseImageForSelected() = propertyActions.chooseImageForSelected()
+    fun resizeSelectedImageToIntrinsic() = propertyActions.resizeSelectedImageToIntrinsic()
+    fun fitSelectedImageFrameToAspect() = propertyActions.fitSelectedImageFrameToAspect()
+    fun updateSelectedImageContentMode(value: TemplateImageContentMode) = propertyActions.updateSelectedImageContentMode(value)
+    fun updateSelectedImageAlignment(value: TemplateImageAlignment) = propertyActions.updateSelectedImageAlignment(value)
+    fun updateSelectedImageBackground(value: String) = propertyActions.updateSelectedImageBackground(value)
+    fun updateSelectedImageBorderColor(value: String) = propertyActions.updateSelectedImageBorderColor(value)
+    fun updateSelectedImageBorderWidth(value: Float) = propertyActions.updateSelectedImageBorderWidth(value)
+    fun updateSelectedImageBorderRadius(value: Float) = propertyActions.updateSelectedImageBorderRadius(value)
+    fun updateSelectedQrText(value: String) = propertyActions.updateSelectedQrText(value)
+    fun updateSelectedQrForeground(value: String) = propertyActions.updateSelectedQrForeground(value)
+    fun updateSelectedQrBackground(value: String) = propertyActions.updateSelectedQrBackground(value)
+    fun updateSelectedQrQuietZone(value: Float) = propertyActions.updateSelectedQrQuietZone(value)
+    fun updateSelectedQrBorderColor(value: String) = propertyActions.updateSelectedQrBorderColor(value)
+    fun updateSelectedQrBorderWidth(value: Float) = propertyActions.updateSelectedQrBorderWidth(value)
+    fun updateSelectedBarcodeText(value: String) = propertyActions.updateSelectedBarcodeText(value)
+    fun updateSelectedBarcodeFormat(value: TemplateBarcodeFormat) = propertyActions.updateSelectedBarcodeFormat(value)
+    fun updateSelectedBarcodeForeground(value: String) = propertyActions.updateSelectedBarcodeForeground(value)
+    fun updateSelectedBarcodeBackground(value: String) = propertyActions.updateSelectedBarcodeBackground(value)
+    fun updateSelectedBarcodeQuietZone(value: Float) = propertyActions.updateSelectedBarcodeQuietZone(value)
+    fun updateSelectedBarcodeShowText(value: Boolean) = propertyActions.updateSelectedBarcodeShowText(value)
+    fun updateSelectedBarcodeFontSize(value: Float) = propertyActions.updateSelectedBarcodeFontSize(value)
+    fun updateSelectedBarcodeBorderColor(value: String) = propertyActions.updateSelectedBarcodeBorderColor(value)
+    fun updateSelectedBarcodeBorderWidth(value: Float) = propertyActions.updateSelectedBarcodeBorderWidth(value)
+    fun updateSelectedListFieldSlug(value: String) = propertyActions.updateSelectedListFieldSlug(value)
+    fun updateSelectedListPrefix(value: String) = propertyActions.updateSelectedListPrefix(value)
+    fun updateSelectedListSuffix(value: String) = propertyActions.updateSelectedListSuffix(value)
+    fun updateSelectedListItemSeparator(value: String) = propertyActions.updateSelectedListItemSeparator(value)
+    fun updateSelectedListMaxItems(value: Float) = propertyActions.updateSelectedListMaxItems(value)
+    fun updateSelectedListMaxItemLength(value: Float) = propertyActions.updateSelectedListMaxItemLength(value)
+    fun updateSelectedListColumns(value: Float) = propertyActions.updateSelectedListColumns(value)
+    fun updateSelectedListColumnGap(value: Float) = propertyActions.updateSelectedListColumnGap(value)
+    fun updateSelectedListItemSpacing(value: Float) = propertyActions.updateSelectedListItemSpacing(value)
+    fun updateSelectedListPadding(value: Float) = propertyActions.updateSelectedListPadding(value)
+    fun updateSelectedListFontFamily(value: String) = propertyActions.updateSelectedListFontFamily(value)
+    fun updateSelectedListFontSize(value: Float) = propertyActions.updateSelectedListFontSize(value)
+    fun updateSelectedListColor(value: String) = propertyActions.updateSelectedListColor(value)
+    fun updateSelectedListBackground(value: String) = propertyActions.updateSelectedListBackground(value)
+    fun updateSelectedListBorderColor(value: String) = propertyActions.updateSelectedListBorderColor(value)
+    fun updateSelectedListBorderWidth(value: Float) = propertyActions.updateSelectedListBorderWidth(value)
+    fun updateSelectedListBorderStyle(value: TemplateBorderStyle) = propertyActions.updateSelectedListBorderStyle(value)
+    fun updateSelectedListBorderRadius(value: Float) = propertyActions.updateSelectedListBorderRadius(value)
 
     fun setZoom(zoom: Float) {
         _uiState.update { state ->
@@ -1212,383 +793,7 @@ class CompileViewModel(
         }
     }
 
-    private fun List<TemplateElement>.withEditorTestElementsIfEmpty(): List<TemplateElement> {
-        if (isNotEmpty()) return this
-        return listOf(
-            TemplateElement.Rectangle(
-                id = "test-header-band",
-                name = "Header band",
-                x = 48f,
-                y = 48f,
-                width = 500f,
-                height = 86f,
-                zIndex = 1,
-                fillColor = "#EFF6FF",
-                borderColor = "#93C5FD",
-                borderWidth = 1f,
-                borderRadius = 8f,
-            ),
-            TemplateElement.Text(
-                id = "test-title",
-                name = "Static heading",
-                x = 72f,
-                y = 66f,
-                width = 250f,
-                height = 34f,
-                zIndex = 2,
-                staticText = "Service order test sheet",
-                fontSize = 20f,
-                fontWeight = 700,
-                color = "#1E3A8A",
-            ),
-            TemplateElement.Text(
-                id = "test-order-number",
-                name = "Bound order number",
-                x = 72f,
-                y = 104f,
-                width = 250f,
-                height = 24f,
-                zIndex = 3,
-                staticText = "Order {{ data.order_number }}",
-                placeholderTag = "[DataRecord:order_number]",
-                fontSize = 13f,
-                color = "#1F2937",
-            ),
-            TemplateElement.Text(
-                id = "test-total",
-                name = "Bound currency total",
-                x = 346f,
-                y = 66f,
-                width = 170f,
-                height = 34f,
-                zIndex = 4,
-                staticText = "{{ currency(data.total_amount, \"USD\") }}",
-                placeholderTag = "[DataRecord:total_amount]",
-                fontSize = 18f,
-                fontWeight = 700,
-                textAlign = "right",
-                color = "#166534",
-            ),
-            TemplateElement.Text(
-                id = "test-conditional-priority",
-                name = "Conditional priority text",
-                x = 346f,
-                y = 104f,
-                width = 170f,
-                height = 24f,
-                zIndex = 5,
-                staticText = "{{ if(gte(data.priority_level, 4), \"Priority order\", \"Standard order\") }}",
-                fontSize = 12f,
-                fontWeight = 600,
-                textAlign = "right",
-                color = "#B45309",
-            ),
-            TemplateElement.Rectangle(
-                id = "test-customer-card",
-                name = "Customer card shape",
-                x = 48f,
-                y = 158f,
-                width = 240f,
-                height = 116f,
-                zIndex = 6,
-                fillColor = "#F8FAFC",
-                borderColor = "#CBD5E1",
-                borderWidth = 1f,
-                borderRadius = 8f,
-            ),
-            TemplateElement.Text(
-                id = "test-customer-label",
-                name = "Customer label",
-                x = 68f,
-                y = 176f,
-                width = 190f,
-                height = 20f,
-                zIndex = 7,
-                staticText = "Customer",
-                fontSize = 11f,
-                fontWeight = 700,
-                color = "#64748B",
-            ),
-            TemplateElement.Text(
-                id = "test-customer-name",
-                name = "Bound customer name",
-                x = 68f,
-                y = 202f,
-                width = 190f,
-                height = 28f,
-                zIndex = 8,
-                staticText = "{{ data.customer_name }}",
-                placeholderTag = "[DataRecord:customer_name]",
-                fontSize = 17f,
-                fontWeight = 700,
-                color = "#111827",
-            ),
-            TemplateElement.Text(
-                id = "test-customer-email",
-                name = "Bound customer email",
-                x = 68f,
-                y = 236f,
-                width = 190f,
-                height = 22f,
-                zIndex = 9,
-                staticText = "{{ lower(data.customer_email) }}",
-                placeholderTag = "[DataRecord:customer_email]",
-                fontSize = 12f,
-                color = "#475569",
-            ),
-            TemplateElement.Rectangle(
-                id = "test-status-pill",
-                name = "Conditional status pill",
-                x = 328f,
-                y = 158f,
-                width = 220f,
-                height = 52f,
-                zIndex = 10,
-                fillColor = "#FEF3C7",
-                borderColor = "#F59E0B",
-                borderWidth = 1f,
-                borderRadius = 8f,
-            ),
-            TemplateElement.Text(
-                id = "test-status-text",
-                name = "Conditional amount text",
-                x = 346f,
-                y = 174f,
-                width = 184f,
-                height = 22f,
-                zIndex = 11,
-                staticText = "{{ if(gt(data.total_amount, 500), \"High value\", \"Regular value\") }}",
-                fontSize = 14f,
-                fontWeight = 700,
-                textAlign = "center",
-                color = "#92400E",
-            ),
-            TemplateElement.List(
-                id = "test-service-items-list",
-                name = "Bound service item list",
-                x = 48f,
-                y = 304f,
-                width = 240f,
-                height = 138f,
-                zIndex = 12,
-                fieldSlug = "service_items",
-                prefix = "- ",
-                itemSeparator = ",",
-                maxItems = 8,
-                columns = 1,
-                itemSpacing = 6f,
-                padding = 12f,
-                fontSize = 12f,
-                color = "#111827",
-                backgroundColor = "#F0FDF4",
-                borderColor = "#86EFAC",
-                borderWidth = 1f,
-                borderRadius = 8f,
-            ),
-            TemplateElement.Circle(
-                id = "test-circle-accent",
-                name = "Circle accent",
-                x = 318f,
-                y = 300f,
-                width = 70f,
-                height = 70f,
-                zIndex = 13,
-                fillColor = "#FCE7F3",
-                borderColor = "#DB2777",
-                borderWidth = 2f,
-            ),
-            TemplateElement.Rectangle(
-                id = "test-overlap-front",
-                name = "Overlap shape",
-                x = 358f,
-                y = 334f,
-                width = 96f,
-                height = 64f,
-                zIndex = 14,
-                fillColor = "#EDE9FE",
-                borderColor = "#7C3AED",
-                borderWidth = 2f,
-                borderRadius = 6f,
-                opacity = 0.9f,
-            ),
-            TemplateElement.QRCode(
-                id = "test-bound-qr",
-                name = "Bound QR code",
-                x = 48f,
-                y = 484f,
-                width = 118f,
-                height = 118f,
-                zIndex = 15,
-                text = "{{ data.qr_payload }}",
-                borderColor = "#CBD5E1",
-                borderWidth = 1f,
-            ),
-            TemplateElement.Text(
-                id = "test-qr-caption",
-                name = "QR caption",
-                x = 48f,
-                y = 610f,
-                width = 118f,
-                height = 28f,
-                zIndex = 16,
-                staticText = "QR from record URL",
-                fontSize = 10f,
-                textAlign = "center",
-                color = "#475569",
-            ),
-            TemplateElement.Barcode(
-                id = "test-bound-barcode",
-                name = "Bound barcode",
-                x = 204f,
-                y = 500f,
-                width = 260f,
-                height = 82f,
-                zIndex = 17,
-                text = "{{ data.tracking_code }}",
-                format = TemplateBarcodeFormat.Code128,
-                showText = true,
-                borderColor = "#CBD5E1",
-                borderWidth = 1f,
-            ),
-            TemplateElement.Text(
-                id = "test-notes",
-                name = "Bound notes with fallback",
-                x = 48f,
-                y = 674f,
-                width = 500f,
-                height = 54f,
-                zIndex = 18,
-                staticText = "Notes: {{ default(data.notes, \"No notes supplied\") }}",
-                placeholderTag = "[DataRecord:notes]",
-                fontSize = 12f,
-                color = "#334155",
-                backgroundColor = "#F8FAFC",
-                padding = 8f,
-                borderColor = "#E2E8F0",
-                borderWidth = 1f,
-                borderRadius = 6f,
-            ),
-            TemplateElement.Line(
-                id = "test-line",
-                name = "Footer divider",
-                x1 = 48f,
-                y1 = 760f,
-                x2 = 548f,
-                y2 = 760f,
-                thickness = 3f,
-                zIndex = 19,
-            ),
-        )
-    }
-
-    private fun PageRect.normalized(): PageRect {
-        val minSize = GeometryService.MinElementSize
-        return copy(
-            x = x,
-            y = y,
-            width = width.coerceAtLeast(minSize),
-            height = height.coerceAtLeast(minSize),
-        )
-    }
-
     private fun newId(prefix: String): String {
         return "$prefix-${Random.nextLong(1_000_000_000L, 9_999_999_999L)}"
     }
-}
-
-private const val EditorTestSchemaId = "test_service_order"
-
-enum class SelectionAlignment {
-    Left,
-    Center,
-    Right,
-    Top,
-    Middle,
-    Bottom,
-}
-
-enum class DistributionAxis {
-    Horizontal,
-    Vertical,
-}
-
-enum class SizeMatchAxis {
-    Width,
-    Height,
-}
-
-private fun TemplateElement.withCopiedIdentity(id: String, zIndex: Int): TemplateElement {
-    val nextName = "$name copy"
-    return updateCommon(name = nextName, zIndex = zIndex).let { element ->
-        when (element) {
-            is TemplateElement.Text -> element.copy(id = id)
-            is TemplateElement.Image -> element.copy(id = id)
-            is TemplateElement.Circle -> element.copy(id = id)
-            is TemplateElement.QRCode -> element.copy(id = id)
-            is TemplateElement.Barcode -> element.copy(id = id)
-            is TemplateElement.List -> element.copy(id = id)
-            is TemplateElement.Rectangle -> element.copy(id = id)
-            is TemplateElement.Line -> element.copy(id = id)
-        }
-    }
-}
-
-private fun List<PageRect>.unionBounds(): PageRect? {
-    if (isEmpty()) return null
-    val left = minOf { it.x }
-    val top = minOf { it.y }
-    val right = maxOf { it.right }
-    val bottom = maxOf { it.bottom }
-    return PageRect(left, top, right - left, bottom - top)
-}
-
-private fun TemplateEditorState.referencedPreviewSchemaIds(): List<String> {
-    val schemas = availableSchemas
-    if (schemas.isEmpty()) return emptyList()
-    val schemaByAlias = schemas
-        .flatMap { schema -> schemaExpressionAliases(schema).map { alias -> alias to schema } }
-        .toMap()
-    val roots = document.elements.flatMap { element -> element.referencedExpressionRoots() }.toSet()
-    val schemaIds = roots.mapNotNull { root ->
-        when (root) {
-            "data" -> schema?.id
-            else -> schemaByAlias[root]?.id
-        }
-    }
-    return schemaIds
-        .ifEmpty { listOfNotNull(schema?.id ?: template?.targetSchemaId) }
-        .distinct()
-}
-
-private fun TemplateElement.referencedExpressionRoots(): Set<String> {
-    val roots = mutableSetOf<String>()
-    fun addFrom(value: String?) {
-        if (!value.isNullOrBlank()) roots += referencedExpressionRoots(value)
-    }
-    when (this) {
-        is TemplateElement.Text -> {
-            addFrom(staticText)
-            expression.takeIf { it.isNotBlank() }?.let(::addFrom)
-            if (!placeholderTag.isNullOrBlank()) roots += "data"
-        }
-        is TemplateElement.QRCode -> addFrom(text)
-        is TemplateElement.Barcode -> addFrom(text)
-        is TemplateElement.List -> {
-            if (fieldSlug.contains(".")) {
-                roots += fieldSlug.substringBefore(".")
-            } else if (fieldSlug.isNotBlank()) {
-                roots += "data"
-            }
-        }
-        is TemplateElement.Image,
-        is TemplateElement.Circle,
-        is TemplateElement.Rectangle,
-        is TemplateElement.Line -> Unit
-    }
-    return roots
-}
-
-private fun normalizeRotation(rotation: Float): Float {
-    val normalized = rotation % 360f
-    return if (normalized < 0f) normalized + 360f else normalized
 }
