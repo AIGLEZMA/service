@@ -27,6 +27,7 @@ fun AppShell(
     val schemas by sidebarViewModel.schemas.collectAsState()
     val navStack = remember { mutableStateListOf<AppScreen>(AppScreen.Dashboard) }
     val currentScreen = navStack.lastOrNull() ?: AppScreen.Dashboard
+    var isSidebarCollapsed by remember { mutableStateOf(false) }
 
     fun navigate(screen: AppScreen) {
         if (navStack.lastOrNull() != screen) {
@@ -55,6 +56,8 @@ fun AppShell(
         onAddRecordClick = { navigate(AppScreen.RecordCreate(it)) },
         onEditSchemaClick = { navigate(AppScreen.SchemaEdit(it)) },
         onManageSchemasClick = { navigate(AppScreen.SchemaManagement) },
+        isSidebarCollapsed = isSidebarCollapsed,
+        onToggleSidebar = { isSidebarCollapsed = !isSidebarCollapsed },
     ) {
         NavDisplay(
             backStack = navStack,
@@ -125,6 +128,8 @@ private fun WorkspaceScaffold(
     onAddRecordClick: (String) -> Unit,
     onEditSchemaClick: (String) -> Unit,
     onManageSchemasClick: () -> Unit,
+    isSidebarCollapsed: Boolean,
+    onToggleSidebar: () -> Unit,
     content: @Composable BoxScope.() -> Unit,
 ) {
     Scaffold(
@@ -160,6 +165,7 @@ private fun WorkspaceScaffold(
                         WorkspaceSidebar(
                             schemas = schemas,
                             selectedSchemaId = selectedSchemaId,
+                            collapsed = isSidebarCollapsed,
                             onHomeClick = onHomeClick,
                             onHelpClick = onHelpClick,
                             onCreateSchemaClick = onCreateSchemaClick,
@@ -167,6 +173,7 @@ private fun WorkspaceScaffold(
                             onAddRecordClick = onAddRecordClick,
                             onEditSchemaClick = onEditSchemaClick,
                             onManageSchemasClick = onManageSchemasClick,
+                            onToggleCollapsed = onToggleSidebar,
                         )
                     }
 
@@ -269,6 +276,5 @@ private fun schemaTitle(
     schemaId: String,
     fallback: String,
 ): String = schemas.firstOrNull { it.id == schemaId }?.name ?: fallback
-
 
 

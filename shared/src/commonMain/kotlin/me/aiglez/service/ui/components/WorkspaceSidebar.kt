@@ -24,6 +24,7 @@ import me.aiglez.service.domain.models.DataSchema
 fun WorkspaceSidebar(
     schemas: List<DataSchema>,
     selectedSchemaId: String?,
+    collapsed: Boolean,
     onHomeClick: () -> Unit,
     onHelpClick: () -> Unit,
     onCreateSchemaClick: () -> Unit,
@@ -31,22 +32,52 @@ fun WorkspaceSidebar(
     onAddRecordClick: (String) -> Unit,
     onEditSchemaClick: (String) -> Unit,
     onManageSchemasClick: () -> Unit,
+    onToggleCollapsed: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Surface(
         modifier = modifier
-            .width(320.dp)
+            .width(if (collapsed) 80.dp else 320.dp)
             .fillMaxHeight(),
         tonalElevation = 3.dp,
         shadowElevation = 10.dp,
     ) {
+        if (collapsed) {
+            CompactSidebar(
+                schemas = schemas,
+                selectedSchemaId = selectedSchemaId,
+                onHomeClick = onHomeClick,
+                onHelpClick = onHelpClick,
+                onCreateSchemaClick = onCreateSchemaClick,
+                onSchemaClick = onSchemaClick,
+                onManageSchemasClick = onManageSchemasClick,
+                onToggleCollapsed = onToggleCollapsed,
+            )
+            return@Surface
+        }
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(18.dp),
             verticalArrangement = Arrangement.spacedBy(18.dp),
         ) {
-            AppBrandHeader(onClick = onHomeClick)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                Box(modifier = Modifier.weight(1f)) {
+                    AppBrandHeader(onClick = onHomeClick)
+                }
+                IconButton(onClick = onToggleCollapsed, modifier = Modifier.size(36.dp)) {
+                    Icon(
+                        imageVector = Icons.Default.Menu,
+                        contentDescription = "Réduire la barre latérale",
+                        modifier = Modifier.size(20.dp),
+                    )
+                }
+            }
             QuickActionCard(onCreateSchemaClick = onCreateSchemaClick)
             SchemaList(
                 schemas = schemas,
@@ -76,6 +107,97 @@ fun WorkspaceSidebar(
                 )
             }
              */
+        }
+    }
+}
+
+@Composable
+private fun CompactSidebar(
+    schemas: List<DataSchema>,
+    selectedSchemaId: String?,
+    onHomeClick: () -> Unit,
+    onHelpClick: () -> Unit,
+    onCreateSchemaClick: () -> Unit,
+    onSchemaClick: (String) -> Unit,
+    onManageSchemasClick: () -> Unit,
+    onToggleCollapsed: () -> Unit,
+) {
+    Column(
+        modifier = Modifier.fillMaxSize().padding(horizontal = 12.dp, vertical = 16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        CompactSidebarButton(
+            icon = Icons.Default.Menu,
+            contentDescription = "Ouvrir la barre latérale",
+            onClick = onToggleCollapsed,
+        )
+        CompactSidebarButton(
+            icon = Icons.Default.AutoAwesome,
+            contentDescription = "Accueil",
+            selected = selectedSchemaId == null,
+            onClick = onHomeClick,
+        )
+        CompactSidebarButton(
+            icon = Icons.Default.Add,
+            contentDescription = "Ajouter un modèle",
+            onClick = onCreateSchemaClick,
+        )
+        CompactSidebarButton(
+            icon = Icons.Default.Tune,
+            contentDescription = "Gérer les modèles de données",
+            onClick = onManageSchemasClick,
+        )
+
+        HorizontalDivider(modifier = Modifier.padding(vertical = 2.dp))
+
+        LazyColumn(
+            modifier = Modifier.weight(1f).fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            items(items = schemas, key = { it.id }) { schema ->
+                CompactSidebarButton(
+                    icon = Icons.Default.TableRows,
+                    contentDescription = schema.name,
+                    selected = schema.id == selectedSchemaId,
+                    onClick = { onSchemaClick(schema.id) },
+                )
+            }
+        }
+
+        CompactSidebarButton(
+            icon = Icons.AutoMirrored.Filled.HelpOutline,
+            contentDescription = "Raccourcis et aide",
+            onClick = onHelpClick,
+        )
+    }
+}
+
+@Composable
+private fun CompactSidebarButton(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    contentDescription: String,
+    selected: Boolean = false,
+    onClick: () -> Unit,
+) {
+    Surface(
+        modifier = Modifier.size(48.dp),
+        shape = RoundedCornerShape(8.dp),
+        color = if (selected) {
+            MaterialTheme.colorScheme.primaryContainer
+        } else {
+            MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f)
+        },
+        border = if (selected) BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)) else null,
+    ) {
+        IconButton(onClick = onClick) {
+            Icon(
+                imageVector = icon,
+                contentDescription = contentDescription,
+                tint = if (selected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(20.dp),
+            )
         }
     }
 }
@@ -316,6 +438,5 @@ fun QuickActionCard(
         }
     }
 }
-
 
 
