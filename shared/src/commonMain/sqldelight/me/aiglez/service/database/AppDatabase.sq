@@ -32,6 +32,15 @@ CREATE TABLE TemplateEntity (
     isArchived INTEGER AS Boolean NOT NULL DEFAULT 0
 );
 
+CREATE INDEX IF NOT EXISTS SchemaEntity_archived_idx
+ON SchemaEntity(isArchived);
+
+CREATE INDEX IF NOT EXISTS RecordEntity_schema_archived_idx
+ON RecordEntity(schemaId, isArchived);
+
+CREATE INDEX IF NOT EXISTS TemplateEntity_schema_archived_idx
+ON TemplateEntity(targetSchemaId, isArchived);
+
 getActiveSchemas:
 SELECT * FROM SchemaEntity WHERE isArchived = 0;
 

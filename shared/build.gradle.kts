@@ -17,6 +17,7 @@ kotlin {
             implementation(compose.materialIconsExtended)
             implementation(libs.compose.material3)
             implementation(libs.compose.ui)
+            implementation(libs.compose.colorpicker)
             implementation(libs.compose.components.resources)
             implementation(libs.compose.uiToolingPreview)
             implementation(libs.androidx.lifecycle.viewmodelCompose)
@@ -34,6 +35,7 @@ kotlin {
         }
         jvmMain.dependencies {
             implementation(libs.sqllite.driver)
+            implementation(libs.zxing.core)
         }
     }
 }
