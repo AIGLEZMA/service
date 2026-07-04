@@ -4,9 +4,12 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ContextMenuArea
 import androidx.compose.foundation.ContextMenuItem
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.HorizontalScrollbar
 import androidx.compose.foundation.TooltipArea
 import androidx.compose.foundation.VerticalScrollbar
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.hoverable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.*
@@ -14,6 +17,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollbarAdapter
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -22,6 +26,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material.icons.filled.UploadFile
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -36,8 +41,13 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import me.aiglez.service.domain.models.DataRecord
 import me.aiglez.service.domain.models.DataSchema
+import me.aiglez.service.domain.models.SchemaField
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
+
+private val RecordColumnWidth = 172.dp
+private val RecordActionColumnWidth = 56.dp
+private const val DefaultVisibleColumnCount = 5
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -132,6 +142,18 @@ private fun RecordListContent(
             }
         }
     }
+    val fields = state.schema?.fields.orEmpty()
+    val fieldIds = remember(fields) { fields.map { it.id } }
+    var visibleFieldIds by remember(fieldIds) {
+        mutableStateOf(fields.take(DefaultVisibleColumnCount).map { it.id }.toSet())
+    }
+    val visibleFields = remember(fields, visibleFieldIds) {
+        fields.filter { it.id in visibleFieldIds }.ifEmpty { fields.take(1) }
+    }
+    var selectedRecordId by remember(state.schema?.id) { mutableStateOf<String?>(null) }
+    val selectedRecord = remember(state.records, selectedRecordId) {
+        state.records.firstOrNull { it.id == selectedRecordId }
+    }
 
     Box(
         modifier = Modifier.fillMaxSize(),
@@ -139,7 +161,7 @@ private fun RecordListContent(
     ) {
         val listState = rememberLazyListState()
         Box(
-            modifier = Modifier.widthIn(max = 920.dp).fillMaxSize(),
+            modifier = Modifier.widthIn(max = 1280.dp).fillMaxSize(),
         ) {
             Column(
                 modifier = Modifier.fillMaxSize().padding(end = 12.dp),
@@ -183,6 +205,18 @@ private fun RecordListContent(
                         keyboardActions = KeyboardActions(onSearch = { focusManager.clearFocus() }),
                     )
 
+                    ColumnPickerButton(
+                        fields = fields,
+                        visibleFieldIds = visibleFieldIds,
+                        onToggleField = { field ->
+                            visibleFieldIds = if (field.id in visibleFieldIds) {
+                                if (visibleFieldIds.size > 1) visibleFieldIds - field.id else visibleFieldIds
+                            } else {
+                                visibleFieldIds + field.id
+                            }
+                        },
+                    )
+
                     AppTooltip(text = "Importer des données depuis un fichier CSV") {
                         OutlinedButton(
                             onClick = onImportCsv,
@@ -222,12 +256,30 @@ private fun RecordListContent(
                             onClearSearch = { searchQuery = "" }
                         )
                     } else {
-                        RecordTable(
-                            schema = state.schema,
-                            records = filteredRecords,
-                            listState = listState,
-                            onArchiveRecord = onArchiveRecord,
-                        )
+                        Row(
+                            modifier = Modifier.fillMaxSize(),
+                            horizontalArrangement = Arrangement.spacedBy(16.dp),
+                        ) {
+                            RecordTable(
+                                schema = state.schema,
+                                visibleFields = visibleFields,
+                                records = filteredRecords,
+                                selectedRecordId = selectedRecordId,
+                                listState = listState,
+                                onRecordClick = { selectedRecordId = it.id },
+                                onArchiveRecord = onArchiveRecord,
+                                modifier = Modifier.weight(1f),
+                            )
+
+                            if (selectedRecord != null) {
+                                RecordDetailPanel(
+                                    schema = state.schema,
+                                    record = selectedRecord,
+                                    onClose = { selectedRecordId = null },
+                                    modifier = Modifier.width(360.dp).fillMaxHeight(),
+                                )
+                            }
+                        }
                     }
                 }
             }
@@ -236,6 +288,57 @@ private fun RecordListContent(
                 VerticalScrollbar(
                     adapter = rememberScrollbarAdapter(listState),
                     modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight(),
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun ColumnPickerButton(
+    fields: List<SchemaField>,
+    visibleFieldIds: Set<String>,
+    onToggleField: (SchemaField) -> Unit,
+) {
+    var expanded by remember { mutableStateOf(false) }
+
+    Box {
+        AppTooltip(text = "Choisir les colonnes visibles") {
+            OutlinedButton(
+                onClick = { expanded = true },
+                enabled = fields.isNotEmpty(),
+                shape = RoundedCornerShape(4.dp),
+                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 10.dp),
+            ) {
+                Icon(Icons.Default.Tune, contentDescription = null, modifier = Modifier.size(18.dp))
+                Spacer(Modifier.width(8.dp))
+                Text("${visibleFieldIds.size.coerceAtLeast(1)} colonnes")
+            }
+        }
+
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+        ) {
+            fields.forEach { field ->
+                DropdownMenuItem(
+                    text = {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(10.dp),
+                        ) {
+                            Checkbox(
+                                checked = field.id in visibleFieldIds,
+                                onCheckedChange = null,
+                            )
+                            Text(
+                                text = field.name,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                        }
+                    },
+                    onClick = { onToggleField(field) },
                 )
             }
         }
@@ -301,26 +404,32 @@ private fun RecordHeader(
 @Composable
 private fun RecordTable(
     schema: DataSchema?,
+    visibleFields: List<SchemaField>,
     records: List<DataRecord>,
+    selectedRecordId: String?,
     listState: androidx.compose.foundation.lazy.LazyListState,
+    onRecordClick: (DataRecord) -> Unit,
     onArchiveRecord: (DataRecord) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
-    val fields = schema?.fields.orEmpty()
-    Column(modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    val horizontalScrollState = rememberScrollState()
+    val tableWidth = RecordColumnWidth * visibleFields.size.toFloat() + RecordActionColumnWidth + 32.dp
+
+    Column(modifier = modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Surface(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth().horizontalScroll(horizontalScrollState),
             shape = RoundedCornerShape(8.dp),
             color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
             border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
         ) {
             Row(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
+                modifier = Modifier.width(tableWidth).padding(horizontal = 16.dp, vertical = 12.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                fields.forEach { field ->
+                visibleFields.forEach { field ->
                     Text(
                         text = field.name,
-                        modifier = Modifier.weight(1f),
+                        modifier = Modifier.width(RecordColumnWidth),
                         fontWeight = FontWeight.SemiBold,
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -332,19 +441,31 @@ private fun RecordTable(
             }
         }
 
-        LazyColumn(
-            state = listState,
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(vertical = 2.dp),
-        ) {
-            items(records, key = { it.id }) { record ->
-                RecordRow(
-                    schema = schema,
-                    record = record,
-                    onArchiveRecord = onArchiveRecord,
-                )
+        Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
+            LazyColumn(
+                state = listState,
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(top = 2.dp, bottom = 14.dp),
+            ) {
+                items(records, key = { it.id }) { record ->
+                    RecordRow(
+                        schema = schema,
+                        visibleFields = visibleFields,
+                        record = record,
+                        selected = record.id == selectedRecordId,
+                        horizontalScrollState = horizontalScrollState,
+                        tableWidth = tableWidth,
+                        onClick = { onRecordClick(record) },
+                        onArchiveRecord = onArchiveRecord,
+                    )
+                }
             }
+
+            HorizontalScrollbar(
+                adapter = rememberScrollbarAdapter(horizontalScrollState),
+                modifier = Modifier.align(Alignment.BottomStart).fillMaxWidth().padding(end = 12.dp),
+            )
         }
     }
 }
@@ -353,7 +474,12 @@ private fun RecordTable(
 @Composable
 private fun RecordRow(
     schema: DataSchema?,
+    visibleFields: List<SchemaField>,
     record: DataRecord,
+    selected: Boolean,
+    horizontalScrollState: androidx.compose.foundation.ScrollState,
+    tableWidth: androidx.compose.ui.unit.Dp,
+    onClick: () -> Unit,
     onArchiveRecord: (DataRecord) -> Unit,
 ) {
     val interactionSource = remember { MutableInteractionSource() }
@@ -376,21 +502,32 @@ private fun RecordRow(
         Surface(
             modifier = Modifier
                 .fillMaxWidth()
+                .horizontalScroll(horizontalScrollState)
                 .hoverable(interactionSource),
             shape = RoundedCornerShape(8.dp),
-            color = if (hovered) MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.25f) else MaterialTheme.colorScheme.surface,
-            border = BorderStroke(1.dp, if (hovered) MaterialTheme.colorScheme.primary.copy(alpha = 0.5f) else MaterialTheme.colorScheme.outlineVariant),
+            color = when {
+                selected -> MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.45f)
+                hovered -> MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.25f)
+                else -> MaterialTheme.colorScheme.surface
+            },
+            border = BorderStroke(
+                1.dp,
+                if (selected || hovered) MaterialTheme.colorScheme.primary.copy(alpha = 0.5f) else MaterialTheme.colorScheme.outlineVariant
+            ),
             tonalElevation = if (hovered) 2.dp else 1.dp,
         ) {
             Row(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+                modifier = Modifier
+                    .width(tableWidth)
+                    .clickable(onClick = onClick)
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                schema?.fields.orEmpty().forEachIndexed { index, field ->
+                visibleFields.forEachIndexed { index, field ->
                     val value = record.values[field.slug] ?: record.values[field.id].orEmpty()
                     Text(
                         text = value,
-                        modifier = Modifier.weight(1f),
+                        modifier = Modifier.width(RecordColumnWidth),
                         style = MaterialTheme.typography.bodyMedium,
                         fontWeight = if (index == 0) FontWeight.Bold else FontWeight.Normal,
                         color = if (index == 0) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
@@ -416,6 +553,84 @@ private fun RecordRow(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun RecordDetailPanel(
+    schema: DataSchema?,
+    record: DataRecord,
+    onClose: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Surface(
+        modifier = modifier,
+        shape = RoundedCornerShape(8.dp),
+        color = MaterialTheme.colorScheme.surface,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+        tonalElevation = 2.dp,
+    ) {
+        Column(modifier = Modifier.fillMaxSize()) {
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(16.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                    Text(
+                        text = "Détail de la donnée",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface,
+                    )
+                    Text(
+                        text = schema?.name.orEmpty(),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+                IconButton(onClick = onClose, modifier = Modifier.size(32.dp)) {
+                    Icon(Icons.Default.Clear, contentDescription = "Fermer", modifier = Modifier.size(18.dp))
+                }
+            }
+
+            HorizontalDivider()
+
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                items(schema?.fields.orEmpty(), key = { it.id }) { field ->
+                    DetailFieldRow(
+                        field = field,
+                        value = record.values[field.slug] ?: record.values[field.id].orEmpty(),
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun DetailFieldRow(
+    field: SchemaField,
+    value: String,
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Text(
+            text = field.name,
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            fontWeight = FontWeight.SemiBold,
+        )
+        Text(
+            text = value.ifBlank { "—" },
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurface,
+        )
     }
 }
 
@@ -472,6 +687,3 @@ private fun EmptyState(
         }
     }
 }
-
-
-
