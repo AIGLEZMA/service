@@ -7,6 +7,8 @@ sealed interface AppScreen {
     @Serializable
     data object Dashboard : AppScreen
     @Serializable
+    data object Help : AppScreen
+    @Serializable
     data object SchemaManagement : AppScreen
     @Serializable
     data object SchemaCreate : AppScreen

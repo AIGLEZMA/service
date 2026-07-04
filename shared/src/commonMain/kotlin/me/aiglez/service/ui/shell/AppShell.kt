@@ -14,6 +14,7 @@ import androidx.navigation3.ui.NavDisplay
 import me.aiglez.service.domain.models.DataSchema
 import me.aiglez.service.ui.components.WorkspaceSidebar
 import me.aiglez.service.ui.components.WorkspaceTopBar
+import me.aiglez.service.ui.help.HelpScreen
 import me.aiglez.service.ui.navigation.AppScreen
 import me.aiglez.service.ui.records.*
 import me.aiglez.service.ui.templates.CompileScreen
@@ -44,9 +45,11 @@ fun AppShell(
         selectedSchemaId = currentScreen.selectedSchemaId,
         currentRoute = currentScreen.chrome(schemas),
         showFab = currentScreen == AppScreen.Dashboard,
+        showDataChrome = currentScreen !is AppScreen.Compile,
         onBackClick = if (navStack.size > 1) ::navigateBack else null,
         onCreateTemplateClick = { navigate(AppScreen.Compile("")) },
         onHomeClick = { navigate(AppScreen.Dashboard) },
+        onHelpClick = { navigate(AppScreen.Help) },
         onCreateSchemaClick = { navigate(AppScreen.SchemaCreate) },
         onSchemaClick = { navigate(AppScreen.RecordList(it)) },
         onAddRecordClick = { navigate(AppScreen.RecordCreate(it)) },
@@ -63,6 +66,9 @@ fun AppShell(
                         onOpenTemplate = { navigate(AppScreen.Compile(it)) },
                         onCreateTemplate = { navigate(AppScreen.Compile("")) },
                     )
+                }
+                entry<AppScreen.Help> {
+                    HelpScreen()
                 }
                 entry<AppScreen.SchemaManagement> {
                     SchemaManagementScreen(
@@ -109,9 +115,11 @@ private fun WorkspaceScaffold(
     selectedSchemaId: String?,
     currentRoute: RouteChrome,
     showFab: Boolean,
+    showDataChrome: Boolean,
     onBackClick: (() -> Unit)?,
     onCreateTemplateClick: () -> Unit,
     onHomeClick: () -> Unit,
+    onHelpClick: () -> Unit,
     onCreateSchemaClick: () -> Unit,
     onSchemaClick: (String) -> Unit,
     onAddRecordClick: (String) -> Unit,
@@ -148,16 +156,19 @@ private fun WorkspaceScaffold(
                     modifier = Modifier
                         .fillMaxSize(),
                 ) {
-                    WorkspaceSidebar(
-                        schemas = schemas,
-                        selectedSchemaId = selectedSchemaId,
-                        onHomeClick = onHomeClick,
-                        onCreateSchemaClick = onCreateSchemaClick,
-                        onSchemaClick = onSchemaClick,
-                        onAddRecordClick = onAddRecordClick,
-                        onEditSchemaClick = onEditSchemaClick,
-                        onManageSchemasClick = onManageSchemasClick,
-                    )
+                    if (showDataChrome) {
+                        WorkspaceSidebar(
+                            schemas = schemas,
+                            selectedSchemaId = selectedSchemaId,
+                            onHomeClick = onHomeClick,
+                            onHelpClick = onHelpClick,
+                            onCreateSchemaClick = onCreateSchemaClick,
+                            onSchemaClick = onSchemaClick,
+                            onAddRecordClick = onAddRecordClick,
+                            onEditSchemaClick = onEditSchemaClick,
+                            onManageSchemasClick = onManageSchemasClick,
+                        )
+                    }
 
                     Surface(
                         modifier = Modifier
@@ -168,17 +179,25 @@ private fun WorkspaceScaffold(
                         shadowElevation = 6.dp,
                     ) {
                         Column(modifier = Modifier.fillMaxSize()) {
-                            WorkspaceTopBar(
-                                title = currentRoute.title,
-                                description = currentRoute.description,
-                                count = schemas.size,
-                                countLabel = if (schemas.size == 1) "Modèle de données" else "Modèles de données",
-                                onBackClick = onBackClick,
-                            )
+                            if (showDataChrome) {
+                                WorkspaceTopBar(
+                                    title = currentRoute.title,
+                                    description = currentRoute.description,
+                                    count = schemas.size,
+                                    countLabel = if (schemas.size == 1) "Modèle de données" else "Modèles de données",
+                                    onBackClick = onBackClick,
+                                )
+                            }
                             Box(
                                 modifier = Modifier
                                     .fillMaxSize()
-                                    .padding(horizontal = 28.dp, vertical = 24.dp),
+                                    .then(
+                                        if (showDataChrome) {
+                                            Modifier.padding(horizontal = 28.dp, vertical = 24.dp)
+                                        } else {
+                                            Modifier
+                                        }
+                                    ),
                                 contentAlignment = Alignment.TopStart,
                                 content = content,
                             )
@@ -209,6 +228,11 @@ private fun AppScreen.chrome(schemas: List<DataSchema>): RouteChrome = when (thi
         description = "Gérez les templates et leurs modèles de donnée",
     )
 
+    AppScreen.Help -> RouteChrome(
+        title = "Aide",
+        description = "Raccourcis clavier, souris et pavé tactile de l'éditeur",
+    )
+
     AppScreen.SchemaManagement -> RouteChrome(
         title = "Modèles de données",
         description = "Consultez, modifiez et archivez les modèles de données réutilisables",
@@ -235,8 +259,8 @@ private fun AppScreen.chrome(schemas: List<DataSchema>): RouteChrome = when (thi
     )
 
     is AppScreen.Compile -> RouteChrome(
-        title = "Compilation de template",
-        description = "Prévisualisez et exportez un document PDF",
+        title = "Template Editor",
+        description = "Composez visuellement le modèle PDF",
     )
 }
 

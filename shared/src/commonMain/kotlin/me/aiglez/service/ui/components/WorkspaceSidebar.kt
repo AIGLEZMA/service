@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.automirrored.filled.HelpOutline
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -24,6 +25,7 @@ fun WorkspaceSidebar(
     schemas: List<DataSchema>,
     selectedSchemaId: String?,
     onHomeClick: () -> Unit,
+    onHelpClick: () -> Unit,
     onCreateSchemaClick: () -> Unit,
     onSchemaClick: (String) -> Unit,
     onAddRecordClick: (String) -> Unit,
@@ -55,6 +57,7 @@ fun WorkspaceSidebar(
                 onManageSchemasClick = onManageSchemasClick,
                 modifier = Modifier.weight(1f),
             )
+            HelpNavigationButton(onClick = onHelpClick)
             /*
             Button(
                 onClick = onCreateSchemaClick,
@@ -229,6 +232,29 @@ private fun SchemaListItem(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun HelpNavigationButton(
+    onClick: () -> Unit,
+) {
+    OutlinedButton(
+        onClick = onClick,
+        modifier = Modifier.fillMaxWidth(),
+        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
+        shape = RoundedCornerShape(4.dp),
+    ) {
+        Icon(
+            imageVector = Icons.AutoMirrored.Filled.HelpOutline,
+            contentDescription = null,
+            modifier = Modifier.size(16.dp),
+        )
+        Spacer(modifier = Modifier.width(6.dp))
+        Text(
+            text = "Raccourcis et aide",
+            style = MaterialTheme.typography.labelMedium,
+        )
     }
 }
 
