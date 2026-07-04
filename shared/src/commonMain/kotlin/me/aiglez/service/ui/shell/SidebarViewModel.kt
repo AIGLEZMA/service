@@ -14,3 +14,6 @@ class SidebarViewModel(
     val schemas: StateFlow<List<DataSchema>> = recordRepository.getActiveSchemas()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 }
+
+
+

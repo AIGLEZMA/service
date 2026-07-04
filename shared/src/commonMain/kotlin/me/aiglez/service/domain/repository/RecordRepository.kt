@@ -15,3 +15,5 @@ interface RecordRepository {
     suspend fun saveRecord(record: DataRecord)
     suspend fun archiveRecord(recordId: String)
 }
+
+

@@ -58,3 +58,6 @@ private fun ensureDatabaseSchema(driver: SqlDriver) {
     driver.execute(null, "CREATE INDEX IF NOT EXISTS RecordEntity_schema_archived_idx ON RecordEntity(schemaId, isArchived)", 0)
     driver.execute(null, "CREATE INDEX IF NOT EXISTS TemplateEntity_schema_archived_idx ON TemplateEntity(targetSchemaId, isArchived)", 0)
 }
+
+
+

@@ -593,3 +593,6 @@ internal class TemplateEditorPropertyActions(
         if (nextElement != element) execute(ReplaceElementCommand(element, nextElement))
     }
 }
+
+
+

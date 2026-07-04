@@ -12,7 +12,6 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import me.aiglez.service.domain.models.DataSchema
 import me.aiglez.service.domain.models.TemplateBarcodeFormat
 import me.aiglez.service.domain.models.TemplateBorderStyle
 import me.aiglez.service.domain.models.Template
@@ -27,7 +26,6 @@ import me.aiglez.service.domain.repository.TemplateRepository
 import me.aiglez.service.ui.templates.editor.AddElementCommand
 import me.aiglez.service.ui.templates.editor.AddElementsCommand
 import me.aiglez.service.ui.templates.editor.CanvasMetric
-import me.aiglez.service.ui.templates.editor.CanvasState
 import me.aiglez.service.ui.templates.editor.CommonProperty
 import me.aiglez.service.ui.templates.editor.DeleteElementCommand
 import me.aiglez.service.ui.templates.editor.DeleteElementsCommand
@@ -40,75 +38,7 @@ import me.aiglez.service.ui.templates.editor.ReplaceElementsCommand
 import me.aiglez.service.ui.templates.editor.TemplateEditorState
 import me.aiglez.service.ui.templates.editor.createDefaultElement
 import me.aiglez.service.ui.templates.editor.expressionIdentifier
-import me.aiglez.service.ui.templates.editor.referencedExpressionRoots
-import me.aiglez.service.ui.templates.editor.schemaExpressionAliases
-import me.aiglez.service.ui.templates.editor.withBarcodeBackground
-import me.aiglez.service.ui.templates.editor.withBarcodeBorderColor
-import me.aiglez.service.ui.templates.editor.withBarcodeBorderWidth
-import me.aiglez.service.ui.templates.editor.withBarcodeFontSize
-import me.aiglez.service.ui.templates.editor.withBarcodeForeground
-import me.aiglez.service.ui.templates.editor.withBarcodeFormat
-import me.aiglez.service.ui.templates.editor.withBarcodeQuietZone
-import me.aiglez.service.ui.templates.editor.withBarcodeShowText
-import me.aiglez.service.ui.templates.editor.withBarcodeText
 import me.aiglez.service.ui.templates.editor.withBounds
-import me.aiglez.service.ui.templates.editor.withCircleBorderColor
-import me.aiglez.service.ui.templates.editor.withCircleBorderStyle
-import me.aiglez.service.ui.templates.editor.withCircleBorderWidth
-import me.aiglez.service.ui.templates.editor.withCircleFill
-import me.aiglez.service.ui.templates.editor.withCommonProperty
-import me.aiglez.service.ui.templates.editor.withImageAlignment
-import me.aiglez.service.ui.templates.editor.withImageBackground
-import me.aiglez.service.ui.templates.editor.withImageBorderColor
-import me.aiglez.service.ui.templates.editor.withImageBorderRadius
-import me.aiglez.service.ui.templates.editor.withImageBorderWidth
-import me.aiglez.service.ui.templates.editor.withImageContentMode
-import me.aiglez.service.ui.templates.editor.withImageSource
-import me.aiglez.service.ui.templates.editor.withListBackground
-import me.aiglez.service.ui.templates.editor.withListBorderColor
-import me.aiglez.service.ui.templates.editor.withListBorderRadius
-import me.aiglez.service.ui.templates.editor.withListBorderStyle
-import me.aiglez.service.ui.templates.editor.withListBorderWidth
-import me.aiglez.service.ui.templates.editor.withListColor
-import me.aiglez.service.ui.templates.editor.withListColumnGap
-import me.aiglez.service.ui.templates.editor.withListColumns
-import me.aiglez.service.ui.templates.editor.withListFieldSlug
-import me.aiglez.service.ui.templates.editor.withListFontFamily
-import me.aiglez.service.ui.templates.editor.withListFontSize
-import me.aiglez.service.ui.templates.editor.withListItemSeparator
-import me.aiglez.service.ui.templates.editor.withListItemSpacing
-import me.aiglez.service.ui.templates.editor.withListMaxItemLength
-import me.aiglez.service.ui.templates.editor.withListMaxItems
-import me.aiglez.service.ui.templates.editor.withListPadding
-import me.aiglez.service.ui.templates.editor.withListPrefix
-import me.aiglez.service.ui.templates.editor.withListSuffix
-import me.aiglez.service.ui.templates.editor.withQrBackground
-import me.aiglez.service.ui.templates.editor.withQrBorderColor
-import me.aiglez.service.ui.templates.editor.withQrBorderWidth
-import me.aiglez.service.ui.templates.editor.withQrForeground
-import me.aiglez.service.ui.templates.editor.withQrQuietZone
-import me.aiglez.service.ui.templates.editor.withQrText
-import me.aiglez.service.ui.templates.editor.withRectangleBorderColor
-import me.aiglez.service.ui.templates.editor.withRectangleBorderRadius
-import me.aiglez.service.ui.templates.editor.withRectangleBorderStyle
-import me.aiglez.service.ui.templates.editor.withRectangleBorderWidth
-import me.aiglez.service.ui.templates.editor.withRectangleFill
-import me.aiglez.service.ui.templates.editor.withTextBackground
-import me.aiglez.service.ui.templates.editor.withTextBorderColor
-import me.aiglez.service.ui.templates.editor.withTextBorderRadius
-import me.aiglez.service.ui.templates.editor.withTextBorderStyle
-import me.aiglez.service.ui.templates.editor.withTextBorderWidth
-import me.aiglez.service.ui.templates.editor.withTextColor
-import me.aiglez.service.ui.templates.editor.withTextAlign
-import me.aiglez.service.ui.templates.editor.withTextDirection
-import me.aiglez.service.ui.templates.editor.withTextFontFamily
-import me.aiglez.service.ui.templates.editor.withTextFontSize
-import me.aiglez.service.ui.templates.editor.withTextFontStyle
-import me.aiglez.service.ui.templates.editor.withTextLetterSpacing
-import me.aiglez.service.ui.templates.editor.withTextLineHeight
-import me.aiglez.service.ui.templates.editor.withTextPadding
-import me.aiglez.service.ui.templates.editor.withTextValue
-import me.aiglez.service.ui.templates.editor.withTextVerticalAlign
 import me.aiglez.service.ui.templates.editor.updateCommon
 import kotlin.math.roundToInt
 import kotlin.random.Random
@@ -797,3 +727,6 @@ class CompileViewModel(
         return "$prefix-${Random.nextLong(1_000_000_000L, 9_999_999_999L)}"
     }
 }
+
+
+

@@ -21,3 +21,6 @@ sealed interface AppScreen {
     @Serializable
     data class Compile(val templateId: String) : AppScreen
 }
+
+
+

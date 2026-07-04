@@ -18,3 +18,6 @@ internal enum class NativeViewportGestureKind {
 
 @Composable
 internal expect fun rememberNativeViewportGesture(): NativeViewportGesture?
+
+
+

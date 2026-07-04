@@ -400,3 +400,6 @@ internal fun componentPaletteItems(): List<ComponentPaletteItem> {
         ComponentPaletteItem("Area", "Box", TemplateElementType.Area, group = "Layout", enabled = false),
     )
 }
+
+
+

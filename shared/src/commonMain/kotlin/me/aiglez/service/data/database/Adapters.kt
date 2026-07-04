@@ -29,3 +29,5 @@ val elementsAdapter = object : ColumnAdapter<List<TemplateElement>, String> {
     override fun encode(value: List<TemplateElement>): String =
         Json.encodeToString(value)
 }
+
+

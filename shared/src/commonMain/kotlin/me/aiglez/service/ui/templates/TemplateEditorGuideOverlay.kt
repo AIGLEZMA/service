@@ -512,3 +512,6 @@ internal fun CanvasState.toSnapGuideSet(): SnapGuideSet {
         includePageCenter = snapToPageCenter,
     )
 }
+
+
+

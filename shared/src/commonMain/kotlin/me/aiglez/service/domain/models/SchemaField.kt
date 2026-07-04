@@ -10,3 +10,5 @@ data class SchemaField(
     val type: FieldType,
     val referenceSchemaId: String? = null // populates if type == REFERENCE
 )
+
+

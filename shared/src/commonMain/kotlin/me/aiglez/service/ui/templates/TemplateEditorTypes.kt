@@ -355,3 +355,6 @@ internal data class LineRenderItem(
     val color: Color,
     val strokeWidth: Float,
 ) : PageRenderItem
+
+
+

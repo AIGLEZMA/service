@@ -70,3 +70,6 @@ class HistoryManagerTest {
         assertEquals(emptyList(), deleted.selectedElementIds)
     }
 }
+
+
+

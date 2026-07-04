@@ -416,3 +416,6 @@ internal fun truncateListItem(value: String, maxLength: Int): String {
     val limit = maxLength.coerceAtLeast(1)
     return if (value.length <= limit) value else value.take((limit - 1).coerceAtLeast(0)) + "..."
 }
+
+
+

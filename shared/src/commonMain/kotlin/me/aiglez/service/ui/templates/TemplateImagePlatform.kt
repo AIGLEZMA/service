@@ -18,3 +18,6 @@ data class TemplateImageBitmap(
 expect fun chooseTemplateImageFile(): TemplateImageFile?
 
 expect fun loadTemplateImageBitmap(path: String): TemplateImageBitmap?
+
+
+

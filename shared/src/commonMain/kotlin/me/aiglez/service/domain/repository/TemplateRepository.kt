@@ -8,3 +8,5 @@ interface TemplateRepository {
     suspend fun saveTemplate(template: Template)
     suspend fun archiveTemplate(templateId: String)
 }
+
+

@@ -70,7 +70,6 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -99,17 +98,7 @@ import androidx.compose.ui.layout.boundsInWindow
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.drawText
-import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.font.FontStyle
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.TextLayoutResult
-import androidx.compose.ui.text.TextMeasurer
-import androidx.compose.ui.text.style.TextDecoration
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextDirection
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.IntOffset
@@ -130,19 +119,9 @@ import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.roundToInt
 import kotlin.math.sin
-import me.aiglez.service.domain.models.DataRecord
-import me.aiglez.service.domain.models.DataSchema
-import me.aiglez.service.domain.models.FieldType
 import me.aiglez.service.domain.models.InlineAlignment
-import me.aiglez.service.domain.models.SchemaField
-import me.aiglez.service.domain.models.TemplateBarcodeFormat
-import me.aiglez.service.domain.models.TemplateBorderStyle
 import me.aiglez.service.domain.models.TemplateElement
 import me.aiglez.service.domain.models.TemplateElementType
-import me.aiglez.service.domain.models.TemplateImageAlignment
-import me.aiglez.service.domain.models.TemplateImageContentMode
-import me.aiglez.service.domain.models.TemplateTextDirection
-import me.aiglez.service.domain.models.TemplateTextStyle
 import me.aiglez.service.ui.templates.editor.CanvasMetrics
 import me.aiglez.service.ui.templates.editor.CanvasMetric
 import me.aiglez.service.ui.templates.editor.CanvasState
@@ -153,14 +132,7 @@ import me.aiglez.service.ui.templates.editor.PagePoint
 import me.aiglez.service.ui.templates.editor.PageRect
 import me.aiglez.service.ui.templates.editor.ResizeHandle
 import me.aiglez.service.ui.templates.editor.SnapGuideSet
-import me.aiglez.service.ui.templates.editor.TemplateExpressionContext
 import me.aiglez.service.ui.templates.editor.TemplateEditorState
-import me.aiglez.service.ui.templates.editor.expressionIdentifier
-import me.aiglez.service.ui.templates.editor.recordExpressionContext
-import me.aiglez.service.ui.templates.editor.renderLegacyPlaceholder
-import me.aiglez.service.ui.templates.editor.renderTemplateText
-import me.aiglez.service.ui.templates.editor.sampleExpressionContext
-import me.aiglez.service.ui.templates.editor.sampleSchemaExpressionContext
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 
@@ -796,3 +768,6 @@ internal fun CanvasWorkspace(
         }
     }
 }
+
+
+

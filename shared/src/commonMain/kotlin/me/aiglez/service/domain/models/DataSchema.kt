@@ -9,3 +9,5 @@ data class DataSchema(
     val fields: List<SchemaField>,
     val isArchived: Boolean = false // Soft delete flag
 )
+
+
