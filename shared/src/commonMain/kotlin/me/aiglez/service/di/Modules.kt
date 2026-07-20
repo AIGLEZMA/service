@@ -7,6 +7,7 @@ import me.aiglez.service.data.database.elementsAdapter
 import me.aiglez.service.data.database.fieldsAdapter
 import me.aiglez.service.data.database.valuesMapAdapter
 import me.aiglez.service.data.repository.SeededRecordRepository
+import me.aiglez.service.data.repository.SeededTemplateRepository
 import me.aiglez.service.data.repository.SqlDelightRecordRepository
 import me.aiglez.service.data.repository.SqlDelightTemplateRepository
 import me.aiglez.service.database.AppDatabase
@@ -33,7 +34,7 @@ val coreModule = module {
 }
 
 val dataModule = module {
-    single {
+    single(createdAtStart = true) {
         AppDatabase(
             driver = get(), // Provided by platformModule
             SchemaEntityAdapter = SchemaEntity.Adapter(fieldsAdapter),
@@ -42,7 +43,7 @@ val dataModule = module {
         )
     }
     single<RecordRepository> { SeededRecordRepository(SqlDelightRecordRepository(get(), get()), get()) }
-    single<TemplateRepository> { SqlDelightTemplateRepository(get(), get()) }
+    single<TemplateRepository> { SeededTemplateRepository(SqlDelightTemplateRepository(get(), get()), get(), get()) }
 }
 
 val uiModule = module {
@@ -61,6 +62,3 @@ fun initKoin(additionalModules: List<Module> = emptyList()) {
         modules(additionalModules)
     }
 }
-
-
-

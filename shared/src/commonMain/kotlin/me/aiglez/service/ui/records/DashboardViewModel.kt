@@ -22,6 +22,7 @@ data class DashboardTemplateItem(
 data class DashboardUiState(
     val stats: DashboardStatsState = DashboardStatsState(),
     val templates: List<DashboardTemplateItem> = emptyList(),
+    val isLoading: Boolean = true,
 )
 
 @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
@@ -33,17 +34,15 @@ class DashboardViewModel(
     val uiState: StateFlow<DashboardUiState> = recordRepository.getActiveSchemas()
         .flatMapLatest { schemas ->
             if (schemas.isEmpty()) {
-                flowOf(DashboardUiState())
+                flowOf(DashboardUiState(isLoading = false))
             } else {
                 val templateFlows = schemas.map { schema ->
-                    templateRepository.getActiveTemplates(schema.id).map { templates ->
-                        schema to templates
-                    }
+                    templateRepository.getActiveTemplates(schema.id)
+                        .map { templates -> schema to templates }
                 }
                 val recordFlows = schemas.map { schema ->
-                    recordRepository.getActiveRecords(schema.id).map { records ->
-                        schema.id to records.size
-                    }
+                    recordRepository.getActiveRecords(schema.id)
+                        .map { records -> schema.id to records.size }
                 }
                 combine(
                     combine(templateFlows) { it.toList() },
@@ -60,12 +59,10 @@ class DashboardViewModel(
                             generatedPdfs = 0,
                         ),
                         templates = templates,
+                        isLoading = false,
                     )
                 }
             }
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), DashboardUiState())
 }
-
-
-

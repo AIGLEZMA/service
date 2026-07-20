@@ -19,10 +19,15 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -31,6 +36,7 @@ import me.aiglez.service.ui.components.EmptyRoutePlaceholder
 import me.aiglez.service.ui.components.MetricCard
 import me.aiglez.service.ui.components.TemplateCard
 import org.koin.compose.viewmodel.koinViewModel
+import kotlinx.coroutines.delay
 
 @Composable
 fun DashboardScreen(
@@ -52,6 +58,15 @@ private fun DashboardContent(
     onOpenTemplate: (String) -> Unit,
     onCreateTemplate: () -> Unit,
 ) {
+    var showLoading by remember { mutableStateOf(false) }
+    LaunchedEffect(state.isLoading) {
+        showLoading = false
+        if (state.isLoading) {
+            delay(600)
+            showLoading = true
+        }
+    }
+
     Column(
         verticalArrangement = Arrangement.spacedBy(20.dp),
         modifier = Modifier.fillMaxSize(),
@@ -70,7 +85,19 @@ private fun DashboardContent(
             style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.SemiBold,
         )
-        if (state.templates.isEmpty()) {
+        if (state.isLoading) {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                if (showLoading) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                    ) {
+                        CircularProgressIndicator()
+                        Text("Chargement des templates…")
+                    }
+                }
+            }
+        } else if (state.templates.isEmpty()) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 EmptyRoutePlaceholder(
                     title = "Aucune template pour le moment",
@@ -106,6 +133,5 @@ private fun DashboardContent(
         }
     }
 }
-
 
 

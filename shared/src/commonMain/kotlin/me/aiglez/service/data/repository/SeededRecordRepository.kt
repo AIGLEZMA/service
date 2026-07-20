@@ -4,8 +4,10 @@ import co.touchlab.kermit.Logger
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 import me.aiglez.service.domain.models.DataRecord
 import me.aiglez.service.domain.models.DataSchema
 import me.aiglez.service.domain.models.FieldType
@@ -28,12 +30,15 @@ class SeededRecordRepository(
         return delegate.getActiveRecords(schemaId).onStart { seedIfNeeded() }
     }
 
-    private suspend fun seedIfNeeded() {
+    private suspend fun seedIfNeeded() = withContext(Dispatchers.Default) {
         seedMutex.withLock {
             if (hasSeeded) return@withLock
 
             val activeSchemas = delegate.getActiveSchemas().first()
             val activeSchemaIds = activeSchemas.map { it.id }.toSet()
+            if (DeprecatedInterventionSchemaId in activeSchemaIds) {
+                delegate.archiveSchema(DeprecatedInterventionSchemaId)
+            }
             demoSchemas.filterNot { it.id in activeSchemaIds }.forEach { schema ->
                 delegate.saveSchema(schema)
             }
@@ -54,8 +59,27 @@ class SeededRecordRepository(
 private const val ServiceOrderSchemaId = "test_service_order"
 private const val CustomerProfileSchemaId = "test_customer_profile"
 private const val ProductCatalogSchemaId = "test_product_catalog"
+internal const val ClientSchemaId = "modele_client"
+internal const val IntervenantSchemaId = "modele_intervenant"
+private const val DeprecatedInterventionSchemaId = "modele_intervention"
 
 private val demoSchemas = listOf(
+    DataSchema(
+        id = ClientSchemaId,
+        name = "Client",
+        fields = listOf(
+            SchemaField("field-client-nom", "Nom", "nom", FieldType.TEXT),
+            SchemaField("field-client-numero", "Numéro", "numero", FieldType.TEXT),
+        ),
+    ),
+    DataSchema(
+        id = IntervenantSchemaId,
+        name = "Intervenant",
+        fields = listOf(
+            SchemaField("field-intervenant-nom", "Nom", "nom", FieldType.TEXT),
+            SchemaField("field-intervenant-prenom", "Prénom", "prenom", FieldType.TEXT),
+        ),
+    ),
     DataSchema(
         id = ServiceOrderSchemaId,
         name = "Test Service Order",
@@ -97,6 +121,42 @@ private val demoSchemas = listOf(
 )
 
 private val demoRecordsBySchemaId = mapOf(
+    ClientSchemaId to listOf(
+        DataRecord(
+            id = "client_dupont",
+            schemaId = ClientSchemaId,
+            values = mapOf(
+                "nom" to "Dupont",
+                "numero" to "CL-001",
+            ),
+        ),
+        DataRecord(
+            id = "client_martin",
+            schemaId = ClientSchemaId,
+            values = mapOf(
+                "nom" to "Martin",
+                "numero" to "CL-002",
+            ),
+        ),
+    ),
+    IntervenantSchemaId to listOf(
+        DataRecord(
+            id = "intervenant_karim_benali",
+            schemaId = IntervenantSchemaId,
+            values = mapOf(
+                "nom" to "Benali",
+                "prenom" to "Karim",
+            ),
+        ),
+        DataRecord(
+            id = "intervenant_sara_alaoui",
+            schemaId = IntervenantSchemaId,
+            values = mapOf(
+                "nom" to "Alaoui",
+                "prenom" to "Sara",
+            ),
+        ),
+    ),
     CustomerProfileSchemaId to listOf(
         DataRecord(
             id = "test_customer_ada",
@@ -218,6 +278,3 @@ private val demoRecordsBySchemaId = mapOf(
         ),
     ),
 )
-
-
-
