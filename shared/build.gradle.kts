@@ -36,6 +36,7 @@ kotlin {
         jvmMain.dependencies {
             implementation(libs.sqllite.driver)
             implementation(libs.zxing.core)
+            implementation(libs.pdfbox)
         }
     }
 }
@@ -47,6 +48,5 @@ sqldelight {
         }
     }
 }
-
 
 

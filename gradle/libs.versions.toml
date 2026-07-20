@@ -13,6 +13,7 @@ koin = "4.2.2"
 koin-plugin = "1.0.1"
 kermit = "2.0.4"
 zxing = "3.5.3"
+pdfbox = "2.0.32"
 
 [libraries]
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
@@ -42,6 +43,7 @@ koin-compose-viewmodel-navigation = { module = "io.insert-koin:koin-compose-view
 koin-androidx-compose = { module = "io.insert-koin:koin-androidx-compose", version.ref = "koin" }
 kermit = { module = "co.touchlab:kermit", version.ref = "kermit" }
 zxing-core = { module = "com.google.zxing:core", version.ref = "zxing" }
+pdfbox = { module = "org.apache.pdfbox:pdfbox", version.ref = "pdfbox" }
 [plugins]
 composeMultiplatform = { id = "org.jetbrains.compose", version.ref = "composeMultiplatform" }
 composeCompiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }

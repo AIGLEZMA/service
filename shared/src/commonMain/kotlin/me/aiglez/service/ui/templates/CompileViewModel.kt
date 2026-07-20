@@ -705,8 +705,22 @@ class CompileViewModel(
     }
 
     fun exportPdf() {
-        logger.i { "PDF export is intentionally deferred until the editor model is stable." }
-        _uiState.update { it.copy(message = "PDF export will be added after the editor model is stable.") }
+        val state = _uiState.value
+        if (state.template == null) return
+        viewModelScope.launch {
+            _uiState.update { it.copy(message = "Preparing PDF export...") }
+            when (val result = exportTemplatePdf(state)) {
+                TemplatePdfExportResult.Cancelled -> _uiState.update { it.copy(message = "PDF export cancelled.") }
+                is TemplatePdfExportResult.Exported -> {
+                    logger.i { "Exported PDF to ${result.path}" }
+                    _uiState.update { it.copy(message = "PDF exported: ${result.path}") }
+                }
+                is TemplatePdfExportResult.Failed -> {
+                    logger.e(result.cause) { "PDF export failed" }
+                    _uiState.update { it.copy(message = "PDF export failed: ${result.message}") }
+                }
+            }
+        }
     }
 
     private fun execute(command: me.aiglez.service.ui.templates.editor.EditorCommand) {
