@@ -1,9 +1,11 @@
 import org.gradle.api.DefaultTask
 import org.gradle.api.GradleException
-import org.gradle.api.file.DirectoryProperty
+import org.gradle.api.file.ConfigurableFileCollection
 import org.gradle.api.provider.Property
 import org.gradle.api.tasks.Input
-import org.gradle.api.tasks.InputDirectory
+import org.gradle.api.tasks.InputFiles
+import org.gradle.api.tasks.PathSensitive
+import org.gradle.api.tasks.PathSensitivity
 import org.gradle.api.tasks.TaskAction
 import java.nio.file.Files
 import java.nio.file.Path
@@ -20,30 +22,22 @@ plugins {
 }
 
 abstract class KotlinSourceStyleTask : DefaultTask() {
-    @get:InputDirectory
-    abstract val sourceRoot: DirectoryProperty
+    @get:InputFiles
+    @get:PathSensitive(PathSensitivity.RELATIVE)
+    abstract val sourceFiles: ConfigurableFileCollection
+
+    @get:Input
+    abstract val sourceRootPath: Property<String>
 
     protected fun kotlinSourceFiles(): List<Path> {
-        val rootPath = sourceRoot.get().asFile.toPath()
-        return Files.walk(rootPath).use { paths ->
-            paths
-                .filter(Files::isRegularFile)
-                .filter { path -> path.fileName.toString().let { it.endsWith(".kt") || it.endsWith(".kts") } }
-                .filter { path -> !relativePath(rootPath, path).isExcludedSourcePath() }
-                .sorted()
-                .toList()
-        }
+        return sourceFiles.files
+            .map { it.toPath() }
+            .sorted()
     }
 
-    protected fun relativePath(rootPath: Path, path: Path): String {
+    protected fun relativePath(path: Path): String {
+        val rootPath = Path.of(sourceRootPath.get())
         return rootPath.relativize(path).toString().replace('\\', '/')
-    }
-
-    private fun String.isExcludedSourcePath(): Boolean {
-        return startsWith(".gradle/") ||
-            startsWith(".idea/") ||
-            contains("/build/") ||
-            startsWith("build/")
     }
 }
 
@@ -70,11 +64,10 @@ abstract class LintKotlinTask : KotlinSourceStyleTask() {
 
     @TaskAction
     fun lint() {
-        val rootPath = sourceRoot.get().asFile.toPath()
         val violations = mutableListOf<String>()
 
         kotlinSourceFiles().forEach { path ->
-            val relativePath = relativePath(rootPath, path)
+            val relativePath = relativePath(path)
             val text = Files.readString(path)
             val lines = text.lineSequence().toList()
 
@@ -106,17 +99,25 @@ abstract class LintKotlinTask : KotlinSourceStyleTask() {
 }
 
 val maxKotlinSourceLines = 800
+val kotlinStyleSourceFiles = files(
+    fileTree(layout.projectDirectory) {
+        include("**/*.kt", "**/*.kts")
+        exclude("**/build/**", ".gradle/**", ".idea/**")
+    },
+)
 
 val formatKotlin by tasks.registering(FormatKotlinTask::class) {
     group = "formatting"
     description = "Formats Kotlin sources with repository-local whitespace rules."
-    sourceRoot.set(layout.projectDirectory)
+    sourceFiles.from(kotlinStyleSourceFiles)
+    sourceRootPath.set(layout.projectDirectory.asFile.absolutePath)
 }
 
 val lintKotlin by tasks.registering(LintKotlinTask::class) {
     group = "verification"
     description = "Checks Kotlin source formatting and file-size guardrails."
-    sourceRoot.set(layout.projectDirectory)
+    sourceFiles.from(kotlinStyleSourceFiles)
+    sourceRootPath.set(layout.projectDirectory.asFile.absolutePath)
     maxSourceLines.set(maxKotlinSourceLines)
 }
 
@@ -131,5 +132,3 @@ subprojects {
         dependsOn(rootProject.tasks.named("lintKotlin"))
     }
 }
-
-
