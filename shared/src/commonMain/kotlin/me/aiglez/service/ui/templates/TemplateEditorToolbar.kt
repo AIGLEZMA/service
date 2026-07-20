@@ -30,17 +30,17 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Redo
+import androidx.compose.material.icons.automirrored.filled.Undo
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Redo
 import androidx.compose.material.icons.filled.Save
-import androidx.compose.material.icons.filled.Undo
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
-import androidx.compose.material3.Divider
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -51,6 +51,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -208,10 +209,10 @@ internal fun TopEditorToolbar(
             ) {
                 ToolbarIconGroup {
                     IconButton(onClick = onUndo, enabled = state.canUndo, modifier = Modifier.size(36.dp)) {
-                        Icon(Icons.Default.Undo, contentDescription = "Undo")
+                        Icon(Icons.AutoMirrored.Filled.Undo, contentDescription = "Undo")
                     }
                     IconButton(onClick = onRedo, enabled = state.canRedo, modifier = Modifier.size(36.dp)) {
-                        Icon(Icons.Default.Redo, contentDescription = "Redo")
+                        Icon(Icons.AutoMirrored.Filled.Redo, contentDescription = "Redo")
                     }
                     IconButton(onClick = onSave, enabled = state.template != null && !state.isSaving, modifier = Modifier.size(36.dp)) {
                         Icon(Icons.Default.Save, contentDescription = "Save")
@@ -476,13 +477,13 @@ internal fun EditorActionsMenu(
         MenuCommand("Paste", true, onPaste, close)
         MenuCommand("Duplicate", enabled, onDuplicate, close)
         MenuCommand("Delete", enabled, onDelete, close)
-        Divider()
+        HorizontalDivider()
         MenuCommand("Group", enabled, onGroup, close)
         MenuCommand("Ungroup", enabled, onUngroup, close)
         MenuCommand("Lock", enabled, onLock, close)
         MenuCommand("Hide", enabled, onHide, close)
         MenuCommand("Select similar", enabled, onSelectSimilar, close)
-        Divider()
+        HorizontalDivider()
         DropdownMenuItem(
             text = { Text("Nudge ${canvas.nudgeDistance.formatForInput()} px") },
             onClick = {},
@@ -512,10 +513,10 @@ internal fun AlignmentMenu(
         MenuCommand("Align top", enabled, { onAlign(SelectionAlignment.Top) }, close)
         MenuCommand("Align middle", enabled, { onAlign(SelectionAlignment.Middle) }, close)
         MenuCommand("Align bottom", enabled, { onAlign(SelectionAlignment.Bottom) }, close)
-        Divider()
+        HorizontalDivider()
         MenuCommand("Distribute horizontally", enabled, { onDistribute(DistributionAxis.Horizontal) }, close)
         MenuCommand("Distribute vertically", enabled, { onDistribute(DistributionAxis.Vertical) }, close)
-        Divider()
+        HorizontalDivider()
         MenuCommand("Match width", enabled, { onMatchSize(SizeMatchAxis.Width) }, close)
         MenuCommand("Match height", enabled, { onMatchSize(SizeMatchAxis.Height) }, close)
     }
@@ -531,7 +532,7 @@ internal fun ViewMenu(
 ) {
     ToolbarMenu("View") { _ ->
         CheckMenuItem("Show sample data", showSampleData) { onToggleSampleData() }
-        Divider()
+        HorizontalDivider()
         CheckMenuItem("Show rulers", canvas.showRulers) { onSetCanvasMetric(CanvasMetric.ShowRulers, it.asMetric()) }
         CheckMenuItem("Show grid", canvas.showGrid) { onSetCanvasMetric(CanvasMetric.ShowGrid, it.asMetric()) }
         CheckMenuItem("Show guides", canvas.showGuides) { onSetCanvasMetric(CanvasMetric.ShowGuides, it.asMetric()) }
@@ -539,7 +540,7 @@ internal fun ViewMenu(
         CheckMenuItem("Show bleed", canvas.showBleed) { onSetCanvasMetric(CanvasMetric.ShowBleed, it.asMetric()) }
         CheckMenuItem("Show safe area", canvas.showSafeArea) { onSetCanvasMetric(CanvasMetric.ShowSafeArea, it.asMetric()) }
         CheckMenuItem("Show page shadow", canvas.showPageShadow) { onSetCanvasMetric(CanvasMetric.ShowPageShadow, it.asMetric()) }
-        Divider()
+        HorizontalDivider()
         DropdownMenuItem(text = { Text("Unit: ${canvas.rulerUnit}") }, onClick = {})
         RulerUnits.forEach { unit ->
             DropdownMenuItem(
@@ -563,7 +564,7 @@ internal fun SnapMenu(
         CheckMenuItem("Snap to guides", canvas.snapToGuides) { onSetCanvasMetric(CanvasMetric.SnapToGuides, it.asMetric()) }
         CheckMenuItem("Snap to margins", canvas.snapToMargins) { onSetCanvasMetric(CanvasMetric.SnapToMargins, it.asMetric()) }
         CheckMenuItem("Snap to page center", canvas.snapToPageCenter) { onSetCanvasMetric(CanvasMetric.SnapToPageCenter, it.asMetric()) }
-        Divider()
+        HorizontalDivider()
         DropdownMenuItem(
             text = { Text("Tolerance ${canvas.snapThreshold.formatForInput()} px") },
             onClick = {},
@@ -674,7 +675,7 @@ internal fun CompactToolbarButton(
 
 @Composable
 internal fun ToolbarDivider() {
-    Divider(modifier = Modifier.height(26.dp).width(1.dp))
+    VerticalDivider(modifier = Modifier.height(26.dp))
 }
 
 @Composable
@@ -721,6 +722,5 @@ internal fun previewRecordLabel(record: DataRecord, fields: List<SchemaField>): 
         ?: record.values.values.firstOrNull { it.isNotBlank() }
         ?: record.id
 }
-
 
 
