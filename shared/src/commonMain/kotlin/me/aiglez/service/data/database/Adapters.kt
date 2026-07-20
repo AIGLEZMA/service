@@ -6,6 +6,11 @@ import kotlinx.serialization.json.Json
 import me.aiglez.service.domain.models.SchemaField
 import me.aiglez.service.domain.models.TemplateElement
 
+private val templateJson = Json {
+    classDiscriminator = "_elementType"
+    ignoreUnknownKeys = true
+}
+
 val fieldsAdapter = object : ColumnAdapter<List<SchemaField>, String> {
     override fun decode(databaseValue: String): List<SchemaField> =
         Json.decodeFromString(databaseValue)
@@ -24,10 +29,9 @@ val valuesMapAdapter = object : ColumnAdapter<Map<String, String>, String> {
 
 val elementsAdapter = object : ColumnAdapter<List<TemplateElement>, String> {
     override fun decode(databaseValue: String): List<TemplateElement> =
-        Json.decodeFromString(databaseValue)
+        templateJson.decodeFromString(databaseValue)
 
     override fun encode(value: List<TemplateElement>): String =
-        Json.encodeToString(value)
+        templateJson.encodeToString(value)
 }
-
 
