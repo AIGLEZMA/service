@@ -13,8 +13,6 @@ import me.aiglez.service.ui.templates.editor.EditorCommand
 import me.aiglez.service.ui.templates.editor.GeometryService
 import me.aiglez.service.ui.templates.editor.PageRect
 import me.aiglez.service.ui.templates.editor.ReplaceElementCommand
-import me.aiglez.service.ui.templates.editor.ReplaceElementsCommand
-import me.aiglez.service.ui.templates.editor.updateCommon
 import me.aiglez.service.ui.templates.editor.withBarcodeBackground
 import me.aiglez.service.ui.templates.editor.withBarcodeBorderColor
 import me.aiglez.service.ui.templates.editor.withBarcodeBorderWidth
@@ -66,6 +64,32 @@ import me.aiglez.service.ui.templates.editor.withRectangleBorderRadius
 import me.aiglez.service.ui.templates.editor.withRectangleBorderStyle
 import me.aiglez.service.ui.templates.editor.withRectangleBorderWidth
 import me.aiglez.service.ui.templates.editor.withRectangleFill
+import me.aiglez.service.ui.templates.editor.withTableAlternateRowColor
+import me.aiglez.service.ui.templates.editor.withTableBackground
+import me.aiglez.service.ui.templates.editor.withTableBorderColor
+import me.aiglez.service.ui.templates.editor.withTableBorderRadius
+import me.aiglez.service.ui.templates.editor.withTableBorderStyle
+import me.aiglez.service.ui.templates.editor.withTableBorderWidth
+import me.aiglez.service.ui.templates.editor.withTableCellBackground
+import me.aiglez.service.ui.templates.editor.withTableCellBorderColor
+import me.aiglez.service.ui.templates.editor.withTableCellBorderWidth
+import me.aiglez.service.ui.templates.editor.withTableCellPadding
+import me.aiglez.service.ui.templates.editor.withTableCellText
+import me.aiglez.service.ui.templates.editor.withTableCellTextAlign
+import me.aiglez.service.ui.templates.editor.withTableCellTextColor
+import me.aiglez.service.ui.templates.editor.withTableCellVerticalAlign
+import me.aiglez.service.ui.templates.editor.withTableColumns
+import me.aiglez.service.ui.templates.editor.withTableFontFamily
+import me.aiglez.service.ui.templates.editor.withTableFontSize
+import me.aiglez.service.ui.templates.editor.withTableHeaderBackground
+import me.aiglez.service.ui.templates.editor.withTableHeaderColor
+import me.aiglez.service.ui.templates.editor.withTableHeaderRows
+import me.aiglez.service.ui.templates.editor.withTablePadding
+import me.aiglez.service.ui.templates.editor.withTableRows
+import me.aiglez.service.ui.templates.editor.withTableTextAlign
+import me.aiglez.service.ui.templates.editor.withTableTextColor
+import me.aiglez.service.ui.templates.editor.withTableUseAlternateRows
+import me.aiglez.service.ui.templates.editor.withTableVerticalAlign
 import me.aiglez.service.ui.templates.editor.withTextAlign
 import me.aiglez.service.ui.templates.editor.withTextBackground
 import me.aiglez.service.ui.templates.editor.withTextBorderColor
@@ -94,35 +118,33 @@ internal class TemplateEditorPropertyActions(
         replaceSelection(transform)
     }
 
+    private fun replaceSelectedIfChanged(transform: (TemplateElement) -> TemplateElement) {
+        val element = selectedElement() ?: return
+        val nextElement = transform(element)
+        if (nextElement != element) execute(ReplaceElementCommand(element, nextElement))
+    }
+
     fun updateSelectedBounds(bounds: PageRect) {
         val element = selectedElement() ?: return
         if (element.locked) return
         val nextElement = element.withBounds(bounds.normalized())
-        execute(ReplaceElementCommand(element, nextElement))
+        if (nextElement != element) execute(ReplaceElementCommand(element, nextElement))
     }
 
     fun updateSelectedCommonProperty(property: CommonProperty, value: String) {
-        val element = selectedElement() ?: return
-        val nextElement = element.withCommonProperty(property, value)
-        if (nextElement != element) execute(ReplaceElementCommand(element, nextElement))
+        replaceSelectedIfChanged { it.withCommonProperty(property, value) }
     }
 
     fun updateSelectedText(value: String) {
-        val element = selectedElement() ?: return
-        val nextElement = element.withTextValue(value)
-        if (nextElement != element) execute(ReplaceElementCommand(element, nextElement))
+        replaceSelectedIfChanged { it.withTextValue(value) }
     }
 
     fun updateSelectedTextColor(value: String) {
-        val element = selectedElement() ?: return
-        val nextElement = element.withTextColor(value)
-        if (nextElement != element) execute(ReplaceElementCommand(element, nextElement))
+        replaceSelectedIfChanged { it.withTextColor(value) }
     }
 
     fun updateSelectedTextFontSize(value: Float) {
-        val element = selectedElement() ?: return
-        val nextElement = element.withTextFontSize(value)
-        if (nextElement != element) execute(ReplaceElementCommand(element, nextElement))
+        replaceSelectedIfChanged { it.withTextFontSize(value) }
     }
 
     fun adjustSelectedTextFontSize(delta: Float) {
@@ -135,15 +157,11 @@ internal class TemplateEditorPropertyActions(
     }
 
     fun updateSelectedTextFontFamily(value: String) {
-        val element = selectedElement() ?: return
-        val nextElement = element.withTextFontFamily(value)
-        if (nextElement != element) execute(ReplaceElementCommand(element, nextElement))
+        replaceSelectedIfChanged { it.withTextFontFamily(value) }
     }
 
     fun updateSelectedTextFontStyle(value: TemplateTextStyle) {
-        val element = selectedElement() ?: return
-        val nextElement = element.withTextFontStyle(value)
-        if (nextElement != element) execute(ReplaceElementCommand(element, nextElement))
+        replaceSelectedIfChanged { it.withTextFontStyle(value) }
     }
 
     fun toggleSelectedTextBold() {
@@ -180,27 +198,19 @@ internal class TemplateEditorPropertyActions(
     }
 
     fun updateSelectedTextLineHeight(value: Float) {
-        val element = selectedElement() ?: return
-        val nextElement = element.withTextLineHeight(value)
-        if (nextElement != element) execute(ReplaceElementCommand(element, nextElement))
+        replaceSelectedIfChanged { it.withTextLineHeight(value) }
     }
 
     fun updateSelectedTextLetterSpacing(value: Float) {
-        val element = selectedElement() ?: return
-        val nextElement = element.withTextLetterSpacing(value)
-        if (nextElement != element) execute(ReplaceElementCommand(element, nextElement))
+        replaceSelectedIfChanged { it.withTextLetterSpacing(value) }
     }
 
     fun updateSelectedTextVerticalAlign(value: String) {
-        val element = selectedElement() ?: return
-        val nextElement = element.withTextVerticalAlign(value)
-        if (nextElement != element) execute(ReplaceElementCommand(element, nextElement))
+        replaceSelectedIfChanged { it.withTextVerticalAlign(value) }
     }
 
     fun updateSelectedTextAlign(value: String) {
-        val element = selectedElement() ?: return
-        val nextElement = element.withTextAlign(value)
-        if (nextElement != element) execute(ReplaceElementCommand(element, nextElement))
+        replaceSelectedIfChanged { it.withTextAlign(value) }
     }
 
     fun alignSelectedText(value: String) {
@@ -213,99 +223,67 @@ internal class TemplateEditorPropertyActions(
     }
 
     fun updateSelectedTextDirection(value: TemplateTextDirection) {
-        val element = selectedElement() ?: return
-        val nextElement = element.withTextDirection(value)
-        if (nextElement != element) execute(ReplaceElementCommand(element, nextElement))
+        replaceSelectedIfChanged { it.withTextDirection(value) }
     }
 
     fun updateSelectedTextBackground(value: String) {
-        val element = selectedElement() ?: return
-        val nextElement = element.withTextBackground(value)
-        if (nextElement != element) execute(ReplaceElementCommand(element, nextElement))
+        replaceSelectedIfChanged { it.withTextBackground(value) }
     }
 
     fun updateSelectedTextPadding(value: Float) {
-        val element = selectedElement() ?: return
-        val nextElement = element.withTextPadding(value)
-        if (nextElement != element) execute(ReplaceElementCommand(element, nextElement))
+        replaceSelectedIfChanged { it.withTextPadding(value) }
     }
 
     fun updateSelectedTextBorderColor(value: String) {
-        val element = selectedElement() ?: return
-        val nextElement = element.withTextBorderColor(value)
-        if (nextElement != element) execute(ReplaceElementCommand(element, nextElement))
+        replaceSelectedIfChanged { it.withTextBorderColor(value) }
     }
 
     fun updateSelectedTextBorderWidth(value: Float) {
-        val element = selectedElement() ?: return
-        val nextElement = element.withTextBorderWidth(value)
-        if (nextElement != element) execute(ReplaceElementCommand(element, nextElement))
+        replaceSelectedIfChanged { it.withTextBorderWidth(value) }
     }
 
     fun updateSelectedTextBorderStyle(value: TemplateBorderStyle) {
-        val element = selectedElement() ?: return
-        val nextElement = element.withTextBorderStyle(value)
-        if (nextElement != element) execute(ReplaceElementCommand(element, nextElement))
+        replaceSelectedIfChanged { it.withTextBorderStyle(value) }
     }
 
     fun updateSelectedTextBorderRadius(value: Float) {
-        val element = selectedElement() ?: return
-        val nextElement = element.withTextBorderRadius(value)
-        if (nextElement != element) execute(ReplaceElementCommand(element, nextElement))
+        replaceSelectedIfChanged { it.withTextBorderRadius(value) }
     }
 
     fun updateSelectedRectangleFill(value: String) {
-        val element = selectedElement() ?: return
-        val nextElement = element.withRectangleFill(value)
-        if (nextElement != element) execute(ReplaceElementCommand(element, nextElement))
+        replaceSelectedIfChanged { it.withRectangleFill(value) }
     }
 
     fun updateSelectedRectangleBorderColor(value: String) {
-        val element = selectedElement() ?: return
-        val nextElement = element.withRectangleBorderColor(value)
-        if (nextElement != element) execute(ReplaceElementCommand(element, nextElement))
+        replaceSelectedIfChanged { it.withRectangleBorderColor(value) }
     }
 
     fun updateSelectedRectangleBorderWidth(value: Float) {
-        val element = selectedElement() ?: return
-        val nextElement = element.withRectangleBorderWidth(value)
-        if (nextElement != element) execute(ReplaceElementCommand(element, nextElement))
+        replaceSelectedIfChanged { it.withRectangleBorderWidth(value) }
     }
 
     fun updateSelectedRectangleBorderStyle(value: TemplateBorderStyle) {
-        val element = selectedElement() ?: return
-        val nextElement = element.withRectangleBorderStyle(value)
-        if (nextElement != element) execute(ReplaceElementCommand(element, nextElement))
+        replaceSelectedIfChanged { it.withRectangleBorderStyle(value) }
     }
 
     fun updateSelectedRectangleBorderRadius(value: Float) {
-        val element = selectedElement() ?: return
-        val nextElement = element.withRectangleBorderRadius(value)
-        if (nextElement != element) execute(ReplaceElementCommand(element, nextElement))
+        replaceSelectedIfChanged { it.withRectangleBorderRadius(value) }
     }
 
     fun updateSelectedCircleFill(value: String) {
-        val element = selectedElement() ?: return
-        val nextElement = element.withCircleFill(value)
-        if (nextElement != element) execute(ReplaceElementCommand(element, nextElement))
+        replaceSelectedIfChanged { it.withCircleFill(value) }
     }
 
     fun updateSelectedCircleBorderColor(value: String) {
-        val element = selectedElement() ?: return
-        val nextElement = element.withCircleBorderColor(value)
-        if (nextElement != element) execute(ReplaceElementCommand(element, nextElement))
+        replaceSelectedIfChanged { it.withCircleBorderColor(value) }
     }
 
     fun updateSelectedCircleBorderWidth(value: Float) {
-        val element = selectedElement() ?: return
-        val nextElement = element.withCircleBorderWidth(value)
-        if (nextElement != element) execute(ReplaceElementCommand(element, nextElement))
+        replaceSelectedIfChanged { it.withCircleBorderWidth(value) }
     }
 
     fun updateSelectedCircleBorderStyle(value: TemplateBorderStyle) {
-        val element = selectedElement() ?: return
-        val nextElement = element.withCircleBorderStyle(value)
-        if (nextElement != element) execute(ReplaceElementCommand(element, nextElement))
+        replaceSelectedIfChanged { it.withCircleBorderStyle(value) }
     }
 
     fun chooseImageForSelected() {
@@ -360,239 +338,270 @@ internal class TemplateEditorPropertyActions(
     }
 
     fun updateSelectedImageContentMode(value: TemplateImageContentMode) {
-        val element = selectedElement() ?: return
-        val nextElement = element.withImageContentMode(value)
-        if (nextElement != element) execute(ReplaceElementCommand(element, nextElement))
+        replaceSelectedIfChanged { it.withImageContentMode(value) }
     }
 
     fun updateSelectedImageAlignment(value: TemplateImageAlignment) {
-        val element = selectedElement() ?: return
-        val nextElement = element.withImageAlignment(value)
-        if (nextElement != element) execute(ReplaceElementCommand(element, nextElement))
+        replaceSelectedIfChanged { it.withImageAlignment(value) }
     }
 
     fun updateSelectedImageBackground(value: String) {
-        val element = selectedElement() ?: return
-        val nextElement = element.withImageBackground(value)
-        if (nextElement != element) execute(ReplaceElementCommand(element, nextElement))
+        replaceSelectedIfChanged { it.withImageBackground(value) }
     }
 
     fun updateSelectedImageBorderColor(value: String) {
-        val element = selectedElement() ?: return
-        val nextElement = element.withImageBorderColor(value)
-        if (nextElement != element) execute(ReplaceElementCommand(element, nextElement))
+        replaceSelectedIfChanged { it.withImageBorderColor(value) }
     }
 
     fun updateSelectedImageBorderWidth(value: Float) {
-        val element = selectedElement() ?: return
-        val nextElement = element.withImageBorderWidth(value)
-        if (nextElement != element) execute(ReplaceElementCommand(element, nextElement))
+        replaceSelectedIfChanged { it.withImageBorderWidth(value) }
     }
 
     fun updateSelectedImageBorderRadius(value: Float) {
-        val element = selectedElement() ?: return
-        val nextElement = element.withImageBorderRadius(value)
-        if (nextElement != element) execute(ReplaceElementCommand(element, nextElement))
+        replaceSelectedIfChanged { it.withImageBorderRadius(value) }
     }
 
     fun updateSelectedQrText(value: String) {
-        val element = selectedElement() ?: return
-        val nextElement = element.withQrText(value)
-        if (nextElement != element) execute(ReplaceElementCommand(element, nextElement))
+        replaceSelectedIfChanged { it.withQrText(value) }
     }
 
     fun updateSelectedQrForeground(value: String) {
-        val element = selectedElement() ?: return
-        val nextElement = element.withQrForeground(value)
-        if (nextElement != element) execute(ReplaceElementCommand(element, nextElement))
+        replaceSelectedIfChanged { it.withQrForeground(value) }
     }
 
     fun updateSelectedQrBackground(value: String) {
-        val element = selectedElement() ?: return
-        val nextElement = element.withQrBackground(value)
-        if (nextElement != element) execute(ReplaceElementCommand(element, nextElement))
+        replaceSelectedIfChanged { it.withQrBackground(value) }
     }
 
     fun updateSelectedQrQuietZone(value: Float) {
-        val element = selectedElement() ?: return
-        val nextElement = element.withQrQuietZone(value.roundToInt())
-        if (nextElement != element) execute(ReplaceElementCommand(element, nextElement))
+        replaceSelectedIfChanged { it.withQrQuietZone(value.roundToInt()) }
     }
 
     fun updateSelectedQrBorderColor(value: String) {
-        val element = selectedElement() ?: return
-        val nextElement = element.withQrBorderColor(value)
-        if (nextElement != element) execute(ReplaceElementCommand(element, nextElement))
+        replaceSelectedIfChanged { it.withQrBorderColor(value) }
     }
 
     fun updateSelectedQrBorderWidth(value: Float) {
-        val element = selectedElement() ?: return
-        val nextElement = element.withQrBorderWidth(value)
-        if (nextElement != element) execute(ReplaceElementCommand(element, nextElement))
+        replaceSelectedIfChanged { it.withQrBorderWidth(value) }
     }
 
     fun updateSelectedBarcodeText(value: String) {
-        val element = selectedElement() ?: return
-        val nextElement = element.withBarcodeText(value)
-        if (nextElement != element) execute(ReplaceElementCommand(element, nextElement))
+        replaceSelectedIfChanged { it.withBarcodeText(value) }
     }
 
     fun updateSelectedBarcodeFormat(value: TemplateBarcodeFormat) {
-        val element = selectedElement() ?: return
-        val nextElement = element.withBarcodeFormat(value)
-        if (nextElement != element) execute(ReplaceElementCommand(element, nextElement))
+        replaceSelectedIfChanged { it.withBarcodeFormat(value) }
     }
 
     fun updateSelectedBarcodeForeground(value: String) {
-        val element = selectedElement() ?: return
-        val nextElement = element.withBarcodeForeground(value)
-        if (nextElement != element) execute(ReplaceElementCommand(element, nextElement))
+        replaceSelectedIfChanged { it.withBarcodeForeground(value) }
     }
 
     fun updateSelectedBarcodeBackground(value: String) {
-        val element = selectedElement() ?: return
-        val nextElement = element.withBarcodeBackground(value)
-        if (nextElement != element) execute(ReplaceElementCommand(element, nextElement))
+        replaceSelectedIfChanged { it.withBarcodeBackground(value) }
     }
 
     fun updateSelectedBarcodeQuietZone(value: Float) {
-        val element = selectedElement() ?: return
-        val nextElement = element.withBarcodeQuietZone(value.roundToInt())
-        if (nextElement != element) execute(ReplaceElementCommand(element, nextElement))
+        replaceSelectedIfChanged { it.withBarcodeQuietZone(value.roundToInt()) }
     }
 
     fun updateSelectedBarcodeShowText(value: Boolean) {
-        val element = selectedElement() ?: return
-        val nextElement = element.withBarcodeShowText(value)
-        if (nextElement != element) execute(ReplaceElementCommand(element, nextElement))
+        replaceSelectedIfChanged { it.withBarcodeShowText(value) }
     }
 
     fun updateSelectedBarcodeFontSize(value: Float) {
-        val element = selectedElement() ?: return
-        val nextElement = element.withBarcodeFontSize(value)
-        if (nextElement != element) execute(ReplaceElementCommand(element, nextElement))
+        replaceSelectedIfChanged { it.withBarcodeFontSize(value) }
     }
 
     fun updateSelectedBarcodeBorderColor(value: String) {
-        val element = selectedElement() ?: return
-        val nextElement = element.withBarcodeBorderColor(value)
-        if (nextElement != element) execute(ReplaceElementCommand(element, nextElement))
+        replaceSelectedIfChanged { it.withBarcodeBorderColor(value) }
     }
 
     fun updateSelectedBarcodeBorderWidth(value: Float) {
-        val element = selectedElement() ?: return
-        val nextElement = element.withBarcodeBorderWidth(value)
-        if (nextElement != element) execute(ReplaceElementCommand(element, nextElement))
+        replaceSelectedIfChanged { it.withBarcodeBorderWidth(value) }
     }
 
     fun updateSelectedListFieldSlug(value: String) {
-        val element = selectedElement() ?: return
-        val nextElement = element.withListFieldSlug(value)
-        if (nextElement != element) execute(ReplaceElementCommand(element, nextElement))
+        replaceSelectedIfChanged { it.withListFieldSlug(value) }
     }
 
     fun updateSelectedListPrefix(value: String) {
-        val element = selectedElement() ?: return
-        val nextElement = element.withListPrefix(value)
-        if (nextElement != element) execute(ReplaceElementCommand(element, nextElement))
+        replaceSelectedIfChanged { it.withListPrefix(value) }
     }
 
     fun updateSelectedListSuffix(value: String) {
-        val element = selectedElement() ?: return
-        val nextElement = element.withListSuffix(value)
-        if (nextElement != element) execute(ReplaceElementCommand(element, nextElement))
+        replaceSelectedIfChanged { it.withListSuffix(value) }
     }
 
     fun updateSelectedListItemSeparator(value: String) {
-        val element = selectedElement() ?: return
-        val nextElement = element.withListItemSeparator(value)
-        if (nextElement != element) execute(ReplaceElementCommand(element, nextElement))
+        replaceSelectedIfChanged { it.withListItemSeparator(value) }
     }
 
     fun updateSelectedListMaxItems(value: Float) {
-        val element = selectedElement() ?: return
-        val nextElement = element.withListMaxItems(value.roundToInt())
-        if (nextElement != element) execute(ReplaceElementCommand(element, nextElement))
+        replaceSelectedIfChanged { it.withListMaxItems(value.roundToInt()) }
     }
 
     fun updateSelectedListMaxItemLength(value: Float) {
-        val element = selectedElement() ?: return
-        val nextElement = element.withListMaxItemLength(value.roundToInt())
-        if (nextElement != element) execute(ReplaceElementCommand(element, nextElement))
+        replaceSelectedIfChanged { it.withListMaxItemLength(value.roundToInt()) }
     }
 
     fun updateSelectedListColumns(value: Float) {
-        val element = selectedElement() ?: return
-        val nextElement = element.withListColumns(value.roundToInt())
-        if (nextElement != element) execute(ReplaceElementCommand(element, nextElement))
+        replaceSelectedIfChanged { it.withListColumns(value.roundToInt()) }
     }
 
     fun updateSelectedListColumnGap(value: Float) {
-        val element = selectedElement() ?: return
-        val nextElement = element.withListColumnGap(value)
-        if (nextElement != element) execute(ReplaceElementCommand(element, nextElement))
+        replaceSelectedIfChanged { it.withListColumnGap(value) }
     }
 
     fun updateSelectedListItemSpacing(value: Float) {
-        val element = selectedElement() ?: return
-        val nextElement = element.withListItemSpacing(value)
-        if (nextElement != element) execute(ReplaceElementCommand(element, nextElement))
+        replaceSelectedIfChanged { it.withListItemSpacing(value) }
     }
 
     fun updateSelectedListPadding(value: Float) {
-        val element = selectedElement() ?: return
-        val nextElement = element.withListPadding(value)
-        if (nextElement != element) execute(ReplaceElementCommand(element, nextElement))
+        replaceSelectedIfChanged { it.withListPadding(value) }
     }
 
     fun updateSelectedListFontFamily(value: String) {
-        val element = selectedElement() ?: return
-        val nextElement = element.withListFontFamily(value)
-        if (nextElement != element) execute(ReplaceElementCommand(element, nextElement))
+        replaceSelectedIfChanged { it.withListFontFamily(value) }
     }
 
     fun updateSelectedListFontSize(value: Float) {
-        val element = selectedElement() ?: return
-        val nextElement = element.withListFontSize(value)
-        if (nextElement != element) execute(ReplaceElementCommand(element, nextElement))
+        replaceSelectedIfChanged { it.withListFontSize(value) }
     }
 
     fun updateSelectedListColor(value: String) {
-        val element = selectedElement() ?: return
-        val nextElement = element.withListColor(value)
-        if (nextElement != element) execute(ReplaceElementCommand(element, nextElement))
+        replaceSelectedIfChanged { it.withListColor(value) }
     }
 
     fun updateSelectedListBackground(value: String) {
-        val element = selectedElement() ?: return
-        val nextElement = element.withListBackground(value)
-        if (nextElement != element) execute(ReplaceElementCommand(element, nextElement))
+        replaceSelectedIfChanged { it.withListBackground(value) }
     }
 
     fun updateSelectedListBorderColor(value: String) {
-        val element = selectedElement() ?: return
-        val nextElement = element.withListBorderColor(value)
-        if (nextElement != element) execute(ReplaceElementCommand(element, nextElement))
+        replaceSelectedIfChanged { it.withListBorderColor(value) }
     }
 
     fun updateSelectedListBorderWidth(value: Float) {
-        val element = selectedElement() ?: return
-        val nextElement = element.withListBorderWidth(value)
-        if (nextElement != element) execute(ReplaceElementCommand(element, nextElement))
+        replaceSelectedIfChanged { it.withListBorderWidth(value) }
     }
 
     fun updateSelectedListBorderStyle(value: TemplateBorderStyle) {
-        val element = selectedElement() ?: return
-        val nextElement = element.withListBorderStyle(value)
-        if (nextElement != element) execute(ReplaceElementCommand(element, nextElement))
+        replaceSelectedIfChanged { it.withListBorderStyle(value) }
     }
 
     fun updateSelectedListBorderRadius(value: Float) {
-        val element = selectedElement() ?: return
-        val nextElement = element.withListBorderRadius(value)
-        if (nextElement != element) execute(ReplaceElementCommand(element, nextElement))
+        replaceSelectedIfChanged { it.withListBorderRadius(value) }
+    }
+
+    fun updateSelectedTableRows(value: Float) {
+        replaceSelectedIfChanged { it.withTableRows(value.roundToInt()) }
+    }
+
+    fun updateSelectedTableColumns(value: Float) {
+        replaceSelectedIfChanged { it.withTableColumns(value.roundToInt()) }
+    }
+
+    fun updateSelectedTableHeaderRows(value: Float) {
+        replaceSelectedIfChanged { it.withTableHeaderRows(value.roundToInt()) }
+    }
+
+    fun updateSelectedTableFontFamily(value: String) {
+        replaceSelectedIfChanged { it.withTableFontFamily(value) }
+    }
+
+    fun updateSelectedTableFontSize(value: Float) {
+        replaceSelectedIfChanged { it.withTableFontSize(value) }
+    }
+
+    fun updateSelectedTableTextColor(value: String) {
+        replaceSelectedIfChanged { it.withTableTextColor(value) }
+    }
+
+    fun updateSelectedTableBackground(value: String) {
+        replaceSelectedIfChanged { it.withTableBackground(value) }
+    }
+
+    fun updateSelectedTableHeaderBackground(value: String) {
+        replaceSelectedIfChanged { it.withTableHeaderBackground(value) }
+    }
+
+    fun updateSelectedTableHeaderColor(value: String) {
+        replaceSelectedIfChanged { it.withTableHeaderColor(value) }
+    }
+
+    fun updateSelectedTableAlternateRowColor(value: String) {
+        replaceSelectedIfChanged { it.withTableAlternateRowColor(value) }
+    }
+
+    fun updateSelectedTableUseAlternateRows(value: Boolean) {
+        replaceSelectedIfChanged { it.withTableUseAlternateRows(value) }
+    }
+
+    fun updateSelectedTableTextAlign(value: String) {
+        replaceSelectedIfChanged { it.withTableTextAlign(value) }
+    }
+
+    fun updateSelectedTableVerticalAlign(value: String) {
+        replaceSelectedIfChanged { it.withTableVerticalAlign(value) }
+    }
+
+    fun updateSelectedTablePadding(value: Float) {
+        replaceSelectedIfChanged { it.withTablePadding(value) }
+    }
+
+    fun updateSelectedTableBorderColor(value: String) {
+        replaceSelectedIfChanged { it.withTableBorderColor(value) }
+    }
+
+    fun updateSelectedTableBorderWidth(value: Float) {
+        replaceSelectedIfChanged { it.withTableBorderWidth(value) }
+    }
+
+    fun updateSelectedTableBorderStyle(value: TemplateBorderStyle) {
+        replaceSelectedIfChanged { it.withTableBorderStyle(value) }
+    }
+
+    fun updateSelectedTableBorderRadius(value: Float) {
+        replaceSelectedIfChanged { it.withTableBorderRadius(value) }
+    }
+
+    fun updateSelectedTableGridBorderColor(value: String) {
+        replaceSelectedIfChanged { it.withTableCellBorderColor(value) }
+    }
+
+    fun updateSelectedTableGridBorderWidth(value: Float) {
+        replaceSelectedIfChanged { it.withTableCellBorderWidth(value) }
+    }
+
+    fun updateSelectedTableCellText(row: Int, column: Int, value: String) {
+        replaceSelectedIfChanged { it.withTableCellText(row, column, value) }
+    }
+
+    fun updateSelectedTableCellBackground(row: Int, column: Int, value: String) {
+        replaceSelectedIfChanged { it.withTableCellBackground(row, column, value) }
+    }
+
+    fun updateSelectedTableCellTextColor(row: Int, column: Int, value: String) {
+        replaceSelectedIfChanged { it.withTableCellTextColor(row, column, value) }
+    }
+
+    fun updateSelectedTableCellBorderColor(row: Int, column: Int, value: String) {
+        replaceSelectedIfChanged { it.withTableCellBorderColor(row, column, value) }
+    }
+
+    fun updateSelectedTableCellBorderWidth(row: Int, column: Int, value: Float) {
+        replaceSelectedIfChanged { it.withTableCellBorderWidth(row, column, value) }
+    }
+
+    fun updateSelectedTableCellTextAlign(row: Int, column: Int, value: String) {
+        replaceSelectedIfChanged { it.withTableCellTextAlign(row, column, value) }
+    }
+
+    fun updateSelectedTableCellVerticalAlign(row: Int, column: Int, value: String) {
+        replaceSelectedIfChanged { it.withTableCellVerticalAlign(row, column, value) }
+    }
+
+    fun updateSelectedTableCellPadding(row: Int, column: Int, value: Float) {
+        replaceSelectedIfChanged { it.withTableCellPadding(row, column, value) }
     }
 }
-
-
-

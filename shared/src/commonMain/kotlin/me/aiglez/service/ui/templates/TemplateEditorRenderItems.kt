@@ -143,6 +143,7 @@ import me.aiglez.service.domain.models.TemplateImageAlignment
 import me.aiglez.service.domain.models.TemplateImageContentMode
 import me.aiglez.service.domain.models.TemplateTextDirection
 import me.aiglez.service.domain.models.TemplateTextStyle
+import me.aiglez.service.domain.models.templateTableCellKey
 import me.aiglez.service.ui.templates.editor.CanvasMetrics
 import me.aiglez.service.ui.templates.editor.CanvasMetric
 import me.aiglez.service.ui.templates.editor.CanvasState
@@ -315,6 +316,23 @@ internal fun buildPageRenderItems(
                         ),
                     )
                 }
+                is TemplateElement.Table -> {
+                    val bounds = GeometryService.getElementBounds(element).scaled(pageScale)
+                    TableRenderItem(
+                        element = element,
+                        bounds = bounds,
+                        borderColor = parseColor(element.borderColor).withElementOpacity(element.opacity),
+                        cellLayouts = buildTableCellLayouts(
+                            element = element,
+                            bounds = bounds,
+                            pageScale = pageScale,
+                            zoom = zoom,
+                            textMeasurer = textMeasurer,
+                            expressionContext = expressionContext,
+                            resolveExpressions = resolveExpressions,
+                        ),
+                    )
+                }
                 is TemplateElement.Line -> {
                     LineRenderItem(
                         element = element,
@@ -387,6 +405,79 @@ internal fun buildListItemLayouts(
     return layouts
 }
 
+internal fun buildTableCellLayouts(
+    element: TemplateElement.Table,
+    bounds: PageRect,
+    pageScale: Float,
+    zoom: Float,
+    textMeasurer: TextMeasurer,
+    expressionContext: TemplateExpressionContext,
+    resolveExpressions: Boolean,
+): kotlin.collections.List<TableCellRenderLayout> {
+    val rows = element.rows.coerceAtLeast(1)
+    val columns = element.columns.coerceAtLeast(1)
+    val rowHeight = (bounds.height / rows).coerceAtLeast(1f)
+    val columnWidth = (bounds.width / columns).coerceAtLeast(1f)
+    val layouts = mutableListOf<TableCellRenderLayout>()
+    for (row in 0 until rows) {
+        for (column in 0 until columns) {
+            val key = templateTableCellKey(row, column)
+            val cell = element.cells[key]
+            val isHeader = row < element.headerRows
+            val backgroundColor = cell?.backgroundColor
+                ?: if (isHeader) element.headerBackgroundColor
+                else if (element.useAlternateRows && row % 2 == 1) element.alternateRowColor
+                else element.backgroundColor
+            val textColor = cell?.color ?: if (isHeader) element.headerColor else element.color
+            val padding = (cell?.padding ?: element.padding).coerceAtLeast(0f) * pageScale
+            val cellBounds = PageRect(
+                x = bounds.x + column * columnWidth,
+                y = bounds.y + row * rowHeight,
+                width = if (column == columns - 1) bounds.right - (bounds.x + column * columnWidth) else columnWidth,
+                height = if (row == rows - 1) bounds.bottom - (bounds.y + row * rowHeight) else rowHeight,
+            )
+            val contentWidth = (cellBounds.width - padding * 2f).coerceAtLeast(1f)
+            val contentHeight = (cellBounds.height - padding * 2f).coerceAtLeast(1f)
+            val rawText = cell?.text ?: defaultTableCellText(row, column, element.headerRows)
+            val displayText = if (resolveExpressions) renderTemplateText(rawText, expressionContext) else rawText
+            val layout = textMeasurer.measure(
+                text = displayText,
+                style = androidx.compose.ui.text.TextStyle(
+                    color = parseColor(textColor).withElementOpacity(element.opacity),
+                    fontFamily = element.fontFamily.toComposeFontFamily(),
+                    fontWeight = FontWeight(cell?.fontWeight ?: if (isHeader) 700 else element.fontWeight),
+                    fontSize = (element.fontSize * zoom).sp,
+                    textAlign = (cell?.textAlign ?: element.textAlign).toComposeTextAlign(),
+                ),
+                overflow = TextOverflow.Ellipsis,
+                softWrap = true,
+                constraints = Constraints(
+                    maxWidth = contentWidth.toInt().coerceAtLeast(1),
+                    maxHeight = contentHeight.toInt().coerceAtLeast(1),
+                ),
+            )
+            val verticalOffset = when ((cell?.verticalAlign ?: element.verticalAlign).lowercase()) {
+                "bottom" -> (contentHeight - layout.size.height).coerceAtLeast(0f)
+                "middle", "center" -> ((contentHeight - layout.size.height) / 2f).coerceAtLeast(0f)
+                else -> 0f
+            }
+            layouts += TableCellRenderLayout(
+                bounds = cellBounds,
+                background = parseColor(backgroundColor).withElementOpacity(element.opacity),
+                borderColor = parseColor(cell?.borderColor ?: element.cellBorderColor).withElementOpacity(element.opacity),
+                borderWidth = (cell?.borderWidth ?: element.cellBorderWidth).coerceAtLeast(0f) * pageScale,
+                textLayout = layout,
+                textTopLeft = Offset(cellBounds.x + padding, cellBounds.y + padding + verticalOffset),
+            )
+        }
+    }
+    return layouts
+}
+
+internal fun defaultTableCellText(row: Int, column: Int, headerRows: Int): String {
+    return if (row < headerRows) "Header ${column + 1}" else "Cell ${row + 1},${column + 1}"
+}
+
 internal fun String.toTemplateListPlaceholder(): String {
     if (isBlank()) return ""
     return if (contains(".")) "{{ $this }}" else "{{ data.$this }}"
@@ -416,6 +507,5 @@ internal fun truncateListItem(value: String, maxLength: Int): String {
     val limit = maxLength.coerceAtLeast(1)
     return if (value.length <= limit) value else value.take((limit - 1).coerceAtLeast(0)) + "..."
 }
-
 
 

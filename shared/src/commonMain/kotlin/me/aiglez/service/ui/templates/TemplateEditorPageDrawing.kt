@@ -436,6 +436,56 @@ internal fun PageBaseCanvas(
                         }
                     }
                 }
+                is TemplateElement.Table -> {
+                    val tableItem = item as TableRenderItem
+                    val bounds = tableItem.bounds
+                    withTransform({
+                        rotate(degrees = element.rotation, pivot = bounds.center())
+                    }) {
+                        val cornerRadius = CornerRadius(element.borderRadius * pageScale, element.borderRadius * pageScale)
+                        drawRoundRect(
+                            color = parseColor(element.backgroundColor).withElementOpacity(element.opacity),
+                            topLeft = Offset(bounds.x, bounds.y),
+                            size = Size(bounds.width, bounds.height),
+                            cornerRadius = cornerRadius,
+                        )
+                        clipRect(
+                            left = bounds.x,
+                            top = bounds.y,
+                            right = bounds.right,
+                            bottom = bounds.bottom,
+                        ) {
+                            tableItem.cellLayouts.forEach { cell ->
+                                drawRect(
+                                    color = cell.background,
+                                    topLeft = Offset(cell.bounds.x, cell.bounds.y),
+                                    size = Size(cell.bounds.width, cell.bounds.height),
+                                )
+                                if (cell.borderWidth > 0f) {
+                                    drawRect(
+                                        color = cell.borderColor,
+                                        topLeft = Offset(cell.bounds.x, cell.bounds.y),
+                                        size = Size(cell.bounds.width, cell.bounds.height),
+                                        style = Stroke(width = cell.borderWidth),
+                                    )
+                                }
+                                drawText(
+                                    textLayoutResult = cell.textLayout,
+                                    topLeft = cell.textTopLeft,
+                                )
+                            }
+                        }
+                        if (element.borderWidth > 0f) {
+                            drawStyledRoundRectBorder(
+                                color = tableItem.borderColor,
+                                bounds = bounds,
+                                radius = element.borderRadius * pageScale,
+                                width = element.borderWidth * pageScale,
+                                style = element.borderStyle,
+                            )
+                        }
+                    }
+                }
                 is TemplateElement.Line -> {
                     val lineItem = item as LineRenderItem
                     val bounds = lineItem.bounds
@@ -652,6 +702,5 @@ internal fun VerticalRuler(
         }
     }
 }
-
 
 

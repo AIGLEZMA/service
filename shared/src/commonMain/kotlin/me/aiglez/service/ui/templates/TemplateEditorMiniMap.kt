@@ -37,10 +37,10 @@ import androidx.compose.material.icons.filled.Undo
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
-import androidx.compose.material3.Divider
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -248,6 +248,7 @@ internal fun MiniMapNavigator(
                             is TemplateElement.QRCode -> Color(0xFF111827).copy(alpha = 0.48f)
                             is TemplateElement.Barcode -> Color(0xFF6D28D9).copy(alpha = 0.42f)
                             is TemplateElement.List -> Color(0xFF0891B2).copy(alpha = 0.42f)
+                            is TemplateElement.Table -> Color(0xFF0D9488).copy(alpha = 0.44f)
                             is TemplateElement.Rectangle -> Color(0xFF16A34A).copy(alpha = 0.42f)
                             is TemplateElement.Line -> Color(0xFF111827).copy(alpha = 0.52f)
                         },
@@ -317,15 +318,15 @@ internal fun ElementContextMenu(
         MenuCommand("Copy", true, onCopy, onDismiss)
         MenuCommand("Paste", true, onPaste, onDismiss)
         MenuCommand("Delete", true, onDelete, onDismiss)
-        Divider()
+        HorizontalDivider()
         MenuCommand("Bring to Front", true, onBringToFront, onDismiss)
         MenuCommand("Send to Back", true, onSendToBack, onDismiss)
-        Divider()
+        HorizontalDivider()
         MenuCommand("Group", true, onGroup, onDismiss)
         MenuCommand("Ungroup", true, onUngroup, onDismiss)
         MenuCommand("Lock", true, onLock, onDismiss)
         MenuCommand("Hide", true, onHide, onDismiss)
-        Divider()
+        HorizontalDivider()
         MenuCommand("Align left", true, { onAlign(SelectionAlignment.Left) }, onDismiss)
         MenuCommand("Align center", true, { onAlign(SelectionAlignment.Center) }, onDismiss)
         MenuCommand("Align right", true, { onAlign(SelectionAlignment.Right) }, onDismiss)
@@ -355,6 +356,4 @@ internal fun miniMapTransform(
         scale = scale,
     )
 }
-
-
 

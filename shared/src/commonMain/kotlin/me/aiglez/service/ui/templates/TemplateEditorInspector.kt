@@ -37,10 +37,10 @@ import androidx.compose.material.icons.filled.Undo
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
-import androidx.compose.material3.Divider
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -143,6 +143,7 @@ import me.aiglez.service.domain.models.TemplateImageAlignment
 import me.aiglez.service.domain.models.TemplateImageContentMode
 import me.aiglez.service.domain.models.TemplateTextDirection
 import me.aiglez.service.domain.models.TemplateTextStyle
+import me.aiglez.service.domain.models.templateTableCellKey
 import me.aiglez.service.ui.templates.editor.CanvasMetrics
 import me.aiglez.service.ui.templates.editor.CanvasMetric
 import me.aiglez.service.ui.templates.editor.CanvasState
@@ -237,6 +238,34 @@ internal fun RightInspectorPanel(
     onUpdateListBorderWidth: (Float) -> Unit,
     onUpdateListBorderStyle: (TemplateBorderStyle) -> Unit,
     onUpdateListBorderRadius: (Float) -> Unit,
+    onUpdateTableRows: (Float) -> Unit,
+    onUpdateTableColumns: (Float) -> Unit,
+    onUpdateTableHeaderRows: (Float) -> Unit,
+    onUpdateTableFontFamily: (String) -> Unit,
+    onUpdateTableFontSize: (Float) -> Unit,
+    onUpdateTableTextColor: (String) -> Unit,
+    onUpdateTableBackground: (String) -> Unit,
+    onUpdateTableHeaderBackground: (String) -> Unit,
+    onUpdateTableHeaderColor: (String) -> Unit,
+    onUpdateTableAlternateRowColor: (String) -> Unit,
+    onUpdateTableUseAlternateRows: (Boolean) -> Unit,
+    onUpdateTableTextAlign: (String) -> Unit,
+    onUpdateTableVerticalAlign: (String) -> Unit,
+    onUpdateTablePadding: (Float) -> Unit,
+    onUpdateTableBorderColor: (String) -> Unit,
+    onUpdateTableBorderWidth: (Float) -> Unit,
+    onUpdateTableBorderStyle: (TemplateBorderStyle) -> Unit,
+    onUpdateTableBorderRadius: (Float) -> Unit,
+    onUpdateTableGridBorderColor: (String) -> Unit,
+    onUpdateTableGridBorderWidth: (Float) -> Unit,
+    onUpdateTableCellText: (Int, Int, String) -> Unit,
+    onUpdateTableCellBackground: (Int, Int, String) -> Unit,
+    onUpdateTableCellTextColor: (Int, Int, String) -> Unit,
+    onUpdateTableCellBorderColor: (Int, Int, String) -> Unit,
+    onUpdateTableCellBorderWidth: (Int, Int, Float) -> Unit,
+    onUpdateTableCellTextAlign: (Int, Int, String) -> Unit,
+    onUpdateTableCellVerticalAlign: (Int, Int, String) -> Unit,
+    onUpdateTableCellPadding: (Int, Int, Float) -> Unit,
     onDeleteSelected: () -> Unit,
 ) {
     val element = state.selectedElement
@@ -327,7 +356,7 @@ internal fun RightInspectorPanel(
             )
             SliderRow("Opacity", element.opacity, 0f..1f, { onUpdateCommon(CommonProperty.Opacity, it.toString()) })
             NumericFieldRow("Z index", element.zIndex.toFloat()) { onUpdateCommon(CommonProperty.ZIndex, it.toInt().toString()) }
-            Divider()
+            HorizontalDivider()
             when (element) {
                 is TemplateElement.Text -> {
                     InspectorSection("Text")
@@ -389,9 +418,12 @@ internal fun RightInspectorPanel(
                     EnumRow("Resize", TemplateImageContentMode.entries.map { it.name }, element.contentMode.name) {
                         onUpdateImageContentMode(TemplateImageContentMode.valueOf(it))
                     }
-                    DropdownRow("Alignment", TemplateImageAlignment.entries.map { it.name }, element.alignment.name) {
-                        onUpdateImageAlignment(TemplateImageAlignment.valueOf(it))
-                    }
+                    DropdownRow(
+                        label = "Alignment",
+                        options = TemplateImageAlignment.entries.map { it.name },
+                        selected = element.alignment.name,
+                        onSelect = { onUpdateImageAlignment(TemplateImageAlignment.valueOf(it)) },
+                    )
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
                         OutlinedButton(
                             onClick = onFitImageFrameToAspect,
@@ -474,9 +506,8 @@ internal fun RightInspectorPanel(
                         label = "Field",
                         options = fieldOptions,
                         selected = element.fieldSlug.ifBlank { "Select field" },
-                    ) { value ->
-                        onUpdateListFieldSlug(if (value == "Select field") "" else value)
-                    }
+                        onSelect = { value -> onUpdateListFieldSlug(if (value == "Select field") "" else value) },
+                    )
                     if (listFieldSlugs.isEmpty()) {
                         Text(
                             "No LIST fields in this schema.",
@@ -505,6 +536,84 @@ internal fun RightInspectorPanel(
                     SliderRow("Border width", element.borderWidth, 0f..12f, onUpdateListBorderWidth)
                     SliderRow("Border radius", element.borderRadius, 0f..48f, onUpdateListBorderRadius)
                 }
+                is TemplateElement.Table -> {
+                    var selectedRow by remember(element.id, element.rows) { mutableStateOf(0) }
+                    var selectedColumn by remember(element.id, element.columns) { mutableStateOf(0) }
+                    selectedRow = selectedRow.coerceIn(0, (element.rows - 1).coerceAtLeast(0))
+                    selectedColumn = selectedColumn.coerceIn(0, (element.columns - 1).coerceAtLeast(0))
+                    val cell = element.cells[templateTableCellKey(selectedRow, selectedColumn)]
+                    val isHeaderCell = selectedRow < element.headerRows
+                    val cellText = cell?.text ?: defaultTableCellText(selectedRow, selectedColumn, element.headerRows)
+                    val cellBackground = cell?.backgroundColor
+                        ?: if (isHeaderCell) element.headerBackgroundColor
+                        else if (element.useAlternateRows && selectedRow % 2 == 1) element.alternateRowColor
+                        else element.backgroundColor
+                    val cellTextColor = cell?.color ?: if (isHeaderCell) element.headerColor else element.color
+
+                    InspectorSection("Table")
+                    SliderRow("Rows", element.rows.toFloat(), 1f..40f, onUpdateTableRows)
+                    SliderRow("Columns", element.columns.toFloat(), 1f..12f, onUpdateTableColumns)
+                    SliderRow("Header rows", element.headerRows.toFloat(), 0f..element.rows.toFloat().coerceAtLeast(1f), onUpdateTableHeaderRows)
+                    ToggleRow("Alternate rows", element.useAlternateRows, onUpdateTableUseAlternateRows)
+                    InspectorSection("Text")
+                    DropdownRow("Font", listOf("Inter", "Sans", "Serif", "Monospace"), element.fontFamily, onUpdateTableFontFamily)
+                    SliderRow("Font size", element.fontSize, 6f..48f, onUpdateTableFontSize)
+                    EnumRow("Text align", listOf("left", "center", "right"), element.textAlign, onUpdateTableTextAlign)
+                    EnumRow("Vertical align", listOf("top", "middle", "bottom"), element.verticalAlign, onUpdateTableVerticalAlign)
+                    SliderRow("Padding", element.padding, 0f..32f, onUpdateTablePadding)
+                    ColorFieldRow("Text color", element.color, onUpdateTableTextColor)
+                    ColorFieldRow("Background", element.backgroundColor, onUpdateTableBackground)
+                    ColorFieldRow("Header background", element.headerBackgroundColor, onUpdateTableHeaderBackground)
+                    ColorFieldRow("Header text", element.headerColor, onUpdateTableHeaderColor)
+                    ColorFieldRow("Alternate row", element.alternateRowColor, onUpdateTableAlternateRowColor)
+                    InspectorSection("Border")
+                    ColorFieldRow("Border color", element.borderColor, onUpdateTableBorderColor)
+                    BorderStyleRow("Border style", element.borderStyle, onUpdateTableBorderStyle)
+                    SliderRow("Border width", element.borderWidth, 0f..12f, onUpdateTableBorderWidth)
+                    SliderRow("Border radius", element.borderRadius, 0f..48f, onUpdateTableBorderRadius)
+                    ColorFieldRow("Cell border", element.cellBorderColor, onUpdateTableGridBorderColor)
+                    SliderRow("Cell border width", element.cellBorderWidth, 0f..8f, onUpdateTableGridBorderWidth)
+                    InspectorSection("Selected cell")
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                        DropdownRow(
+                            label = "Row",
+                            options = (0 until element.rows).map { (it + 1).toString() },
+                            selected = (selectedRow + 1).toString(),
+                            onSelect = { selectedRow = it.toIntOrNull()?.minus(1)?.coerceIn(0, element.rows - 1) ?: selectedRow },
+                            modifier = Modifier.weight(1f),
+                        )
+                        DropdownRow(
+                            label = "Column",
+                            options = (0 until element.columns).map { (it + 1).toString() },
+                            selected = (selectedColumn + 1).toString(),
+                            onSelect = { selectedColumn = it.toIntOrNull()?.minus(1)?.coerceIn(0, element.columns - 1) ?: selectedColumn },
+                            modifier = Modifier.weight(1f),
+                        )
+                    }
+                    ExpressionTextEditor(
+                        value = cellText,
+                        schema = state.schema,
+                        legacyPlaceholder = null,
+                        onValueChange = { onUpdateTableCellText(selectedRow, selectedColumn, it) },
+                    )
+                    ColorFieldRow("Cell background", cellBackground) { onUpdateTableCellBackground(selectedRow, selectedColumn, it) }
+                    ColorFieldRow("Cell text", cellTextColor) { onUpdateTableCellTextColor(selectedRow, selectedColumn, it) }
+                    ColorFieldRow("Cell border", cell?.borderColor ?: element.cellBorderColor) {
+                        onUpdateTableCellBorderColor(selectedRow, selectedColumn, it)
+                    }
+                    SliderRow("Cell border width", cell?.borderWidth ?: element.cellBorderWidth, 0f..8f) {
+                        onUpdateTableCellBorderWidth(selectedRow, selectedColumn, it)
+                    }
+                    EnumRow("Cell align", listOf("left", "center", "right"), cell?.textAlign ?: element.textAlign) {
+                        onUpdateTableCellTextAlign(selectedRow, selectedColumn, it)
+                    }
+                    EnumRow("Cell vertical", listOf("top", "middle", "bottom"), cell?.verticalAlign ?: element.verticalAlign) {
+                        onUpdateTableCellVerticalAlign(selectedRow, selectedColumn, it)
+                    }
+                    SliderRow("Cell padding", cell?.padding ?: element.padding, 0f..32f) {
+                        onUpdateTableCellPadding(selectedRow, selectedColumn, it)
+                    }
+                }
                 is TemplateElement.Rectangle -> {
                     InspectorSection("Fill")
                     ColorFieldRow("Fill color", element.fillColor, onUpdateRectangleFill)
@@ -527,6 +636,3 @@ internal fun RightInspectorPanel(
         }
     }
 }
-
-
-

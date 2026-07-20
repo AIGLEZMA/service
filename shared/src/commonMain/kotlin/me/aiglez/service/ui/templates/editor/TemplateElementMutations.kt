@@ -52,6 +52,12 @@ fun TemplateElement.withBounds(bounds: PageRect): TemplateElement {
             width = bounds.width,
             height = bounds.height,
         )
+        is TemplateElement.Table -> copy(
+            x = bounds.x,
+            y = bounds.y,
+            width = bounds.width,
+            height = bounds.height,
+        )
         is TemplateElement.Rectangle -> copy(
             x = bounds.x,
             y = bounds.y,
@@ -175,6 +181,20 @@ fun TemplateElement.updateCommon(
             inlineAlignment = inlineAlignment,
         )
         is TemplateElement.List -> copy(
+            name = name,
+            anchorX = anchorX,
+            anchorY = anchorY,
+            rotation = rotation,
+            locked = locked,
+            visible = visible,
+            zIndex = zIndex,
+            opacity = opacity,
+            visibilityExpression = visibilityExpression,
+            breakInside = breakInside,
+            inlineType = inlineType,
+            inlineAlignment = inlineAlignment,
+        )
+        is TemplateElement.Table -> copy(
             name = name,
             anchorX = anchorX,
             anchorY = anchorY,
@@ -729,6 +749,13 @@ fun createDefaultElement(type: TemplateElementType, id: String, x: Float, y: Flo
             y = y,
             zIndex = zIndex,
         )
+        TemplateElementType.Table -> TemplateElement.Table(
+            id = id,
+            name = "Table",
+            x = x,
+            y = y,
+            zIndex = zIndex,
+        )
         TemplateElementType.Rectangle -> TemplateElement.Rectangle(
             id = id,
             name = "Rectangle",
@@ -756,26 +783,8 @@ fun createDefaultElement(type: TemplateElementType, id: String, x: Float, y: Flo
     }
 }
 
-enum class CommonProperty {
-    Name,
-    AnchorX,
-    AnchorY,
-    Rotation,
-    Locked,
-    Visible,
-    ZIndex,
-    Opacity,
-    VisibilityExpression,
-    BreakInside,
-    InlineType,
-    InlineAlignment,
-}
-
 private fun String.toAnchorXOrNull(): AnchorX? = AnchorX.entries.firstOrNull { it.name == this }
 private fun String.toAnchorYOrNull(): AnchorY? = AnchorY.entries.firstOrNull { it.name == this }
 private fun String.toBreakInsideOrNull(): BreakInside? = BreakInside.entries.firstOrNull { it.name == this }
 private fun String.toInlineTypeOrNull(): InlineType? = InlineType.entries.firstOrNull { it.name == this }
 private fun String.toInlineAlignmentOrNull(): InlineAlignment? = InlineAlignment.entries.firstOrNull { it.name == this }
-
-
-

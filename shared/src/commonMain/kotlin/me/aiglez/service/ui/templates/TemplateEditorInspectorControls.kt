@@ -472,9 +472,10 @@ internal fun DropdownRow(
     options: List<String>,
     selected: String,
     onSelect: (String) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     var expanded by remember { mutableStateOf(false) }
-    Box(modifier = Modifier.fillMaxWidth()) {
+    Box(modifier = modifier.fillMaxWidth()) {
         OutlinedButton(
             onClick = { expanded = true },
             modifier = Modifier.fillMaxWidth(),
@@ -634,6 +635,4 @@ internal fun EnumRow(
         }
     }
 }
-
-
 

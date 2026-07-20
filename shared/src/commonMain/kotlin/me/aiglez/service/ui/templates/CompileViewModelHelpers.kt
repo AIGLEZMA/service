@@ -47,6 +47,7 @@ internal fun TemplateElement.withCopiedIdentity(id: String, zIndex: Int): Templa
             is TemplateElement.QRCode -> element.copy(id = id)
             is TemplateElement.Barcode -> element.copy(id = id)
             is TemplateElement.List -> element.copy(id = id)
+            is TemplateElement.Table -> element.copy(id = id)
             is TemplateElement.Rectangle -> element.copy(id = id)
             is TemplateElement.Line -> element.copy(id = id)
         }
@@ -100,6 +101,7 @@ internal fun TemplateElement.referencedExpressionRoots(): Set<String> {
                 roots += "data"
             }
         }
+        is TemplateElement.Table -> cells.values.forEach { cell -> addFrom(cell.text) }
         is TemplateElement.Image,
         is TemplateElement.Circle,
         is TemplateElement.Rectangle,
@@ -112,6 +114,5 @@ internal fun normalizeRotation(rotation: Float): Float {
     val normalized = rotation % 360f
     return if (normalized < 0f) normalized + 360f else normalized
 }
-
 
 

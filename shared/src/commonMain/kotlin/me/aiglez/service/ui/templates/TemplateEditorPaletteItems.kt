@@ -394,12 +394,11 @@ internal fun componentPaletteItems(): List<ComponentPaletteItem> {
         ComponentPaletteItem("Circle", "Circ", TemplateElementType.Circle, group = "Shapes"),
         ComponentPaletteItem("QR Code", "QR", TemplateElementType.QRCode, group = "Data"),
         ComponentPaletteItem("Barcode", "|||", TemplateElementType.Barcode, group = "Data"),
-        ComponentPaletteItem("Table", "Tbl", TemplateElementType.Table, group = "Layout", enabled = false),
+        ComponentPaletteItem("Table", "Tbl", TemplateElementType.Table, group = "Layout"),
         ComponentPaletteItem("List", "List", TemplateElementType.List, group = "Layout"),
         ComponentPaletteItem("Section", "Sec", TemplateElementType.Area, group = "Layout", enabled = false),
         ComponentPaletteItem("Area", "Box", TemplateElementType.Area, group = "Layout", enabled = false),
     )
 }
-
 
 

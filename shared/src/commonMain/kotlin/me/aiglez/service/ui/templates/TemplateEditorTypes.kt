@@ -347,6 +347,22 @@ internal data class ListItemRenderLayout(
     val topLeft: Offset,
 )
 
+internal data class TableRenderItem(
+    override val element: TemplateElement.Table,
+    val bounds: PageRect,
+    val borderColor: Color,
+    val cellLayouts: kotlin.collections.List<TableCellRenderLayout>,
+) : PageRenderItem
+
+internal data class TableCellRenderLayout(
+    val bounds: PageRect,
+    val background: Color,
+    val borderColor: Color,
+    val borderWidth: Float,
+    val textLayout: TextLayoutResult,
+    val textTopLeft: Offset,
+)
+
 internal data class LineRenderItem(
     override val element: TemplateElement.Line,
     val bounds: PageRect,
@@ -355,6 +371,5 @@ internal data class LineRenderItem(
     val color: Color,
     val strokeWidth: Float,
 ) : PageRenderItem
-
 
 

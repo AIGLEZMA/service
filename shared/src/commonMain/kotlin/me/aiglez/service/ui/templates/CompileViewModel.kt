@@ -554,6 +554,34 @@ class CompileViewModel(
     fun updateSelectedListBorderWidth(value: Float) = propertyActions.updateSelectedListBorderWidth(value)
     fun updateSelectedListBorderStyle(value: TemplateBorderStyle) = propertyActions.updateSelectedListBorderStyle(value)
     fun updateSelectedListBorderRadius(value: Float) = propertyActions.updateSelectedListBorderRadius(value)
+    fun updateSelectedTableRows(value: Float) = propertyActions.updateSelectedTableRows(value)
+    fun updateSelectedTableColumns(value: Float) = propertyActions.updateSelectedTableColumns(value)
+    fun updateSelectedTableHeaderRows(value: Float) = propertyActions.updateSelectedTableHeaderRows(value)
+    fun updateSelectedTableFontFamily(value: String) = propertyActions.updateSelectedTableFontFamily(value)
+    fun updateSelectedTableFontSize(value: Float) = propertyActions.updateSelectedTableFontSize(value)
+    fun updateSelectedTableTextColor(value: String) = propertyActions.updateSelectedTableTextColor(value)
+    fun updateSelectedTableBackground(value: String) = propertyActions.updateSelectedTableBackground(value)
+    fun updateSelectedTableHeaderBackground(value: String) = propertyActions.updateSelectedTableHeaderBackground(value)
+    fun updateSelectedTableHeaderColor(value: String) = propertyActions.updateSelectedTableHeaderColor(value)
+    fun updateSelectedTableAlternateRowColor(value: String) = propertyActions.updateSelectedTableAlternateRowColor(value)
+    fun updateSelectedTableUseAlternateRows(value: Boolean) = propertyActions.updateSelectedTableUseAlternateRows(value)
+    fun updateSelectedTableTextAlign(value: String) = propertyActions.updateSelectedTableTextAlign(value)
+    fun updateSelectedTableVerticalAlign(value: String) = propertyActions.updateSelectedTableVerticalAlign(value)
+    fun updateSelectedTablePadding(value: Float) = propertyActions.updateSelectedTablePadding(value)
+    fun updateSelectedTableBorderColor(value: String) = propertyActions.updateSelectedTableBorderColor(value)
+    fun updateSelectedTableBorderWidth(value: Float) = propertyActions.updateSelectedTableBorderWidth(value)
+    fun updateSelectedTableBorderStyle(value: TemplateBorderStyle) = propertyActions.updateSelectedTableBorderStyle(value)
+    fun updateSelectedTableBorderRadius(value: Float) = propertyActions.updateSelectedTableBorderRadius(value)
+    fun updateSelectedTableGridBorderColor(value: String) = propertyActions.updateSelectedTableGridBorderColor(value)
+    fun updateSelectedTableGridBorderWidth(value: Float) = propertyActions.updateSelectedTableGridBorderWidth(value)
+    fun updateSelectedTableCellText(row: Int, column: Int, value: String) = propertyActions.updateSelectedTableCellText(row, column, value)
+    fun updateSelectedTableCellBackground(row: Int, column: Int, value: String) = propertyActions.updateSelectedTableCellBackground(row, column, value)
+    fun updateSelectedTableCellTextColor(row: Int, column: Int, value: String) = propertyActions.updateSelectedTableCellTextColor(row, column, value)
+    fun updateSelectedTableCellBorderColor(row: Int, column: Int, value: String) = propertyActions.updateSelectedTableCellBorderColor(row, column, value)
+    fun updateSelectedTableCellBorderWidth(row: Int, column: Int, value: Float) = propertyActions.updateSelectedTableCellBorderWidth(row, column, value)
+    fun updateSelectedTableCellTextAlign(row: Int, column: Int, value: String) = propertyActions.updateSelectedTableCellTextAlign(row, column, value)
+    fun updateSelectedTableCellVerticalAlign(row: Int, column: Int, value: String) = propertyActions.updateSelectedTableCellVerticalAlign(row, column, value)
+    fun updateSelectedTableCellPadding(row: Int, column: Int, value: Float) = propertyActions.updateSelectedTableCellPadding(row, column, value)
 
     fun setZoom(zoom: Float) {
         _uiState.update { state ->
@@ -716,6 +744,7 @@ class CompileViewModel(
                     is TemplateElement.QRCode -> element.copy(id = id)
                     is TemplateElement.Barcode -> element.copy(id = id)
                     is TemplateElement.List -> element.copy(id = id)
+                    is TemplateElement.Table -> element.copy(id = id)
                     is TemplateElement.Rectangle -> element.copy(id = id)
                     is TemplateElement.Line -> element.copy(id = id)
                 }
@@ -727,6 +756,3 @@ class CompileViewModel(
         return "$prefix-${Random.nextLong(1_000_000_000L, 9_999_999_999L)}"
     }
 }
-
-
-

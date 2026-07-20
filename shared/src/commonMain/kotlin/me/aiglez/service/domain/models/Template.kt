@@ -97,6 +97,21 @@ enum class TemplateBarcodeFormat {
 }
 
 @Serializable
+data class TemplateTableCell(
+    val text: String = "",
+    val backgroundColor: String? = null,
+    val color: String? = null,
+    val borderColor: String? = null,
+    val borderWidth: Float? = null,
+    val textAlign: String? = null,
+    val verticalAlign: String? = null,
+    val padding: Float? = null,
+    val fontWeight: Int? = null,
+)
+
+fun templateTableCellKey(row: Int, column: Int): String = "$row:$column"
+
+@Serializable
 enum class BreakInside {
     Auto,
     Avoid,
@@ -331,6 +346,51 @@ sealed interface TemplateElement {
     }
 
     @Serializable
+    data class Table(
+        override val id: String = "",
+        override val name: String = "Table",
+        override val x: Float,
+        override val y: Float,
+        override val width: Float = 300f,
+        override val height: Float = 180f,
+        override val anchorX: AnchorX = AnchorX.Left,
+        override val anchorY: AnchorY = AnchorY.Top,
+        override val rotation: Float = 0f,
+        override val locked: Boolean = false,
+        override val visible: Boolean = true,
+        override val zIndex: Int = 0,
+        override val opacity: Float = 1f,
+        override val visibilityExpression: String = "",
+        override val breakInside: BreakInside = BreakInside.Auto,
+        override val inlineType: InlineType = InlineType.Block,
+        override val inlineAlignment: InlineAlignment = InlineAlignment.Start,
+        val rows: Int = 4,
+        val columns: Int = 3,
+        val headerRows: Int = 1,
+        val cells: Map<String, TemplateTableCell> = emptyMap(),
+        val fontFamily: String = "Inter",
+        val fontSize: Float = 11f,
+        val fontWeight: Int = 400,
+        val color: String = "#111827",
+        val backgroundColor: String = "#FFFFFF",
+        val headerBackgroundColor: String = "#E5E7EB",
+        val headerColor: String = "#111827",
+        val alternateRowColor: String = "#F8FAFC",
+        val useAlternateRows: Boolean = true,
+        val textAlign: String = "left",
+        val verticalAlign: String = "middle",
+        val padding: Float = 6f,
+        val borderColor: String = "#CBD5E1",
+        val borderWidth: Float = 1f,
+        val borderStyle: TemplateBorderStyle = TemplateBorderStyle.Solid,
+        val borderRadius: Float = 0f,
+        val cellBorderColor: String = "#CBD5E1",
+        val cellBorderWidth: Float = 1f,
+    ) : TemplateElement {
+        override val type: TemplateElementType = TemplateElementType.Table
+    }
+
+    @Serializable
     data class Rectangle(
         override val id: String = "",
         override val name: String = "Rectangle",
@@ -398,6 +458,5 @@ data class Template(
     val elements: List<TemplateElement>,
     val isArchived: Boolean = false, // Soft delete flag
 )
-
 
 
