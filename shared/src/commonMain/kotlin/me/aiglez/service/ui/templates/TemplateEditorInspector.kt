@@ -280,7 +280,7 @@ internal fun RightInspectorPanel(
             modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(14.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
-            Text("Inspector", style = MaterialTheme.typography.titleSmall)
+            Text("Inspecteur", style = MaterialTheme.typography.titleSmall)
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -288,13 +288,13 @@ internal fun RightInspectorPanel(
                 FilterChip(
                     selected = inspectorPage == InspectorPage.Component,
                     onClick = { inspectorPage = InspectorPage.Component },
-                    label = { Text("Component") },
+                    label = { Text("Composant") },
                     modifier = Modifier.weight(1f),
                 )
                 FilterChip(
                     selected = inspectorPage == InspectorPage.PageSetup,
                     onClick = { inspectorPage = InspectorPage.PageSetup },
-                    label = { Text("Page setup") },
+                    label = { Text("Mise en page") },
                     modifier = Modifier.weight(1f),
                 )
             }
@@ -306,7 +306,7 @@ internal fun RightInspectorPanel(
                 return@Column
             }
             if (element == null) {
-                Text("No selection", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text("Aucune sélection", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 return@Column
             }
             Row(
@@ -322,10 +322,10 @@ internal fun RightInspectorPanel(
                 )
             }
 
-            InspectorSection("Element")
-            TextFieldRow("Name", element.name) { onUpdateCommon(CommonProperty.Name, it) }
+            InspectorSection("Élément")
+            TextFieldRow("Nom", element.name) { onUpdateCommon(CommonProperty.Name, it) }
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
-                ToggleRow("Locked", element.locked, { onUpdateCommon(CommonProperty.Locked, it.toString()) }, Modifier.weight(1f))
+                ToggleRow("Verrouillé", element.locked, { onUpdateCommon(CommonProperty.Locked, it.toString()) }, Modifier.weight(1f))
                 ToggleRow("Visible", element.visible, { onUpdateCommon(CommonProperty.Visible, it.toString()) }, Modifier.weight(1f))
             }
 
@@ -337,67 +337,74 @@ internal fun RightInspectorPanel(
                 onSecondChange = { onUpdateBounds(GeometryService.getElementBounds(element).copy(y = it)) },
             )
             NumericGridRow(
-                "Width" to element.width,
-                "Height" to element.height,
+                "Largeur" to element.width,
+                "Hauteur" to element.height,
                 onFirstChange = { onUpdateBounds(GeometryService.getElementBounds(element).copy(width = it)) },
                 onSecondChange = { onUpdateBounds(GeometryService.getElementBounds(element).copy(height = it)) },
             )
             NumericGridRow(
-                "Right" to element.x + element.width,
-                "Bottom" to element.y + element.height,
+                "Droite" to element.x + element.width,
+                "Bas" to element.y + element.height,
                 onFirstChange = { onUpdateBounds(GeometryService.getElementBounds(element).copy(width = it - element.x)) },
                 onSecondChange = { onUpdateBounds(GeometryService.getElementBounds(element).copy(height = it - element.y)) },
             )
 
-            InspectorSection("Arrange")
+            InspectorSection("Disposition")
             RotationRow(
                 value = element.rotation,
                 onValueChange = { onUpdateCommon(CommonProperty.Rotation, it.toString()) },
             )
-            SliderRow("Opacity", element.opacity, 0f..1f, { onUpdateCommon(CommonProperty.Opacity, it.toString()) })
-            NumericFieldRow("Z index", element.zIndex.toFloat()) { onUpdateCommon(CommonProperty.ZIndex, it.toInt().toString()) }
+            SliderRow("Opacité", element.opacity, 0f..1f, { onUpdateCommon(CommonProperty.Opacity, it.toString()) })
+            NumericFieldRow("Ordre d’empilement", element.zIndex.toFloat()) { onUpdateCommon(CommonProperty.ZIndex, it.toInt().toString()) }
             HorizontalDivider()
             when (element) {
                 is TemplateElement.Text -> {
-                    InspectorSection("Text")
+                    InspectorSection("Texte")
                     ExpressionTextEditor(
                         value = element.staticText.orEmpty(),
                         schema = state.schema,
                         legacyPlaceholder = element.placeholderTag,
                         onValueChange = onUpdateText,
                     )
-                    DropdownRow("Font", listOf("Inter", "Sans", "Serif", "Monospace"), element.fontFamily, onUpdateTextFontFamily)
+                    DropdownRow("Police", listOf("Inter", "Sans", "Serif", "Monospace"), element.fontFamily, onUpdateTextFontFamily)
                     EnumRow("Style", TemplateTextStyle.entries.map { it.name }, element.fontStyle.name) {
                         onUpdateTextFontStyle(TemplateTextStyle.valueOf(it))
                     }
-                    SliderRow("Font size", element.fontSize, 6f..96f, onUpdateTextFontSize)
-                    SliderRow("Line height", element.lineHeight, 0.8f..3f, onUpdateTextLineHeight)
-                    SliderRow("Letter spacing", element.letterSpacing, -2f..12f, onUpdateTextLetterSpacing)
-                    EnumRow("Text align", listOf("left", "center", "right", "justify"), element.textAlign) {
+                    SliderRow("Taille de police", element.fontSize, 6f..96f, onUpdateTextFontSize)
+                    SliderRow("Hauteur de ligne", element.lineHeight, 0.8f..3f, onUpdateTextLineHeight)
+                    SliderRow("Espacement des lettres", element.letterSpacing, -2f..12f, onUpdateTextLetterSpacing)
+                    EnumRow("Alignement du texte", listOf("left", "center", "right", "justify"), element.textAlign) {
                         onUpdateTextAlign(it)
                     }
-                    EnumRow("Vertical align", listOf("top", "middle", "bottom"), element.verticalAlign) {
+                    EnumRow("Alignement vertical", listOf("top", "middle", "bottom"), element.verticalAlign) {
                         onUpdateTextVerticalAlign(it)
                     }
                     EnumRow("Direction", TemplateTextDirection.entries.map { it.name }, element.textDirection.name) {
                         onUpdateTextDirection(TemplateTextDirection.valueOf(it))
                     }
-                    ColorFieldRow("Text color", element.color, onUpdateTextColor)
-                    ColorFieldRow("Background", element.backgroundColor, onUpdateTextBackground)
-                    SliderRow("Padding", element.padding, 0f..48f, onUpdateTextPadding)
-                    InspectorSection("Border")
-                    ColorFieldRow("Border color", element.borderColor, onUpdateTextBorderColor)
-                    BorderStyleRow("Border style", element.borderStyle, onUpdateTextBorderStyle)
-                    SliderRow("Border width", element.borderWidth, 0f..12f, onUpdateTextBorderWidth)
-                    SliderRow("Border radius", element.borderRadius, 0f..48f, onUpdateTextBorderRadius)
+                    ColorFieldRow("Couleur du texte", element.color, onUpdateTextColor)
+                    ColorFieldRow("Arrière-plan", element.backgroundColor, onUpdateTextBackground)
+                    SliderRow("Marge intérieure", element.padding, 0f..48f, onUpdateTextPadding)
+                    InspectorSection("Bordure")
+                    ColorFieldRow("Couleur de bordure", element.borderColor, onUpdateTextBorderColor)
+                    BorderStyleRow("Style de bordure", element.borderStyle, onUpdateTextBorderStyle)
+                    SliderRow("Épaisseur de bordure", element.borderWidth, 0f..12f, onUpdateTextBorderWidth)
+                    SliderRow("Rayon de bordure", element.borderRadius, 0f..48f, onUpdateTextBorderRadius)
                 }
                 is TemplateElement.Image -> {
                     InspectorSection("Image")
                     Button(
                         onClick = onChooseImage,
+                        enabled = !state.isChoosingImage,
                         modifier = Modifier.fillMaxWidth(),
                     ) {
-                        Text(if (element.sourcePath.isBlank()) "Choose from file" else "Replace file")
+                        Text(
+                            when {
+                                state.isChoosingImage -> "Chargement…"
+                                element.sourcePath.isBlank() -> "Choisir un fichier"
+                                else -> "Remplacer le fichier"
+                            }
+                        )
                     }
                     if (element.sourceName.isNotBlank()) {
                         Text(
@@ -415,11 +422,11 @@ internal fun RightInspectorPanel(
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
-                    EnumRow("Resize", TemplateImageContentMode.entries.map { it.name }, element.contentMode.name) {
+                    EnumRow("Redimensionnement", TemplateImageContentMode.entries.map { it.name }, element.contentMode.name) {
                         onUpdateImageContentMode(TemplateImageContentMode.valueOf(it))
                     }
                     DropdownRow(
-                        label = "Alignment",
+                        label = "Alignement",
                         options = TemplateImageAlignment.entries.map { it.name },
                         selected = element.alignment.name,
                         onSelect = { onUpdateImageAlignment(TemplateImageAlignment.valueOf(it)) },
@@ -430,68 +437,68 @@ internal fun RightInspectorPanel(
                             enabled = element.intrinsicWidth > 0 && element.intrinsicHeight > 0,
                             modifier = Modifier.weight(1f),
                         ) {
-                            Text("Fit aspect")
+                            Text("Adapter aux proportions")
                         }
                         OutlinedButton(
                             onClick = onResizeImageToIntrinsic,
                             enabled = element.intrinsicWidth > 0 && element.intrinsicHeight > 0,
                             modifier = Modifier.weight(1f),
                         ) {
-                            Text("Original size")
+                            Text("Taille d’origine")
                         }
                     }
-                    ColorFieldRow("Background", element.backgroundColor, onUpdateImageBackground)
-                    InspectorSection("Border")
-                    ColorFieldRow("Border color", element.borderColor, onUpdateImageBorderColor)
-                    SliderRow("Border width", element.borderWidth, 0f..12f, onUpdateImageBorderWidth)
-                    SliderRow("Border radius", element.borderRadius, 0f..72f, onUpdateImageBorderRadius)
+                    ColorFieldRow("Arrière-plan", element.backgroundColor, onUpdateImageBackground)
+                    InspectorSection("Bordure")
+                    ColorFieldRow("Couleur de bordure", element.borderColor, onUpdateImageBorderColor)
+                    SliderRow("Épaisseur de bordure", element.borderWidth, 0f..12f, onUpdateImageBorderWidth)
+                    SliderRow("Rayon de bordure", element.borderRadius, 0f..72f, onUpdateImageBorderRadius)
                 }
                 is TemplateElement.Circle -> {
-                    InspectorSection("Fill")
-                    ColorFieldRow("Fill color", element.fillColor, onUpdateCircleFill)
-                    InspectorSection("Border")
-                    ColorFieldRow("Border color", element.borderColor, onUpdateCircleBorderColor)
-                    BorderStyleRow("Border style", element.borderStyle, onUpdateCircleBorderStyle)
-                    SliderRow("Border width", element.borderWidth, 0f..12f, onUpdateCircleBorderWidth)
+                    InspectorSection("Remplissage")
+                    ColorFieldRow("Couleur de remplissage", element.fillColor, onUpdateCircleFill)
+                    InspectorSection("Bordure")
+                    ColorFieldRow("Couleur de bordure", element.borderColor, onUpdateCircleBorderColor)
+                    BorderStyleRow("Style de bordure", element.borderStyle, onUpdateCircleBorderStyle)
+                    SliderRow("Épaisseur de bordure", element.borderWidth, 0f..12f, onUpdateCircleBorderWidth)
                 }
                 is TemplateElement.QRCode -> {
                     InspectorSection("QR code")
                     OutlinedTextField(
                         value = element.text,
                         onValueChange = onUpdateQrText,
-                        label = { Text("Text") },
+                        label = { Text("Texte") },
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = false,
                         minLines = 3,
                         maxLines = 5,
                     )
-                    SliderRow("Quiet zone", element.quietZone.toFloat(), 0f..8f, onUpdateQrQuietZone)
-                    ColorFieldRow("Foreground", element.foregroundColor, onUpdateQrForeground)
-                    ColorFieldRow("Background", element.backgroundColor, onUpdateQrBackground)
-                    InspectorSection("Border")
-                    ColorFieldRow("Border color", element.borderColor, onUpdateQrBorderColor)
-                    SliderRow("Border width", element.borderWidth, 0f..12f, onUpdateQrBorderWidth)
+                    SliderRow("Zone de silence", element.quietZone.toFloat(), 0f..8f, onUpdateQrQuietZone)
+                    ColorFieldRow("Premier plan", element.foregroundColor, onUpdateQrForeground)
+                    ColorFieldRow("Arrière-plan", element.backgroundColor, onUpdateQrBackground)
+                    InspectorSection("Bordure")
+                    ColorFieldRow("Couleur de bordure", element.borderColor, onUpdateQrBorderColor)
+                    SliderRow("Épaisseur de bordure", element.borderWidth, 0f..12f, onUpdateQrBorderWidth)
                 }
                 is TemplateElement.Barcode -> {
-                    InspectorSection("Barcode")
+                    InspectorSection("Code-barres")
                     OutlinedTextField(
                         value = element.text,
                         onValueChange = onUpdateBarcodeText,
-                        label = { Text("Text") },
+                        label = { Text("Texte") },
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true,
                     )
                     EnumRow("Format", TemplateBarcodeFormat.entries.map { it.name }, element.format.name) {
                         onUpdateBarcodeFormat(TemplateBarcodeFormat.valueOf(it))
                     }
-                    SliderRow("Quiet zone", element.quietZone.toFloat(), 0f..40f, onUpdateBarcodeQuietZone)
-                    ToggleRow("Show text", element.showText, onUpdateBarcodeShowText)
-                    SliderRow("Text size", element.fontSize, 6f..32f, onUpdateBarcodeFontSize)
-                    ColorFieldRow("Foreground", element.foregroundColor, onUpdateBarcodeForeground)
-                    ColorFieldRow("Background", element.backgroundColor, onUpdateBarcodeBackground)
-                    InspectorSection("Border")
-                    ColorFieldRow("Border color", element.borderColor, onUpdateBarcodeBorderColor)
-                    SliderRow("Border width", element.borderWidth, 0f..12f, onUpdateBarcodeBorderWidth)
+                    SliderRow("Zone de silence", element.quietZone.toFloat(), 0f..40f, onUpdateBarcodeQuietZone)
+                    ToggleRow("Afficher le texte", element.showText, onUpdateBarcodeShowText)
+                    SliderRow("Taille du texte", element.fontSize, 6f..32f, onUpdateBarcodeFontSize)
+                    ColorFieldRow("Premier plan", element.foregroundColor, onUpdateBarcodeForeground)
+                    ColorFieldRow("Arrière-plan", element.backgroundColor, onUpdateBarcodeBackground)
+                    InspectorSection("Bordure")
+                    ColorFieldRow("Couleur de bordure", element.borderColor, onUpdateBarcodeBorderColor)
+                    SliderRow("Épaisseur de bordure", element.borderWidth, 0f..12f, onUpdateBarcodeBorderWidth)
                 }
                 is TemplateElement.List -> {
                     val listFieldSlugs = state.schema?.fields
@@ -499,42 +506,42 @@ internal fun RightInspectorPanel(
                         .filter { it.type == FieldType.LIST }
                         .map { it.slug }
                         .filter { it.isNotBlank() }
-                    val fieldOptions = (listOf("Select field") + listFieldSlugs + element.fieldSlug.takeIf { it.isNotBlank() && it !in listFieldSlugs }.orEmpty())
+                    val fieldOptions = (listOf("Choisir un champ") + listFieldSlugs + element.fieldSlug.takeIf { it.isNotBlank() && it !in listFieldSlugs }.orEmpty())
                         .distinct()
-                    InspectorSection("List data")
+                    InspectorSection("Données de la liste")
                     DropdownRow(
-                        label = "Field",
+                        label = "Champ",
                         options = fieldOptions,
-                        selected = element.fieldSlug.ifBlank { "Select field" },
-                        onSelect = { value -> onUpdateListFieldSlug(if (value == "Select field") "" else value) },
+                        selected = element.fieldSlug.ifBlank { "Choisir un champ" },
+                        onSelect = { value -> onUpdateListFieldSlug(if (value == "Choisir un champ") "" else value) },
                     )
                     if (listFieldSlugs.isEmpty()) {
                         Text(
-                            "No LIST fields in this schema.",
+                            "Aucun champ LIST dans ce modèle de données.",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
-                    TextFieldRow("Prefix", element.prefix, onValueChange = onUpdateListPrefix)
-                    TextFieldRow("Suffix", element.suffix, onValueChange = onUpdateListSuffix)
-                    TextFieldRow("Separator", element.itemSeparator, onValueChange = onUpdateListItemSeparator)
-                    SliderRow("Max items", element.maxItems.toFloat(), 1f..80f, onUpdateListMaxItems)
-                    SliderRow("Max length", element.maxItemLength.toFloat(), 1f..240f, onUpdateListMaxItemLength)
-                    InspectorSection("Layout")
-                    SliderRow("Columns", element.columns.toFloat(), 1f..6f, onUpdateListColumns)
-                    SliderRow("Column gap", element.columnGap, 0f..80f, onUpdateListColumnGap)
-                    SliderRow("Item spacing", element.itemSpacing, 0f..32f, onUpdateListItemSpacing)
-                    SliderRow("Padding", element.padding, 0f..48f, onUpdateListPadding)
-                    InspectorSection("Text")
-                    DropdownRow("Font", listOf("Inter", "Sans", "Serif", "Monospace"), element.fontFamily, onUpdateListFontFamily)
-                    SliderRow("Font size", element.fontSize, 6f..48f, onUpdateListFontSize)
-                    ColorFieldRow("Text color", element.color, onUpdateListColor)
-                    ColorFieldRow("Background", element.backgroundColor, onUpdateListBackground)
-                    InspectorSection("Border")
-                    ColorFieldRow("Border color", element.borderColor, onUpdateListBorderColor)
-                    BorderStyleRow("Border style", element.borderStyle, onUpdateListBorderStyle)
-                    SliderRow("Border width", element.borderWidth, 0f..12f, onUpdateListBorderWidth)
-                    SliderRow("Border radius", element.borderRadius, 0f..48f, onUpdateListBorderRadius)
+                    TextFieldRow("Préfixe", element.prefix, onValueChange = onUpdateListPrefix)
+                    TextFieldRow("Suffixe", element.suffix, onValueChange = onUpdateListSuffix)
+                    TextFieldRow("Séparateur", element.itemSeparator, onValueChange = onUpdateListItemSeparator)
+                    SliderRow("Nombre maximal d’éléments", element.maxItems.toFloat(), 1f..80f, onUpdateListMaxItems)
+                    SliderRow("Longueur maximale", element.maxItemLength.toFloat(), 1f..240f, onUpdateListMaxItemLength)
+                    InspectorSection("Mise en page")
+                    SliderRow("Colonnes", element.columns.toFloat(), 1f..6f, onUpdateListColumns)
+                    SliderRow("Écart entre les colonnes", element.columnGap, 0f..80f, onUpdateListColumnGap)
+                    SliderRow("Espacement des éléments", element.itemSpacing, 0f..32f, onUpdateListItemSpacing)
+                    SliderRow("Marge intérieure", element.padding, 0f..48f, onUpdateListPadding)
+                    InspectorSection("Texte")
+                    DropdownRow("Police", listOf("Inter", "Sans", "Serif", "Monospace"), element.fontFamily, onUpdateListFontFamily)
+                    SliderRow("Taille de police", element.fontSize, 6f..48f, onUpdateListFontSize)
+                    ColorFieldRow("Couleur du texte", element.color, onUpdateListColor)
+                    ColorFieldRow("Arrière-plan", element.backgroundColor, onUpdateListBackground)
+                    InspectorSection("Bordure")
+                    ColorFieldRow("Couleur de bordure", element.borderColor, onUpdateListBorderColor)
+                    BorderStyleRow("Style de bordure", element.borderStyle, onUpdateListBorderStyle)
+                    SliderRow("Épaisseur de bordure", element.borderWidth, 0f..12f, onUpdateListBorderWidth)
+                    SliderRow("Rayon de bordure", element.borderRadius, 0f..48f, onUpdateListBorderRadius)
                 }
                 is TemplateElement.Table -> {
                     var selectedRow by remember(element.id, element.rows) { mutableStateOf(0) }
@@ -550,40 +557,40 @@ internal fun RightInspectorPanel(
                         else element.backgroundColor
                     val cellTextColor = cell?.color ?: if (isHeaderCell) element.headerColor else element.color
 
-                    InspectorSection("Table")
-                    SliderRow("Rows", element.rows.toFloat(), 1f..40f, onUpdateTableRows)
-                    SliderRow("Columns", element.columns.toFloat(), 1f..12f, onUpdateTableColumns)
-                    SliderRow("Header rows", element.headerRows.toFloat(), 0f..element.rows.toFloat().coerceAtLeast(1f), onUpdateTableHeaderRows)
-                    ToggleRow("Alternate rows", element.useAlternateRows, onUpdateTableUseAlternateRows)
-                    InspectorSection("Text")
-                    DropdownRow("Font", listOf("Inter", "Sans", "Serif", "Monospace"), element.fontFamily, onUpdateTableFontFamily)
-                    SliderRow("Font size", element.fontSize, 6f..48f, onUpdateTableFontSize)
-                    EnumRow("Text align", listOf("left", "center", "right"), element.textAlign, onUpdateTableTextAlign)
-                    EnumRow("Vertical align", listOf("top", "middle", "bottom"), element.verticalAlign, onUpdateTableVerticalAlign)
-                    SliderRow("Padding", element.padding, 0f..32f, onUpdateTablePadding)
-                    ColorFieldRow("Text color", element.color, onUpdateTableTextColor)
-                    ColorFieldRow("Background", element.backgroundColor, onUpdateTableBackground)
-                    ColorFieldRow("Header background", element.headerBackgroundColor, onUpdateTableHeaderBackground)
-                    ColorFieldRow("Header text", element.headerColor, onUpdateTableHeaderColor)
-                    ColorFieldRow("Alternate row", element.alternateRowColor, onUpdateTableAlternateRowColor)
-                    InspectorSection("Border")
-                    ColorFieldRow("Border color", element.borderColor, onUpdateTableBorderColor)
-                    BorderStyleRow("Border style", element.borderStyle, onUpdateTableBorderStyle)
-                    SliderRow("Border width", element.borderWidth, 0f..12f, onUpdateTableBorderWidth)
-                    SliderRow("Border radius", element.borderRadius, 0f..48f, onUpdateTableBorderRadius)
-                    ColorFieldRow("Cell border", element.cellBorderColor, onUpdateTableGridBorderColor)
-                    SliderRow("Cell border width", element.cellBorderWidth, 0f..8f, onUpdateTableGridBorderWidth)
-                    InspectorSection("Selected cell")
+                    InspectorSection("Tableau")
+                    SliderRow("Lignes", element.rows.toFloat(), 1f..40f, onUpdateTableRows)
+                    SliderRow("Colonnes", element.columns.toFloat(), 1f..12f, onUpdateTableColumns)
+                    SliderRow("Lignes d’en-tête", element.headerRows.toFloat(), 0f..element.rows.toFloat().coerceAtLeast(1f), onUpdateTableHeaderRows)
+                    ToggleRow("Alterner les lignes", element.useAlternateRows, onUpdateTableUseAlternateRows)
+                    InspectorSection("Texte")
+                    DropdownRow("Police", listOf("Inter", "Sans", "Serif", "Monospace"), element.fontFamily, onUpdateTableFontFamily)
+                    SliderRow("Taille de police", element.fontSize, 6f..48f, onUpdateTableFontSize)
+                    EnumRow("Alignement du texte", listOf("left", "center", "right"), element.textAlign, onUpdateTableTextAlign)
+                    EnumRow("Alignement vertical", listOf("top", "middle", "bottom"), element.verticalAlign, onUpdateTableVerticalAlign)
+                    SliderRow("Marge intérieure", element.padding, 0f..32f, onUpdateTablePadding)
+                    ColorFieldRow("Couleur du texte", element.color, onUpdateTableTextColor)
+                    ColorFieldRow("Arrière-plan", element.backgroundColor, onUpdateTableBackground)
+                    ColorFieldRow("Arrière-plan de l’en-tête", element.headerBackgroundColor, onUpdateTableHeaderBackground)
+                    ColorFieldRow("Texte de l’en-tête", element.headerColor, onUpdateTableHeaderColor)
+                    ColorFieldRow("Ligne alternée", element.alternateRowColor, onUpdateTableAlternateRowColor)
+                    InspectorSection("Bordure")
+                    ColorFieldRow("Couleur de bordure", element.borderColor, onUpdateTableBorderColor)
+                    BorderStyleRow("Style de bordure", element.borderStyle, onUpdateTableBorderStyle)
+                    SliderRow("Épaisseur de bordure", element.borderWidth, 0f..12f, onUpdateTableBorderWidth)
+                    SliderRow("Rayon de bordure", element.borderRadius, 0f..48f, onUpdateTableBorderRadius)
+                    ColorFieldRow("Bordure de cellule", element.cellBorderColor, onUpdateTableGridBorderColor)
+                    SliderRow("Épaisseur de bordure de cellule", element.cellBorderWidth, 0f..8f, onUpdateTableGridBorderWidth)
+                    InspectorSection("Cellule sélectionnée")
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
                         DropdownRow(
-                            label = "Row",
+                            label = "Ligne",
                             options = (0 until element.rows).map { (it + 1).toString() },
                             selected = (selectedRow + 1).toString(),
                             onSelect = { selectedRow = it.toIntOrNull()?.minus(1)?.coerceIn(0, element.rows - 1) ?: selectedRow },
                             modifier = Modifier.weight(1f),
                         )
                         DropdownRow(
-                            label = "Column",
+                            label = "Colonne",
                             options = (0 until element.columns).map { (it + 1).toString() },
                             selected = (selectedColumn + 1).toString(),
                             onSelect = { selectedColumn = it.toIntOrNull()?.minus(1)?.coerceIn(0, element.columns - 1) ?: selectedColumn },
@@ -596,32 +603,32 @@ internal fun RightInspectorPanel(
                         legacyPlaceholder = null,
                         onValueChange = { onUpdateTableCellText(selectedRow, selectedColumn, it) },
                     )
-                    ColorFieldRow("Cell background", cellBackground) { onUpdateTableCellBackground(selectedRow, selectedColumn, it) }
-                    ColorFieldRow("Cell text", cellTextColor) { onUpdateTableCellTextColor(selectedRow, selectedColumn, it) }
-                    ColorFieldRow("Cell border", cell?.borderColor ?: element.cellBorderColor) {
+                    ColorFieldRow("Arrière-plan de la cellule", cellBackground) { onUpdateTableCellBackground(selectedRow, selectedColumn, it) }
+                    ColorFieldRow("Texte de la cellule", cellTextColor) { onUpdateTableCellTextColor(selectedRow, selectedColumn, it) }
+                    ColorFieldRow("Bordure de la cellule", cell?.borderColor ?: element.cellBorderColor) {
                         onUpdateTableCellBorderColor(selectedRow, selectedColumn, it)
                     }
-                    SliderRow("Cell border width", cell?.borderWidth ?: element.cellBorderWidth, 0f..8f) {
+                    SliderRow("Épaisseur de bordure de la cellule", cell?.borderWidth ?: element.cellBorderWidth, 0f..8f) {
                         onUpdateTableCellBorderWidth(selectedRow, selectedColumn, it)
                     }
-                    EnumRow("Cell align", listOf("left", "center", "right"), cell?.textAlign ?: element.textAlign) {
+                    EnumRow("Alignement de la cellule", listOf("left", "center", "right"), cell?.textAlign ?: element.textAlign) {
                         onUpdateTableCellTextAlign(selectedRow, selectedColumn, it)
                     }
-                    EnumRow("Cell vertical", listOf("top", "middle", "bottom"), cell?.verticalAlign ?: element.verticalAlign) {
+                    EnumRow("Alignement vertical de la cellule", listOf("top", "middle", "bottom"), cell?.verticalAlign ?: element.verticalAlign) {
                         onUpdateTableCellVerticalAlign(selectedRow, selectedColumn, it)
                     }
-                    SliderRow("Cell padding", cell?.padding ?: element.padding, 0f..32f) {
+                    SliderRow("Marge intérieure de la cellule", cell?.padding ?: element.padding, 0f..32f) {
                         onUpdateTableCellPadding(selectedRow, selectedColumn, it)
                     }
                 }
                 is TemplateElement.Rectangle -> {
-                    InspectorSection("Fill")
-                    ColorFieldRow("Fill color", element.fillColor, onUpdateRectangleFill)
-                    InspectorSection("Border")
-                    ColorFieldRow("Border color", element.borderColor, onUpdateRectangleBorderColor)
-                    BorderStyleRow("Border style", element.borderStyle, onUpdateRectangleBorderStyle)
-                    SliderRow("Border width", element.borderWidth, 0f..12f, onUpdateRectangleBorderWidth)
-                    SliderRow("Border radius", element.borderRadius, 0f..72f, onUpdateRectangleBorderRadius)
+                    InspectorSection("Remplissage")
+                    ColorFieldRow("Couleur de remplissage", element.fillColor, onUpdateRectangleFill)
+                    InspectorSection("Bordure")
+                    ColorFieldRow("Couleur de bordure", element.borderColor, onUpdateRectangleBorderColor)
+                    BorderStyleRow("Style de bordure", element.borderStyle, onUpdateRectangleBorderStyle)
+                    SliderRow("Épaisseur de bordure", element.borderWidth, 0f..12f, onUpdateRectangleBorderWidth)
+                    SliderRow("Rayon de bordure", element.borderRadius, 0f..72f, onUpdateRectangleBorderRadius)
                 }
                 is TemplateElement.Line -> Unit
             }
@@ -631,7 +638,7 @@ internal fun RightInspectorPanel(
             ) {
                 Icon(Icons.Default.Delete, contentDescription = null)
                 Spacer(Modifier.width(8.dp))
-                Text("Delete")
+                Text("Supprimer")
             }
         }
     }

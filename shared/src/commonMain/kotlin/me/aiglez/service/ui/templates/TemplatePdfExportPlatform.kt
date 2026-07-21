@@ -8,4 +8,4 @@ sealed interface TemplatePdfExportResult {
     data class Failed(val message: String, val cause: Throwable? = null) : TemplatePdfExportResult
 }
 
-expect fun exportTemplatePdf(state: TemplateEditorState): TemplatePdfExportResult
+expect suspend fun exportTemplatePdf(state: TemplateEditorState): TemplatePdfExportResult

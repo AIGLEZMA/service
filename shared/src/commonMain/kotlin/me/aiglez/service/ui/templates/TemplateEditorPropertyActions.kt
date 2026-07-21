@@ -286,9 +286,8 @@ internal class TemplateEditorPropertyActions(
         replaceSelectedIfChanged { it.withCircleBorderStyle(value) }
     }
 
-    fun chooseImageForSelected() {
+    fun applyImageFileToSelected(imageFile: TemplateImageFile) {
         val element = selectedElement() as? TemplateElement.Image ?: return
-        val imageFile = chooseTemplateImageFile() ?: return
         val nextSource = element.withImageSource(
             path = imageFile.path,
             name = imageFile.name,

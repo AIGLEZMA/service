@@ -91,6 +91,8 @@ data class TemplateEditorState(
     val canvas: CanvasState = CanvasState(),
     val isDirty: Boolean = false,
     val isSaving: Boolean = false,
+    val isExporting: Boolean = false,
+    val isChoosingImage: Boolean = false,
     val canUndo: Boolean = false,
     val canRedo: Boolean = false,
     val message: String? = null,
@@ -110,7 +112,9 @@ data class TemplateEditorState(
             val record = records.firstOrNull { it.id == recordId } ?: return@mapNotNull null
             schemaId to record
         }.toMap()
+
+    val canGeneratePreviewPdf: Boolean
+        get() = previewSchemaIds.isNotEmpty() &&
+            previewSchemaIds.all { schemaId -> selectedPreviewRecords[schemaId] != null }
 }
-
-
 

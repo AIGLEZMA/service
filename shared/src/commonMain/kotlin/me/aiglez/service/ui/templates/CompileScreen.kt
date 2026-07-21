@@ -167,14 +167,21 @@ import org.koin.core.parameter.parametersOf
 @Composable
 fun CompileScreen(
     templateId: String,
+    mode: TemplateScreenMode = TemplateScreenMode.Editor,
+    onHomeClick: () -> Unit = {},
+    onEditClick: (() -> Unit)? = null,
 ) {
     val viewModel: CompileViewModel = koinViewModel(
-        key = "template-editor-$templateId",
+        key = "template-${mode.name.lowercase()}-$templateId",
         parameters = { parametersOf(templateId) },
     )
     val state by viewModel.uiState.collectAsState()
+    val previewOnly = mode == TemplateScreenMode.Preview
     TemplateEditorContent(
-        state = state,
+        state = if (previewOnly) state.copy(isPreviewMode = true) else state,
+        previewOnly = previewOnly,
+        onHomeClick = onHomeClick,
+        onEditClick = onEditClick,
         onAddElement = viewModel::addElement,
         onAddDataField = viewModel::addDataField,
         onSelectElement = viewModel::selectElement,
@@ -303,8 +310,8 @@ fun CompileScreen(
         onUndo = viewModel::undo,
         onRedo = viewModel::redo,
         onSave = viewModel::saveTemplate,
-        onExportPdf = viewModel::exportPdf,
-        onPreviewButtonClick = viewModel::togglePreviewMode,
+        onExportPdf = if (previewOnly) viewModel::exportPreviewPdf else viewModel::exportPdf,
+        onPreviewButtonClick = if (previewOnly) viewModel::openPreviewDialog else viewModel::togglePreviewMode,
         onToggleSampleData = viewModel::toggleSampleData,
         onPreviewDialogDismiss = viewModel::closePreviewDialog,
         onPreviewRecordSelected = viewModel::selectPreviewRecord,
@@ -324,9 +331,17 @@ fun CompileScreen(
     )
 }
 
+enum class TemplateScreenMode {
+    Preview,
+    Editor,
+}
+
 @Composable
 internal fun TemplateEditorContent(
     state: TemplateEditorState,
+    previewOnly: Boolean = false,
+    onHomeClick: () -> Unit = {},
+    onEditClick: (() -> Unit)? = null,
     onAddElement: (TemplateElementType, Float, Float) -> Unit,
     onAddDataField: (String, String, String, Float, Float) -> Unit,
     onSelectElement: (String?) -> Unit,
@@ -480,6 +495,9 @@ internal fun TemplateEditorContent(
     Column(modifier = Modifier.fillMaxSize()) {
         TopEditorToolbar(
             state = state,
+            previewOnly = previewOnly,
+            onHomeClick = onHomeClick,
+            onEditClick = onEditClick,
             onUndo = onUndo,
             onRedo = onRedo,
             onSave = onSave,
@@ -506,21 +524,28 @@ internal fun TemplateEditorContent(
             onMatchSize = onMatchSize,
         )
         Row(modifier = Modifier.weight(1f).fillMaxWidth()) {
-            LeftComponentPalette(
-                state = state,
-                onAddElement = onAddElement,
-                onAddDataField = onAddDataField,
-                onDropElement = { type, windowPosition ->
-                    dropSequence += 1
-                    paletteDrop = PaletteDrop.Component(type, windowPosition, dropSequence)
-                },
-                onDropDataField = { schemaName, slug, name, windowPosition ->
-                    dropSequence += 1
-                    paletteDrop = PaletteDrop.DataField(schemaName, slug, name, windowPosition, dropSequence)
-                },
-            )
+            if (!previewOnly) {
+                LeftComponentPalette(
+                    state = state,
+                    onAddElement = onAddElement,
+                    onAddDataField = onAddDataField,
+                    onDropElement = { type, windowPosition ->
+                        dropSequence += 1
+                        paletteDrop = PaletteDrop.Component(type, windowPosition, dropSequence)
+                    },
+                    onDropDataField = { schemaName, slug, name, windowPosition ->
+                        dropSequence += 1
+                        paletteDrop = PaletteDrop.DataField(schemaName, slug, name, windowPosition, dropSequence)
+                    },
+                )
+            }
             CanvasWorkspace(
                 state = state,
+                workspaceColor = if (previewOnly) {
+                    MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.28f)
+                } else {
+                    Color(0xFFE5E7EB)
+                },
                 zoomCommand = zoomCommand,
                 onConsumeZoomCommand = { zoomCommand = null },
                 paletteDrop = paletteDrop,
@@ -566,7 +591,7 @@ internal fun TemplateEditorContent(
                 onAlignSelectedText = onAlignSelectedText,
                 modifier = Modifier.weight(1f).fillMaxHeight(),
             )
-            RightInspectorPanel(
+            if (!previewOnly) RightInspectorPanel(
                 state = state,
                 onSetCanvasMetric = onSetCanvasMetric,
                 onUpdateBounds = onUpdateBounds,
@@ -680,4 +705,3 @@ internal fun TemplateEditorContent(
         )
     }
 }
-

@@ -184,12 +184,12 @@ internal fun LeftComponentPalette(
         ) {
             Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                 PaletteTabButton(
-                    label = "Components",
+                    label = "Composants",
                     selected = selectedTab == PaletteTab.Components,
                     onClick = { selectedTab = PaletteTab.Components },
                 )
                 PaletteTabButton(
-                    label = "Data schemas",
+                    label = "Modèles de données",
                     selected = selectedTab == PaletteTab.DataFields,
                     onClick = { selectedTab = PaletteTab.DataFields },
                 )
@@ -291,7 +291,7 @@ internal fun DataSchemaTreeList(
 ) {
     val rootSchemas = (listOfNotNull(primarySchema) + availableSchemas).distinctBy { it.id }
     if (rootSchemas.isEmpty()) {
-        EmptyPaletteText("No data schemas")
+        EmptyPaletteText("Aucun modèle de données")
         return
     }
     var collapsedSchemaIds by remember { mutableStateOf<Set<String>>(emptySet()) }
@@ -335,7 +335,7 @@ internal fun DataSchemaTreeSection(
             return@Column
         }
         if (schema.fields.isEmpty()) {
-            EmptyPaletteText("No data fields")
+            EmptyPaletteText("Aucun champ de données")
         } else {
             Row(
                 modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min),
@@ -634,6 +634,5 @@ internal fun fieldGlyphColor(field: SchemaField): Color {
         else -> Color(0xFF374151)
     }
 }
-
 
 

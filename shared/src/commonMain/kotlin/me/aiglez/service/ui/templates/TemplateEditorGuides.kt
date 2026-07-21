@@ -323,7 +323,7 @@ internal fun buildSmartGuides(
                 kind = SmartGuideKind.SameWidth,
                 spanStart = verticalSpan.first,
                 spanEnd = verticalSpan.second,
-                label = "same width",
+                label = "même largeur",
             )
         }
         if (abs(activeBounds.height - otherBounds.height) <= threshold) {
@@ -333,7 +333,7 @@ internal fun buildSmartGuides(
                 kind = SmartGuideKind.SameHeight,
                 spanStart = horizontalSpan.first,
                 spanEnd = horizontalSpan.second,
-                label = "same height",
+                label = "même hauteur",
             )
         }
 
@@ -364,7 +364,7 @@ internal fun equalSpacingGuides(activeBounds: PageRect, otherBounds: List<PageRe
                 kind = SmartGuideKind.EqualSpacing,
                 spanStart = min(left.y, min(activeBounds.y, right.y)),
                 spanEnd = max(left.bottom, max(activeBounds.bottom, right.bottom)),
-                label = "equal spacing ${formatCompact((leftGap + rightGap) / 2f)}",
+                label = "espacement égal ${formatCompact((leftGap + rightGap) / 2f)}",
             )
         }
     }
@@ -383,7 +383,7 @@ internal fun equalSpacingGuides(activeBounds: PageRect, otherBounds: List<PageRe
                 kind = SmartGuideKind.EqualSpacing,
                 spanStart = min(top.x, min(activeBounds.x, bottom.x)),
                 spanEnd = max(top.right, max(activeBounds.right, bottom.right)),
-                label = "equal spacing ${formatCompact((topGap + bottomGap) / 2f)}",
+                label = "espacement égal ${formatCompact((topGap + bottomGap) / 2f)}",
             )
         }
     }
@@ -464,6 +464,5 @@ internal fun effectiveSnapThreshold(
     val precisionScale = zoom.coerceAtLeast(1f)
     return (baseThreshold / precisionScale).coerceAtLeast(0.75f)
 }
-
 
 

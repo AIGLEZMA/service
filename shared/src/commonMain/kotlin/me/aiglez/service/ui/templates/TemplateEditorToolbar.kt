@@ -33,6 +33,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Redo
 import androidx.compose.material.icons.automirrored.filled.Undo
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -168,6 +170,9 @@ import org.koin.core.parameter.parametersOf
 @Composable
 internal fun TopEditorToolbar(
     state: TemplateEditorState,
+    previewOnly: Boolean = false,
+    onHomeClick: () -> Unit = {},
+    onEditClick: (() -> Unit)? = null,
     onUndo: () -> Unit,
     onRedo: () -> Unit,
     onSave: () -> Unit,
@@ -193,6 +198,16 @@ internal fun TopEditorToolbar(
     onDistribute: (DistributionAxis) -> Unit,
     onMatchSize: (SizeMatchAxis) -> Unit,
 ) {
+    if (previewOnly) {
+        PreviewGenerationToolbar(
+            state = state,
+            onHomeClick = onHomeClick,
+            onChooseDataClick = onPreviewButtonClick,
+            onExportPdf = onExportPdf,
+            onEditClick = onEditClick,
+        )
+        return
+    }
     Surface(
         modifier = Modifier.fillMaxWidth().height(56.dp),
         color = MaterialTheme.colorScheme.surface,
@@ -208,14 +223,19 @@ internal fun TopEditorToolbar(
                 horizontalArrangement = Arrangement.spacedBy(6.dp),
             ) {
                 ToolbarIconGroup {
-                    IconButton(onClick = onUndo, enabled = state.canUndo, modifier = Modifier.size(36.dp)) {
-                        Icon(Icons.AutoMirrored.Filled.Undo, contentDescription = "Undo")
+                    IconButton(onClick = onHomeClick, modifier = Modifier.size(36.dp)) {
+                        Icon(Icons.Default.Home, contentDescription = "Accueil")
                     }
-                    IconButton(onClick = onRedo, enabled = state.canRedo, modifier = Modifier.size(36.dp)) {
-                        Icon(Icons.AutoMirrored.Filled.Redo, contentDescription = "Redo")
-                    }
-                    IconButton(onClick = onSave, enabled = state.template != null && !state.isSaving, modifier = Modifier.size(36.dp)) {
-                        Icon(Icons.Default.Save, contentDescription = "Save")
+                    if (!previewOnly) {
+                        IconButton(onClick = onUndo, enabled = state.canUndo, modifier = Modifier.size(36.dp)) {
+                            Icon(Icons.AutoMirrored.Filled.Undo, contentDescription = "Annuler")
+                        }
+                        IconButton(onClick = onRedo, enabled = state.canRedo, modifier = Modifier.size(36.dp)) {
+                            Icon(Icons.AutoMirrored.Filled.Redo, contentDescription = "Rétablir")
+                        }
+                        IconButton(onClick = onSave, enabled = state.template != null && !state.isSaving, modifier = Modifier.size(36.dp)) {
+                            Icon(Icons.Default.Save, contentDescription = "Enregistrer")
+                        }
                     }
                 }
                 Column(
@@ -223,7 +243,7 @@ internal fun TopEditorToolbar(
                     verticalArrangement = Arrangement.Center,
                 ) {
                     Text(
-                        text = state.template?.name ?: "Template editor",
+                        text = state.template?.name ?: "Éditeur de modèle",
                         style = MaterialTheme.typography.titleSmall,
                         color = MaterialTheme.colorScheme.onSurface,
                         maxLines = 1,
@@ -237,9 +257,10 @@ internal fun TopEditorToolbar(
                         overflow = TextOverflow.Ellipsis,
                     )
                 }
-                ToolbarDivider()
-                ToolbarIconGroup {
-                    EditorActionsMenu(
+                if (!previewOnly) {
+                    ToolbarDivider()
+                    ToolbarIconGroup {
+                        EditorActionsMenu(
                         canvas = state.canvas,
                         enabled = state.selectedElements.isNotEmpty(),
                         onCopy = onCopy,
@@ -253,24 +274,25 @@ internal fun TopEditorToolbar(
                         onSelectSimilar = onSelectSimilar,
                         onSetNudgeDistance = onSetNudgeDistance,
                     )
-                    AlignmentMenu(
+                        AlignmentMenu(
                         enabled = state.selectedElements.isNotEmpty(),
                         onAlign = onAlign,
                         onDistribute = onDistribute,
                         onMatchSize = onMatchSize,
                     )
-                    ViewMenu(
+                        ViewMenu(
                         canvas = state.canvas,
                         showSampleData = state.showSampleData,
                         onSetRulerUnit = onSetRulerUnit,
                         onSetCanvasMetric = onSetCanvasMetric,
                         onToggleSampleData = onToggleSampleData,
                     )
-                    SnapMenu(
+                        SnapMenu(
                         canvas = state.canvas,
                         onToggleSnap = onToggleSnap,
                         onSetCanvasMetric = onSetCanvasMetric,
-                    )
+                        )
+                    }
                 }
                 state.message?.let {
                     Text(
@@ -287,10 +309,25 @@ internal fun TopEditorToolbar(
                     enabled = state.template != null,
                     modifier = Modifier.height(36.dp),
                 ) {
-                    Text(if (state.isPreviewMode) "Edit" else "Preview")
+                    Text(if (previewOnly) "Choisir les données" else if (state.isPreviewMode) "Modifier" else "Aperçu")
                 }
-                OutlinedButton(onClick = onExportPdf, enabled = state.template != null, modifier = Modifier.height(36.dp)) {
-                    Text("PDF")
+                if (previewOnly && onEditClick != null) {
+                    OutlinedButton(
+                        onClick = onEditClick,
+                        enabled = state.template != null,
+                        modifier = Modifier.height(36.dp),
+                    ) {
+                        Icon(Icons.Default.Edit, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(Modifier.width(6.dp))
+                        Text("Modifier le modèle")
+                    }
+                }
+                OutlinedButton(
+                    onClick = onExportPdf,
+                    enabled = state.template != null && !state.isExporting,
+                    modifier = Modifier.height(36.dp),
+                ) {
+                    Text(if (state.isExporting) "Génération…" else "Générer le PDF")
                 }
             }
             ToolbarZoomControls(
@@ -315,11 +352,11 @@ internal fun PreviewRecordDialog(
     val canPreview = schemas.isNotEmpty() && schemas.all { !state.selectedPreviewRecordIds[it.id].isNullOrBlank() }
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Preview records") },
+        title = { Text("Choisir les données") },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
                 if (schemas.isEmpty()) {
-                    Text("No record schemas are used by this template.", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text("Ce modèle n’utilise aucun modèle de données.", color = MaterialTheme.colorScheme.onSurfaceVariant)
                 } else {
                     schemas.forEach { schema ->
                         PreviewRecordDropdown(
@@ -334,12 +371,12 @@ internal fun PreviewRecordDialog(
         },
         confirmButton = {
             Button(onClick = onShowPreview, enabled = canPreview) {
-                Text("Show preview")
+                Text("Afficher l’aperçu")
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancel")
+                Text("Annuler")
             }
         },
     )
@@ -363,7 +400,7 @@ internal fun PreviewRecordDropdown(
                 modifier = Modifier.fillMaxWidth().height(38.dp),
             ) {
                 Text(
-                    text = selected?.let { previewRecordLabel(it, schema.fields) } ?: if (records.isEmpty()) "No registered records" else "Choose record",
+                    text = selected?.let { previewRecordLabel(it, schema.fields) } ?: if (records.isEmpty()) "Aucune donnée enregistrée" else "Choisir une donnée",
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
@@ -401,9 +438,9 @@ internal fun EditorStatusBar(
             horizontalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             Text("Page 1 / 1", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            Text("Zoom: ${(state.canvas.zoom * 100).toInt()}%", style = MaterialTheme.typography.labelMedium)
+            Text("Zoom : ${(state.canvas.zoom * 100).toInt()}%", style = MaterialTheme.typography.labelMedium)
             Text(
-                text = selected?.let { "Selected: ${it.type.name} - ${it.name}" } ?: "Selected: none",
+                text = selected?.let { "Sélection : ${it.type.name} - ${it.name}" } ?: "Sélection : aucune",
                 style = MaterialTheme.typography.labelMedium,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
@@ -416,9 +453,9 @@ internal fun EditorStatusBar(
                 style = MaterialTheme.typography.labelMedium,
             )
             Spacer(modifier = Modifier.weight(1f))
-            Text("Cursor: canvas", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            Text("Snap: ${if (state.canvas.snapEnabled) "ON" else "OFF"}", style = MaterialTheme.typography.labelMedium)
-            Text("Grid: ${formatCompact(state.canvas.gridSize)}px", style = MaterialTheme.typography.labelMedium)
+            Text("Curseur : canevas", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text("Magnétisme : ${if (state.canvas.snapEnabled) "ACTIF" else "INACTIF"}", style = MaterialTheme.typography.labelMedium)
+            Text("Grille : ${formatCompact(state.canvas.gridSize)} px", style = MaterialTheme.typography.labelMedium)
         }
     }
 }
@@ -472,28 +509,28 @@ internal fun EditorActionsMenu(
     onSelectSimilar: () -> Unit,
     onSetNudgeDistance: (Float) -> Unit,
 ) {
-    ToolbarMenu("Edit") { close ->
-        MenuCommand("Copy", enabled, onCopy, close)
-        MenuCommand("Paste", true, onPaste, close)
-        MenuCommand("Duplicate", enabled, onDuplicate, close)
-        MenuCommand("Delete", enabled, onDelete, close)
+    ToolbarMenu("Modifier") { close ->
+        MenuCommand("Copier", enabled, onCopy, close)
+        MenuCommand("Coller", true, onPaste, close)
+        MenuCommand("Dupliquer", enabled, onDuplicate, close)
+        MenuCommand("Supprimer", enabled, onDelete, close)
         HorizontalDivider()
-        MenuCommand("Group", enabled, onGroup, close)
-        MenuCommand("Ungroup", enabled, onUngroup, close)
-        MenuCommand("Lock", enabled, onLock, close)
-        MenuCommand("Hide", enabled, onHide, close)
-        MenuCommand("Select similar", enabled, onSelectSimilar, close)
+        MenuCommand("Grouper", enabled, onGroup, close)
+        MenuCommand("Dégrouper", enabled, onUngroup, close)
+        MenuCommand("Verrouiller", enabled, onLock, close)
+        MenuCommand("Masquer", enabled, onHide, close)
+        MenuCommand("Sélectionner les éléments similaires", enabled, onSelectSimilar, close)
         HorizontalDivider()
         DropdownMenuItem(
-            text = { Text("Nudge ${canvas.nudgeDistance.formatForInput()} px") },
+            text = { Text("Déplacement précis : ${canvas.nudgeDistance.formatForInput()} px") },
             onClick = {},
         )
         DropdownMenuItem(
-            text = { Text("Nudge -") },
+            text = { Text("Réduire le déplacement") },
             onClick = { onSetNudgeDistance(canvas.nudgeDistance - 1f) },
         )
         DropdownMenuItem(
-            text = { Text("Nudge +") },
+            text = { Text("Augmenter le déplacement") },
             onClick = { onSetNudgeDistance(canvas.nudgeDistance + 1f) },
         )
     }
@@ -506,19 +543,19 @@ internal fun AlignmentMenu(
     onDistribute: (DistributionAxis) -> Unit,
     onMatchSize: (SizeMatchAxis) -> Unit,
 ) {
-    ToolbarMenu("Align") { close ->
-        MenuCommand("Align left", enabled, { onAlign(SelectionAlignment.Left) }, close)
-        MenuCommand("Align center", enabled, { onAlign(SelectionAlignment.Center) }, close)
-        MenuCommand("Align right", enabled, { onAlign(SelectionAlignment.Right) }, close)
-        MenuCommand("Align top", enabled, { onAlign(SelectionAlignment.Top) }, close)
-        MenuCommand("Align middle", enabled, { onAlign(SelectionAlignment.Middle) }, close)
-        MenuCommand("Align bottom", enabled, { onAlign(SelectionAlignment.Bottom) }, close)
+    ToolbarMenu("Aligner") { close ->
+        MenuCommand("Aligner à gauche", enabled, { onAlign(SelectionAlignment.Left) }, close)
+        MenuCommand("Centrer horizontalement", enabled, { onAlign(SelectionAlignment.Center) }, close)
+        MenuCommand("Aligner à droite", enabled, { onAlign(SelectionAlignment.Right) }, close)
+        MenuCommand("Aligner en haut", enabled, { onAlign(SelectionAlignment.Top) }, close)
+        MenuCommand("Centrer verticalement", enabled, { onAlign(SelectionAlignment.Middle) }, close)
+        MenuCommand("Aligner en bas", enabled, { onAlign(SelectionAlignment.Bottom) }, close)
         HorizontalDivider()
-        MenuCommand("Distribute horizontally", enabled, { onDistribute(DistributionAxis.Horizontal) }, close)
-        MenuCommand("Distribute vertically", enabled, { onDistribute(DistributionAxis.Vertical) }, close)
+        MenuCommand("Distribuer horizontalement", enabled, { onDistribute(DistributionAxis.Horizontal) }, close)
+        MenuCommand("Distribuer verticalement", enabled, { onDistribute(DistributionAxis.Vertical) }, close)
         HorizontalDivider()
-        MenuCommand("Match width", enabled, { onMatchSize(SizeMatchAxis.Width) }, close)
-        MenuCommand("Match height", enabled, { onMatchSize(SizeMatchAxis.Height) }, close)
+        MenuCommand("Uniformiser la largeur", enabled, { onMatchSize(SizeMatchAxis.Width) }, close)
+        MenuCommand("Uniformiser la hauteur", enabled, { onMatchSize(SizeMatchAxis.Height) }, close)
     }
 }
 
@@ -530,18 +567,18 @@ internal fun ViewMenu(
     onSetCanvasMetric: (CanvasMetric, Float) -> Unit,
     onToggleSampleData: () -> Unit,
 ) {
-    ToolbarMenu("View") { _ ->
-        CheckMenuItem("Show sample data", showSampleData) { onToggleSampleData() }
+    ToolbarMenu("Affichage") { _ ->
+        CheckMenuItem("Afficher les exemples de données", showSampleData) { onToggleSampleData() }
         HorizontalDivider()
-        CheckMenuItem("Show rulers", canvas.showRulers) { onSetCanvasMetric(CanvasMetric.ShowRulers, it.asMetric()) }
-        CheckMenuItem("Show grid", canvas.showGrid) { onSetCanvasMetric(CanvasMetric.ShowGrid, it.asMetric()) }
-        CheckMenuItem("Show guides", canvas.showGuides) { onSetCanvasMetric(CanvasMetric.ShowGuides, it.asMetric()) }
-        CheckMenuItem("Show margins", canvas.showMargins) { onSetCanvasMetric(CanvasMetric.ShowMargins, it.asMetric()) }
-        CheckMenuItem("Show bleed", canvas.showBleed) { onSetCanvasMetric(CanvasMetric.ShowBleed, it.asMetric()) }
-        CheckMenuItem("Show safe area", canvas.showSafeArea) { onSetCanvasMetric(CanvasMetric.ShowSafeArea, it.asMetric()) }
-        CheckMenuItem("Show page shadow", canvas.showPageShadow) { onSetCanvasMetric(CanvasMetric.ShowPageShadow, it.asMetric()) }
+        CheckMenuItem("Afficher les règles", canvas.showRulers) { onSetCanvasMetric(CanvasMetric.ShowRulers, it.asMetric()) }
+        CheckMenuItem("Afficher la grille", canvas.showGrid) { onSetCanvasMetric(CanvasMetric.ShowGrid, it.asMetric()) }
+        CheckMenuItem("Afficher les repères", canvas.showGuides) { onSetCanvasMetric(CanvasMetric.ShowGuides, it.asMetric()) }
+        CheckMenuItem("Afficher les marges", canvas.showMargins) { onSetCanvasMetric(CanvasMetric.ShowMargins, it.asMetric()) }
+        CheckMenuItem("Afficher le fond perdu", canvas.showBleed) { onSetCanvasMetric(CanvasMetric.ShowBleed, it.asMetric()) }
+        CheckMenuItem("Afficher la zone de sécurité", canvas.showSafeArea) { onSetCanvasMetric(CanvasMetric.ShowSafeArea, it.asMetric()) }
+        CheckMenuItem("Afficher l’ombre de la page", canvas.showPageShadow) { onSetCanvasMetric(CanvasMetric.ShowPageShadow, it.asMetric()) }
         HorizontalDivider()
-        DropdownMenuItem(text = { Text("Unit: ${canvas.rulerUnit}") }, onClick = {})
+        DropdownMenuItem(text = { Text("Unité : ${canvas.rulerUnit}") }, onClick = {})
         RulerUnits.forEach { unit ->
             DropdownMenuItem(
                 text = { Text(unit) },
@@ -557,24 +594,24 @@ internal fun SnapMenu(
     onToggleSnap: () -> Unit,
     onSetCanvasMetric: (CanvasMetric, Float) -> Unit,
 ) {
-    ToolbarMenu("Snap") { _ ->
-        CheckMenuItem("Snap enabled", canvas.snapEnabled) { onToggleSnap() }
-        CheckMenuItem("Snap to grid", canvas.snapToGrid) { onSetCanvasMetric(CanvasMetric.SnapToGrid, it.asMetric()) }
-        CheckMenuItem("Snap to objects", canvas.snapToObjects) { onSetCanvasMetric(CanvasMetric.SnapToObjects, it.asMetric()) }
-        CheckMenuItem("Snap to guides", canvas.snapToGuides) { onSetCanvasMetric(CanvasMetric.SnapToGuides, it.asMetric()) }
-        CheckMenuItem("Snap to margins", canvas.snapToMargins) { onSetCanvasMetric(CanvasMetric.SnapToMargins, it.asMetric()) }
-        CheckMenuItem("Snap to page center", canvas.snapToPageCenter) { onSetCanvasMetric(CanvasMetric.SnapToPageCenter, it.asMetric()) }
+    ToolbarMenu("Magnétisme") { _ ->
+        CheckMenuItem("Activer le magnétisme", canvas.snapEnabled) { onToggleSnap() }
+        CheckMenuItem("Aligner sur la grille", canvas.snapToGrid) { onSetCanvasMetric(CanvasMetric.SnapToGrid, it.asMetric()) }
+        CheckMenuItem("Aligner sur les objets", canvas.snapToObjects) { onSetCanvasMetric(CanvasMetric.SnapToObjects, it.asMetric()) }
+        CheckMenuItem("Aligner sur les repères", canvas.snapToGuides) { onSetCanvasMetric(CanvasMetric.SnapToGuides, it.asMetric()) }
+        CheckMenuItem("Aligner sur les marges", canvas.snapToMargins) { onSetCanvasMetric(CanvasMetric.SnapToMargins, it.asMetric()) }
+        CheckMenuItem("Aligner au centre de la page", canvas.snapToPageCenter) { onSetCanvasMetric(CanvasMetric.SnapToPageCenter, it.asMetric()) }
         HorizontalDivider()
         DropdownMenuItem(
-            text = { Text("Tolerance ${canvas.snapThreshold.formatForInput()} px") },
+            text = { Text("Tolérance : ${canvas.snapThreshold.formatForInput()} px") },
             onClick = {},
         )
         DropdownMenuItem(
-            text = { Text("Tolerance -") },
+            text = { Text("Réduire la tolérance") },
             onClick = { onSetCanvasMetric(CanvasMetric.SnapThreshold, canvas.snapThreshold - 1f) },
         )
         DropdownMenuItem(
-            text = { Text("Tolerance +") },
+            text = { Text("Augmenter la tolérance") },
             onClick = { onSetCanvasMetric(CanvasMetric.SnapThreshold, canvas.snapThreshold + 1f) },
         )
     }
@@ -650,9 +687,9 @@ internal fun ToolbarZoomControls(
             }
         }
         ToolbarIconGroup {
-            CompactToolbarButton("Selection", enabled = hasSelection) { onZoomCommand(ZoomCommand.Selection) }
+            CompactToolbarButton("Sélection", enabled = hasSelection) { onZoomCommand(ZoomCommand.Selection) }
             CompactToolbarButton("Page") { onZoomCommand(ZoomCommand.FitPage) }
-            CompactToolbarButton("Fit") { onZoomCommand(ZoomCommand.FitWidth) }
+            CompactToolbarButton("Largeur") { onZoomCommand(ZoomCommand.FitWidth) }
             CompactToolbarButton("100%") { onZoomCommand(ZoomCommand.Reset) }
         }
     }
@@ -722,5 +759,3 @@ internal fun previewRecordLabel(record: DataRecord, fields: List<SchemaField>): 
         ?: record.values.values.firstOrNull { it.isNotBlank() }
         ?: record.id
 }
-
-

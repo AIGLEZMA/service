@@ -19,8 +19,9 @@ sealed interface AppScreen {
     @Serializable
     data class RecordCreate(val schemaId: String) : AppScreen
     @Serializable
-    data class Compile(val templateId: String) : AppScreen
+    data class TemplatePreview(val templateId: String) : AppScreen
+    @Serializable
+    data class TemplateEditor(val templateId: String) : AppScreen
 }
-
 
 

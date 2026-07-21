@@ -303,7 +303,7 @@ internal fun DrawScope.drawSnapIcon(
     drawCircle(color.copy(alpha = 0.18f), radius = 4.dp.toPx() + snapPulse * 2.dp.toPx(), center = Offset(cx, cy))
 
     if (snapPulse > 0.35f) {
-        drawGuideLabel("Snap", Offset(topLeft.x + iconSize + 6.dp.toPx(), cy), textMeasurer, color)
+        drawGuideLabel("Magnétisme", Offset(topLeft.x + iconSize + 6.dp.toPx(), cy), textMeasurer, color)
     }
 }
 
@@ -512,6 +512,5 @@ internal fun CanvasState.toSnapGuideSet(): SnapGuideSet {
         includePageCenter = snapToPageCenter,
     )
 }
-
 
 

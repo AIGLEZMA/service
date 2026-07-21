@@ -183,6 +183,7 @@ internal fun CanvasWorkspace(
     onToggleSelectedTextUnderline: () -> Unit,
     onAdjustSelectedTextFontSize: (Float) -> Unit,
     onAlignSelectedText: (String) -> Unit,
+    workspaceColor: Color = Color(0xFFE5E7EB),
     modifier: Modifier = Modifier,
 ) {
     val verticalScroll = rememberScrollState()
@@ -219,7 +220,7 @@ internal fun CanvasWorkspace(
 
     BoxWithConstraints(
         modifier = modifier
-            .background(Color(0xFFE5E7EB))
+            .background(workspaceColor)
             .focusRequester(focusRequester)
             .focusable()
             .onPreviewKeyEvent { event ->
@@ -768,6 +769,5 @@ internal fun CanvasWorkspace(
         }
     }
 }
-
 
 

@@ -75,7 +75,7 @@ class CompileViewModel(
                                 draftSchema,
                                 Template(
                                     id = draftTemplateId,
-                                    name = "Untitled template",
+                                    name = "Modèle sans titre",
                                     targetSchemaId = draftSchema.id,
                                     elements = emptyList(),
                                 ),
@@ -98,7 +98,7 @@ class CompileViewModel(
                     TemplateEditorState(
                         availableSchemas = schemas,
                         showSampleData = current.showSampleData,
-                        message = "Create a data schema before editing templates.",
+                        message = "Créez un modèle de données avant de modifier des modèles.",
                     )
                 } else {
                     TemplateEditorState(
@@ -107,7 +107,7 @@ class CompileViewModel(
                         availableSchemas = schemas,
                         showSampleData = current.showSampleData,
                         document = EditorDocument(
-                            elements = template.elements.ensureStableIds().withEditorTestElementsIfEmpty(),
+                            elements = ensureStableElementIds(template.elements, ::newId).withEditorTestElementsIfEmpty(),
                         ),
                     )
                 }
@@ -146,7 +146,7 @@ class CompileViewModel(
     fun openPreviewDialog() {
         val state = _uiState.value
         if (state.previewSchemaIds.isEmpty()) {
-            _uiState.update { it.copy(message = "Add a data field before previewing this template.") }
+            _uiState.update { it.copy(message = "Ajoutez un champ de données avant d’afficher l’aperçu de ce modèle.") }
             return
         }
         _uiState.update { it.copy(isPreviewDialogOpen = true, message = null) }
@@ -178,7 +178,7 @@ class CompileViewModel(
         _uiState.update { state ->
             state.copy(
                 showSampleData = !state.showSampleData,
-                message = if (state.showSampleData) "Showing template bindings." else "Showing sample data.",
+                message = if (state.showSampleData) "Affichage des liaisons du modèle." else "Affichage des exemples de données.",
             )
         }
     }
@@ -189,13 +189,13 @@ class CompileViewModel(
             state.selectedPreviewRecordIds[schema.id].isNullOrBlank()
         }
         when {
-            state.previewSchemaIds.isEmpty() -> _uiState.update { it.copy(message = "Add a data field before previewing this template.") }
-            missingSchema != null -> _uiState.update { it.copy(message = "Choose a record for ${missingSchema.name}.") }
+            state.previewSchemaIds.isEmpty() -> _uiState.update { it.copy(message = "Ajoutez un champ de données avant d’afficher l’aperçu de ce modèle.") }
+            missingSchema != null -> _uiState.update { it.copy(message = "Choisissez une donnée pour ${missingSchema.name}.") }
             else -> _uiState.update {
                 it.copy(
                     isPreviewMode = true,
                     isPreviewDialogOpen = false,
-                    message = "Preview mode enabled.",
+                    message = "Mode aperçu activé.",
                 )
             }
         }
@@ -216,7 +216,7 @@ class CompileViewModel(
         val textValue = if (schemaKey.isNotBlank() && fieldKey.isNotBlank()) "{{ $schemaKey.$fieldKey }}" else null
         val element = TemplateElement.Text(
             id = newId("field-${fieldSlug.ifBlank { "data" }}"),
-            name = fieldName.ifBlank { fieldSlug.ifBlank { "Data field" } },
+            name = fieldName.ifBlank { fieldSlug.ifBlank { "Champ de données" } },
             x = x,
             y = y,
             width = 220f,
@@ -291,7 +291,7 @@ class CompileViewModel(
     fun copySelected() {
         clipboardElements = _uiState.value.selectedElements
         if (clipboardElements.isNotEmpty()) {
-            _uiState.update { it.copy(message = "Copied ${clipboardElements.size} element${if (clipboardElements.size == 1) "" else "s"}.") }
+            _uiState.update { it.copy(message = "${clipboardElements.size} élément${if (clipboardElements.size == 1) " copié" else "s copiés"}.") }
         }
     }
 
@@ -343,11 +343,11 @@ class CompileViewModel(
     }
 
     fun groupSelected() {
-        _uiState.update { it.copy(message = "Grouping will be enabled when group containers are added.") }
+        _uiState.update { it.copy(message = "Le groupement sera disponible après l’ajout des conteneurs de groupe.") }
     }
 
     fun ungroupSelected() {
-        _uiState.update { it.copy(message = "Ungroup will be enabled when group containers are added.") }
+        _uiState.update { it.copy(message = "Le dégroupement sera disponible après l’ajout des conteneurs de groupe.") }
     }
 
     fun alignSelected(alignment: SelectionAlignment) {
@@ -512,7 +512,28 @@ class CompileViewModel(
     fun updateSelectedCircleBorderColor(value: String) = propertyActions.updateSelectedCircleBorderColor(value)
     fun updateSelectedCircleBorderWidth(value: Float) = propertyActions.updateSelectedCircleBorderWidth(value)
     fun updateSelectedCircleBorderStyle(value: TemplateBorderStyle) = propertyActions.updateSelectedCircleBorderStyle(value)
-    fun chooseImageForSelected() = propertyActions.chooseImageForSelected()
+    fun chooseImageForSelected() {
+        if (_uiState.value.isChoosingImage) return
+        viewModelScope.launch {
+            _uiState.update { it.copy(isChoosingImage = true, message = "Chargement de l’image…") }
+            val result = runCatching { chooseTemplateImageFile() }
+            _uiState.update { it.copy(isChoosingImage = false) }
+            result.fold(
+                onSuccess = { imageFile ->
+                    if (imageFile != null) {
+                        propertyActions.applyImageFileToSelected(imageFile)
+                        _uiState.update { it.copy(message = "Image chargée.") }
+                    } else {
+                        _uiState.update { it.copy(message = null) }
+                    }
+                },
+                onFailure = { error ->
+                    logger.e(error) { "Image loading failed" }
+                    _uiState.update { it.copy(message = "Impossible de charger cette image.") }
+                },
+            )
+        }
+    }
     fun resizeSelectedImageToIntrinsic() = propertyActions.resizeSelectedImageToIntrinsic()
     fun fitSelectedImageFrameToAspect() = propertyActions.fitSelectedImageFrameToAspect()
     fun updateSelectedImageContentMode(value: TemplateImageContentMode) = propertyActions.updateSelectedImageContentMode(value)
@@ -698,7 +719,7 @@ class CompileViewModel(
                     template = nextTemplate,
                     isDirty = false,
                     isSaving = false,
-                    message = "Template saved.",
+                    message = "Modèle enregistré.",
                 )
             }
         }
@@ -706,20 +727,37 @@ class CompileViewModel(
 
     fun exportPdf() {
         val state = _uiState.value
-        if (state.template == null) return
+        if (state.template == null || state.isExporting) return
         viewModelScope.launch {
-            _uiState.update { it.copy(message = "Preparing PDF export...") }
-            when (val result = exportTemplatePdf(state)) {
-                TemplatePdfExportResult.Cancelled -> _uiState.update { it.copy(message = "PDF export cancelled.") }
-                is TemplatePdfExportResult.Exported -> {
-                    logger.i { "Exported PDF to ${result.path}" }
-                    _uiState.update { it.copy(message = "PDF exported: ${result.path}") }
+            _uiState.update { it.copy(isExporting = true, message = "Préparation de l’export PDF…") }
+            try {
+                when (val result = exportTemplatePdf(state)) {
+                    TemplatePdfExportResult.Cancelled -> _uiState.update { it.copy(message = "Export PDF annulé.") }
+                    is TemplatePdfExportResult.Exported -> {
+                        logger.i { "Exported PDF to ${result.path}" }
+                        _uiState.update { it.copy(message = "PDF exporté : ${result.path}") }
+                    }
+                    is TemplatePdfExportResult.Failed -> {
+                        logger.e(result.cause) { "PDF export failed" }
+                        _uiState.update { it.copy(message = "Échec de l’export PDF : ${result.message}") }
+                    }
                 }
-                is TemplatePdfExportResult.Failed -> {
-                    logger.e(result.cause) { "PDF export failed" }
-                    _uiState.update { it.copy(message = "PDF export failed: ${result.message}") }
-                }
+            } finally {
+                _uiState.update { it.copy(isExporting = false) }
             }
+        }
+    }
+
+    fun exportPreviewPdf() {
+        val state = _uiState.value
+        when {
+            state.previewSchemaIds.isEmpty() -> _uiState.update {
+                it.copy(message = "Ce modèle ne contient aucun champ de données. Modifiez-le avant de générer un PDF.")
+            }
+            !state.canGeneratePreviewPdf -> _uiState.update {
+                it.copy(message = "Choisissez toutes les données requises avant de générer le PDF.")
+            }
+            else -> exportPdf()
         }
     }
 
@@ -743,27 +781,6 @@ class CompileViewModel(
             if (next == element) null else element to next
         }
         if (replacements.isNotEmpty()) execute(ReplaceElementsCommand(replacements))
-    }
-
-    private fun List<TemplateElement>.ensureStableIds(): List<TemplateElement> {
-        return mapIndexed { index, element ->
-            if (element.id.isNotBlank()) {
-                element
-            } else {
-                val id = newId("element-${index + 1}")
-                when (element) {
-                    is TemplateElement.Text -> element.copy(id = id)
-                    is TemplateElement.Image -> element.copy(id = id)
-                    is TemplateElement.Circle -> element.copy(id = id)
-                    is TemplateElement.QRCode -> element.copy(id = id)
-                    is TemplateElement.Barcode -> element.copy(id = id)
-                    is TemplateElement.List -> element.copy(id = id)
-                    is TemplateElement.Table -> element.copy(id = id)
-                    is TemplateElement.Rectangle -> element.copy(id = id)
-                    is TemplateElement.Line -> element.copy(id = id)
-                }
-            }
-        }
     }
 
     private fun newId(prefix: String): String {

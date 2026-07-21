@@ -75,13 +75,13 @@ private fun DashboardContent(
             horizontalArrangement = Arrangement.spacedBy(16.dp),
             modifier = Modifier.fillMaxWidth(),
         ) {
-            MetricCard("TEMPLATES", state.stats.totalTemplates.toString(), null, Modifier.weight(1f))
+            MetricCard("MODÈLES", state.stats.totalTemplates.toString(), null, Modifier.weight(1f))
             MetricCard("MODÈLES DE DONNÉE", state.stats.totalSchemas.toString(), null, Modifier.weight(1f))
             MetricCard("DONNÉES", state.stats.totalRecords.toString(), null, Modifier.weight(1f))
             MetricCard("PDF GÉNÉRÉS", state.stats.generatedPdfs.toString(), null, Modifier.weight(1f))
         }
         Text(
-            text = "Templates sauvegardés",
+            text = "Modèles enregistrés",
             style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.SemiBold,
         )
@@ -93,15 +93,15 @@ private fun DashboardContent(
                         verticalArrangement = Arrangement.spacedBy(12.dp),
                     ) {
                         CircularProgressIndicator()
-                        Text("Chargement des templates…")
+                        Text("Chargement des modèles…")
                     }
                 }
             }
         } else if (state.templates.isEmpty()) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 EmptyRoutePlaceholder(
-                    title = "Aucune template pour le moment",
-                    detail = "Créez une template pour commencer à compiler des documents alimentés par vos données.",
+                    title = "Aucun modèle pour le moment",
+                    detail = "Créez un modèle pour générer des documents à partir de vos données.",
                 )
             }
         } else {
@@ -133,5 +133,4 @@ private fun DashboardContent(
         }
     }
 }
-
 

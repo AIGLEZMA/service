@@ -1,11 +1,13 @@
 package me.aiglez.service.ui.records
 
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ContextMenuArea
 import androidx.compose.foundation.ContextMenuItem
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.TooltipArea
 import androidx.compose.foundation.VerticalScrollbar
+import androidx.compose.foundation.background
 import androidx.compose.foundation.hoverable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
@@ -22,6 +24,8 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Archive
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.ExpandLess
+import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.TableRows
 import androidx.compose.material3.*
@@ -300,6 +304,7 @@ private fun SchemaCard(
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val hovered by interactionSource.collectIsHoveredAsState()
+    var fieldsExpanded by remember(schema.id) { mutableStateOf(false) }
 
     ContextMenuArea(
         items = {
@@ -319,18 +324,22 @@ private fun SchemaCard(
             border = BorderStroke(1.dp, if (hovered) MaterialTheme.colorScheme.primary.copy(alpha = 0.5f) else MaterialTheme.colorScheme.outlineVariant),
             tonalElevation = if (hovered) 2.dp else 1.dp,
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(16.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .animateContentSize()
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(14.dp),
             ) {
-                Column(
-                    modifier = Modifier.weight(1f),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Row(
+                        modifier = Modifier.weight(1f),
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
                         Text(
                             text = schema.name,
@@ -341,101 +350,188 @@ private fun SchemaCard(
                             overflow = TextOverflow.Ellipsis
                         )
 
-                        AssistChip(
-                            onClick = {},
-                            label = { Text("${schema.fields.size} champs") },
-                            shape = RoundedCornerShape(4.dp),
-                            modifier = Modifier.height(24.dp)
-                        )
+                        FieldCountBadge(schema.fields.size)
                     }
 
-                    if (schema.fields.isNotEmpty()) {
-                        Row(
-                            horizontalArrangement = Arrangement.spacedBy(6.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Text(
-                                text = "Champs :",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                fontWeight = FontWeight.SemiBold
-                            )
+                    Spacer(Modifier.width(16.dp))
 
-                            val maxPreviewFields = 4
-                            val previewFields = schema.fields.take(maxPreviewFields)
-                            previewFields.forEachIndexed { index, field ->
-                                Text(
-                                    text = "${field.name} (${getTypeLabelAbbrev(field.type)})",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.primary,
-                                )
-                                if (index < previewFields.size - 1 || schema.fields.size > maxPreviewFields) {
-                                    Text(
-                                        text = "•",
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
-                                    )
-                                }
-                            }
-                            if (schema.fields.size > maxPreviewFields) {
-                                Text(
-                                    text = "+${schema.fields.size - maxPreviewFields} autres",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    fontWeight = FontWeight.Medium
-                               )
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        AppTooltip(text = "Consulter les données de ce modèle") {
+                            Button(
+                                onClick = { onOpenRecords(schema.id) },
+                                shape = RoundedCornerShape(4.dp),
+                                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
+                            ) {
+                                Icon(Icons.Default.TableRows, contentDescription = null, modifier = Modifier.size(16.dp))
+                                Spacer(Modifier.width(6.dp))
+                                Text("Données", style = MaterialTheme.typography.labelMedium)
                             }
                         }
-                    } else {
-                        Text(
-                            text = "Aucun champ configuré",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
+
+                        AppTooltip(text = "Modifier ce modèle de données") {
+                            OutlinedButton(
+                                onClick = { onEditSchema(schema.id) },
+                                shape = RoundedCornerShape(4.dp),
+                                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
+                            ) {
+                                Icon(Icons.Default.Edit, contentDescription = null, modifier = Modifier.size(16.dp))
+                                Spacer(Modifier.width(6.dp))
+                                Text("Modifier", style = MaterialTheme.typography.labelMedium)
+                            }
+                        }
+
+                        AppTooltip(text = "Archiver ce modèle de données") {
+                            IconButton(
+                                onClick = { onArchiveRequested(schema) },
+                                colors = IconButtonDefaults.iconButtonColors(
+                                    contentColor = MaterialTheme.colorScheme.onSurfaceVariant
+                                ),
+                            ) {
+                                Icon(Icons.Default.Archive, contentDescription = "Archiver", modifier = Modifier.size(20.dp))
+                            }
+                        }
                     }
                 }
 
-                Spacer(Modifier.width(16.dp))
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
 
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically,
+                SchemaFieldsPreview(
+                    schema = schema,
+                    expanded = fieldsExpanded,
+                    onExpandedChange = { fieldsExpanded = it },
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun FieldCountBadge(fieldCount: Int) {
+    Surface(
+        shape = RoundedCornerShape(4.dp),
+        color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.65f),
+    ) {
+        Text(
+            text = "$fieldCount ${if (fieldCount > 1) "champs" else "champ"}",
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSecondaryContainer,
+            fontWeight = FontWeight.SemiBold,
+        )
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun SchemaFieldsPreview(
+    schema: DataSchema,
+    expanded: Boolean,
+    onExpandedChange: (Boolean) -> Unit,
+) {
+    if (schema.fields.isEmpty()) {
+        Text(
+            text = "Aucun champ configuré",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        return
+    }
+
+    val collapsedFieldCount = 6
+    val visibleFields = if (expanded) schema.fields else schema.fields.take(collapsedFieldCount)
+    val hiddenFieldCount = schema.fields.size - visibleFields.size
+
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = "CHAMPS DU MODÈLE",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                fontWeight = FontWeight.Bold,
+            )
+
+            if (schema.fields.size > collapsedFieldCount) {
+                TextButton(
+                    onClick = { onExpandedChange(!expanded) },
+                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp),
                 ) {
-                    AppTooltip(text = "Consulter les données de ce modèle") {
-                        Button(
-                            onClick = { onOpenRecords(schema.id) },
-                            shape = RoundedCornerShape(4.dp),
-                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
-                        ) {
-                            Icon(Icons.Default.TableRows, contentDescription = null, modifier = Modifier.size(16.dp))
-                            Spacer(Modifier.width(6.dp))
-                            Text("Données", style = MaterialTheme.typography.labelMedium)
-                        }
-                    }
+                    Text(
+                        text = if (expanded) "Réduire" else "Tout afficher",
+                        style = MaterialTheme.typography.labelMedium,
+                    )
+                    Spacer(Modifier.width(4.dp))
+                    Icon(
+                        imageVector = if (expanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp),
+                    )
+                }
+            }
+        }
 
-                    AppTooltip(text = "Modifier ce modèle de données") {
-                        OutlinedButton(
-                            onClick = { onEditSchema(schema.id) },
-                            shape = RoundedCornerShape(4.dp),
-                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
+        FlowRow(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            visibleFields.forEach { field ->
+                AppTooltip(text = "${field.name} · ${getTypeLabelAbbrev(field.type)}") {
+                    Surface(
+                        modifier = Modifier.widthIn(max = 220.dp),
+                        shape = RoundedCornerShape(4.dp),
+                        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.55f),
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(start = 9.dp, end = 6.dp, top = 5.dp, bottom = 5.dp),
+                            horizontalArrangement = Arrangement.spacedBy(7.dp),
+                            verticalAlignment = Alignment.CenterVertically,
                         ) {
-                            Icon(Icons.Default.Edit, contentDescription = null, modifier = Modifier.size(16.dp))
-                            Spacer(Modifier.width(6.dp))
-                            Text("Modifier", style = MaterialTheme.typography.labelMedium)
+                            Text(
+                                text = field.name,
+                                modifier = Modifier.weight(1f, fill = false),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurface,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                            Text(
+                                text = getTypeLabelAbbrev(field.type),
+                                modifier = Modifier
+                                    .background(
+                                        MaterialTheme.colorScheme.primaryContainer,
+                                        RoundedCornerShape(3.dp),
+                                    )
+                                    .padding(horizontal = 5.dp, vertical = 2.dp),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                maxLines = 1,
+                            )
                         }
                     }
+                }
+            }
 
-                    AppTooltip(text = "Archiver ce modèle de données") {
-                        IconButton(
-                            onClick = { onArchiveRequested(schema) },
-                            colors = IconButtonDefaults.iconButtonColors(
-                                contentColor = MaterialTheme.colorScheme.onSurfaceVariant
-                            ),
-                        ) {
-                            Icon(Icons.Default.Archive, contentDescription = "Archiver", modifier = Modifier.size(20.dp))
-                        }
-                    }
+            if (hiddenFieldCount > 0) {
+                Surface(
+                    onClick = { onExpandedChange(true) },
+                    shape = RoundedCornerShape(4.dp),
+                    color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.6f),
+                ) {
+                    Text(
+                        text = "+$hiddenFieldCount autres",
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 7.dp),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.SemiBold,
+                    )
                 }
             }
         }
@@ -505,6 +601,4 @@ private fun getTypeLabelAbbrev(type: FieldType): String {
         FieldType.LIST -> "Liste"
     }
 }
-
-
 

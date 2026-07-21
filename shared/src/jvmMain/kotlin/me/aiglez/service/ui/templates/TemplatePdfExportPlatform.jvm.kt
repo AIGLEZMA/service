@@ -3,6 +3,8 @@ package me.aiglez.service.ui.templates
 import java.awt.FileDialog
 import java.awt.Frame
 import java.io.File
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.roundToInt
@@ -27,20 +29,22 @@ import org.apache.pdfbox.pdmodel.font.PDType1Font
 import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject
 import org.apache.pdfbox.util.Matrix
 
-actual fun exportTemplatePdf(state: TemplateEditorState): TemplatePdfExportResult {
+actual suspend fun exportTemplatePdf(state: TemplateEditorState): TemplatePdfExportResult {
     val template = state.template ?: return TemplatePdfExportResult.Failed("No template is open.")
     val outputFile = choosePdfOutputFile(template.name) ?: return TemplatePdfExportResult.Cancelled
-    return runCatching {
-        val context = state.exportExpressionContext()
-        writeTemplatePdf(
-            outputFile = outputFile,
-            elements = state.document.elements,
-            expressionContext = context,
-            resolveExpressions = true,
-        )
-        TemplatePdfExportResult.Exported(outputFile.absolutePath)
-    }.getOrElse { error ->
-        TemplatePdfExportResult.Failed(error.message ?: "Unable to write PDF.", error)
+    return withContext(Dispatchers.Default) {
+        runCatching {
+            val context = state.exportExpressionContext()
+            writeTemplatePdf(
+                outputFile = outputFile,
+                elements = state.document.elements,
+                expressionContext = context,
+                resolveExpressions = true,
+            )
+            TemplatePdfExportResult.Exported(outputFile.absolutePath)
+        }.getOrElse { error ->
+            TemplatePdfExportResult.Failed(error.message ?: "Unable to write PDF.", error)
+        }
     }
 }
 

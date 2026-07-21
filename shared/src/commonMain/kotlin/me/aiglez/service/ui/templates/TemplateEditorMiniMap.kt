@@ -314,25 +314,25 @@ internal fun ElementContextMenu(
         onDismissRequest = onDismiss,
         offset = menuOffset,
     ) {
-        MenuCommand("Duplicate", true, onDuplicate, onDismiss)
-        MenuCommand("Copy", true, onCopy, onDismiss)
-        MenuCommand("Paste", true, onPaste, onDismiss)
-        MenuCommand("Delete", true, onDelete, onDismiss)
+        MenuCommand("Dupliquer", true, onDuplicate, onDismiss)
+        MenuCommand("Copier", true, onCopy, onDismiss)
+        MenuCommand("Coller", true, onPaste, onDismiss)
+        MenuCommand("Supprimer", true, onDelete, onDismiss)
         HorizontalDivider()
-        MenuCommand("Bring to Front", true, onBringToFront, onDismiss)
-        MenuCommand("Send to Back", true, onSendToBack, onDismiss)
+        MenuCommand("Mettre au premier plan", true, onBringToFront, onDismiss)
+        MenuCommand("Mettre à l’arrière-plan", true, onSendToBack, onDismiss)
         HorizontalDivider()
-        MenuCommand("Group", true, onGroup, onDismiss)
-        MenuCommand("Ungroup", true, onUngroup, onDismiss)
-        MenuCommand("Lock", true, onLock, onDismiss)
-        MenuCommand("Hide", true, onHide, onDismiss)
+        MenuCommand("Grouper", true, onGroup, onDismiss)
+        MenuCommand("Dégrouper", true, onUngroup, onDismiss)
+        MenuCommand("Verrouiller", true, onLock, onDismiss)
+        MenuCommand("Masquer", true, onHide, onDismiss)
         HorizontalDivider()
-        MenuCommand("Align left", true, { onAlign(SelectionAlignment.Left) }, onDismiss)
-        MenuCommand("Align center", true, { onAlign(SelectionAlignment.Center) }, onDismiss)
-        MenuCommand("Align right", true, { onAlign(SelectionAlignment.Right) }, onDismiss)
-        MenuCommand("Align top", true, { onAlign(SelectionAlignment.Top) }, onDismiss)
-        MenuCommand("Align middle", true, { onAlign(SelectionAlignment.Middle) }, onDismiss)
-        MenuCommand("Align bottom", true, { onAlign(SelectionAlignment.Bottom) }, onDismiss)
+        MenuCommand("Aligner à gauche", true, { onAlign(SelectionAlignment.Left) }, onDismiss)
+        MenuCommand("Centrer horizontalement", true, { onAlign(SelectionAlignment.Center) }, onDismiss)
+        MenuCommand("Aligner à droite", true, { onAlign(SelectionAlignment.Right) }, onDismiss)
+        MenuCommand("Aligner en haut", true, { onAlign(SelectionAlignment.Top) }, onDismiss)
+        MenuCommand("Centrer verticalement", true, { onAlign(SelectionAlignment.Middle) }, onDismiss)
+        MenuCommand("Aligner en bas", true, { onAlign(SelectionAlignment.Bottom) }, onDismiss)
     }
 }
 
@@ -356,4 +356,3 @@ internal fun miniMapTransform(
         scale = scale,
     )
 }
-

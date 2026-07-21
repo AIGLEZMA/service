@@ -233,7 +233,7 @@ internal fun ComponentPaletteList(
     onDropElement: (TemplateElementType, Offset) -> Unit,
 ) {
     if (items.isEmpty()) {
-        EmptyPaletteText("No components")
+        EmptyPaletteText("Aucun composant")
         return
     }
     items.groupBy { it.group }.forEach { (group, groupItems) ->
@@ -241,7 +241,7 @@ internal fun ComponentPaletteList(
         groupItems.forEach { item ->
             PaletteListItem(
                 label = item.label,
-                meta = if (item.enabled) item.type.name else "Coming soon",
+                meta = if (item.enabled) item.type.name else "Bientôt disponible",
                 glyph = item.glyph,
                 enabled = item.enabled,
                 onClick = { onAddElement(item.type, 64f, 64f) },
@@ -260,7 +260,7 @@ internal fun DataFieldPaletteList(
 ) {
     Text(schemaName, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
     if (fields.isEmpty()) {
-        EmptyPaletteText("No data fields")
+        EmptyPaletteText("Aucun champ de données")
         return
     }
     fields.forEach { field ->
@@ -387,18 +387,17 @@ internal fun PaletteGlyph(
 
 internal fun componentPaletteItems(): List<ComponentPaletteItem> {
     return listOf(
-        ComponentPaletteItem("Text", "Tt", TemplateElementType.Text, group = "Basic"),
-        ComponentPaletteItem("Rectangle", "Rect", TemplateElementType.Rectangle, group = "Basic"),
-        ComponentPaletteItem("Line", "Line", TemplateElementType.Line, group = "Basic"),
-        ComponentPaletteItem("Image", "IMG", TemplateElementType.Image, group = "Media"),
-        ComponentPaletteItem("Circle", "Circ", TemplateElementType.Circle, group = "Shapes"),
-        ComponentPaletteItem("QR Code", "QR", TemplateElementType.QRCode, group = "Data"),
-        ComponentPaletteItem("Barcode", "|||", TemplateElementType.Barcode, group = "Data"),
-        ComponentPaletteItem("Table", "Tbl", TemplateElementType.Table, group = "Layout"),
-        ComponentPaletteItem("List", "List", TemplateElementType.List, group = "Layout"),
-        ComponentPaletteItem("Section", "Sec", TemplateElementType.Area, group = "Layout", enabled = false),
-        ComponentPaletteItem("Area", "Box", TemplateElementType.Area, group = "Layout", enabled = false),
+        ComponentPaletteItem("Texte", "Tt", TemplateElementType.Text, group = "Éléments de base"),
+        ComponentPaletteItem("Rectangle", "Rect", TemplateElementType.Rectangle, group = "Éléments de base"),
+        ComponentPaletteItem("Ligne", "Ligne", TemplateElementType.Line, group = "Éléments de base"),
+        ComponentPaletteItem("Image", "IMG", TemplateElementType.Image, group = "Médias"),
+        ComponentPaletteItem("Cercle", "Circ", TemplateElementType.Circle, group = "Formes"),
+        ComponentPaletteItem("Code QR", "QR", TemplateElementType.QRCode, group = "Données"),
+        ComponentPaletteItem("Code-barres", "|||", TemplateElementType.Barcode, group = "Données"),
+        ComponentPaletteItem("Tableau", "Tab", TemplateElementType.Table, group = "Mise en page"),
+        ComponentPaletteItem("Liste", "Liste", TemplateElementType.List, group = "Mise en page"),
+        ComponentPaletteItem("Section", "Sec", TemplateElementType.Area, group = "Mise en page", enabled = false),
+        ComponentPaletteItem("Zone", "Zone", TemplateElementType.Area, group = "Mise en page", enabled = false),
     )
 }
-
 

@@ -195,7 +195,7 @@ internal fun ExpressionTextEditor(
         OutlinedTextField(
             value = value,
             onValueChange = onValueChange,
-            label = { Text("Value") },
+            label = { Text("Valeur") },
             modifier = Modifier.fillMaxWidth(),
             singleLine = false,
             minLines = 3,
@@ -208,7 +208,7 @@ internal fun ExpressionTextEditor(
         ) {
             Box {
                 OutlinedButton(onClick = { menuExpanded = true }, modifier = Modifier.height(34.dp)) {
-                    Text("Insert")
+                    Text("Insérer")
                 }
                 DropdownMenu(
                     expanded = menuExpanded,
@@ -260,14 +260,14 @@ internal fun buildTemplateExpressionSnippets(schema: DataSchema?): List<Template
         )
     }
     return fieldSnippets + listOf(
-        TemplateExpressionSnippet("Default", "{{ default($firstPath, \"N/A\") }}", "fallback value"),
-        TemplateExpressionSnippet("If", "{{ if(eq($schemaKey.Status, \"paid\"), \"Paid\", \"Pending\") }}", "conditional text"),
-        TemplateExpressionSnippet("Coalesce", "{{ coalesce($firstPath, \"Untitled\") }}", "first available value"),
-        TemplateExpressionSnippet("Currency", "{{ currency($schemaKey.Total, \"USD\") }}", "money formatting"),
-        TemplateExpressionSnippet("Percent", "{{ percent($schemaKey.Discount) }}", "percentage formatting"),
-        TemplateExpressionSnippet("Uppercase", "{{ upper($firstPath) }}", "text formatting"),
-        TemplateExpressionSnippet("Compare", "{{ if(gt($schemaKey.Amount, 100), \"High\", \"Standard\") }}", "number comparison"),
-        TemplateExpressionSnippet("Join", "{{ join($schemaKey.Tags, \", \") }}", "list formatting"),
+        TemplateExpressionSnippet("Valeur par défaut", "{{ default($firstPath, \"N/A\") }}", "valeur de remplacement"),
+        TemplateExpressionSnippet("Condition", "{{ if(eq($schemaKey.Status, \"paid\"), \"Paid\", \"Pending\") }}", "texte conditionnel"),
+        TemplateExpressionSnippet("Première valeur", "{{ coalesce($firstPath, \"Untitled\") }}", "première valeur disponible"),
+        TemplateExpressionSnippet("Devise", "{{ currency($schemaKey.Total, \"USD\") }}", "format monétaire"),
+        TemplateExpressionSnippet("Pourcentage", "{{ percent($schemaKey.Discount) }}", "format en pourcentage"),
+        TemplateExpressionSnippet("Majuscules", "{{ upper($firstPath) }}", "format du texte"),
+        TemplateExpressionSnippet("Comparer", "{{ if(gt($schemaKey.Amount, 100), \"High\", \"Standard\") }}", "comparaison numérique"),
+        TemplateExpressionSnippet("Joindre", "{{ join($schemaKey.Tags, \", \") }}", "format d’une liste"),
     )
 }
 
@@ -359,45 +359,45 @@ internal fun PageSetupSection(
     canvas: CanvasState,
     onSetCanvasMetric: (CanvasMetric, Float) -> Unit,
 ) {
-    InspectorSection("Page Setup")
+    InspectorSection("Mise en page")
     NumericGridRow(
-        "Margin" to canvas.pageMargin,
-        "Printable" to canvas.printableInset,
+        "Marge" to canvas.pageMargin,
+        "Zone imprimable" to canvas.printableInset,
         onFirstChange = { onSetCanvasMetric(CanvasMetric.PageMargin, it) },
         onSecondChange = { onSetCanvasMetric(CanvasMetric.PrintableInset, it) },
     )
     NumericGridRow(
-        "Bleed" to canvas.bleedInset,
-        "Trim" to canvas.trimInset,
+        "Fond perdu" to canvas.bleedInset,
+        "Coupe" to canvas.trimInset,
         onFirstChange = { onSetCanvasMetric(CanvasMetric.BleedInset, it) },
         onSecondChange = { onSetCanvasMetric(CanvasMetric.TrimInset, it) },
     )
     NumericGridRow(
-        "Safe" to canvas.safeAreaInset,
-        "Snap" to canvas.snapThreshold,
+        "Zone sûre" to canvas.safeAreaInset,
+        "Magnétisme" to canvas.snapThreshold,
         onFirstChange = { onSetCanvasMetric(CanvasMetric.SafeAreaInset, it) },
         onSecondChange = { onSetCanvasMetric(CanvasMetric.SnapThreshold, it) },
     )
     NumericGridRow(
-        "Header" to canvas.headerGuide,
-        "Footer" to canvas.footerGuide,
+        "En-tête" to canvas.headerGuide,
+        "Pied de page" to canvas.footerGuide,
         onFirstChange = { onSetCanvasMetric(CanvasMetric.HeaderGuide, it) },
         onSecondChange = { onSetCanvasMetric(CanvasMetric.FooterGuide, it) },
     )
     NumericGridRow(
-        "Columns" to canvas.documentColumns.toFloat(),
-        "Rows" to canvas.documentRows.toFloat(),
+        "Colonnes" to canvas.documentColumns.toFloat(),
+        "Lignes" to canvas.documentRows.toFloat(),
         onFirstChange = { onSetCanvasMetric(CanvasMetric.DocumentColumns, it) },
         onSecondChange = { onSetCanvasMetric(CanvasMetric.DocumentRows, it) },
     )
     NumericGridRow(
-        "Grid" to canvas.gridSize,
-        "Baseline" to canvas.baselineGrid,
+        "Grille" to canvas.gridSize,
+        "Ligne de base" to canvas.baselineGrid,
         onFirstChange = { onSetCanvasMetric(CanvasMetric.GridSize, it) },
         onSecondChange = { onSetCanvasMetric(CanvasMetric.BaselineGrid, it) },
     )
     ToggleRow(
-        label = "Page outline",
+        label = "Contour de la page",
         checked = canvas.showPageOutline,
         onCheckedChange = { checked -> onSetCanvasMetric(CanvasMetric.ShowPageOutline, if (checked) 1f else 0f) },
     )
@@ -486,14 +486,14 @@ internal fun DropdownRow(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(label, style = MaterialTheme.typography.labelMedium)
-                Text(selected, style = MaterialTheme.typography.bodyMedium)
+                Text(editorOptionLabel(selected), style = MaterialTheme.typography.bodyMedium)
             }
         }
         if (expanded) {
             DropdownMenu(expanded = true, onDismissRequest = { expanded = false }) {
                 options.forEach { option ->
                     DropdownMenuItem(
-                        text = { Text(option) },
+                        text = { Text(editorOptionLabel(option)) },
                         onClick = {
                             onSelect(option)
                             expanded = false
@@ -560,13 +560,13 @@ internal fun ColorFieldRow(
                             }
                         },
                     )
-                    Text("Brightness", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text("Luminosité", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     BrightnessSlider(
                         modifier = Modifier.fillMaxWidth().height(24.dp),
                         controller = colorPickerController,
                         initialColor = parseColor(draftColor),
                     )
-                    Text("Alpha", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text("Opacité", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     AlphaSlider(
                         modifier = Modifier.fillMaxWidth().height(24.dp),
                         controller = colorPickerController,
@@ -586,10 +586,10 @@ internal fun ColorFieldRow(
                         ) {}
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             OutlinedButton(onClick = { expanded = false }) {
-                                Text("Cancel")
+                                Text("Annuler")
                             }
                             Button(onClick = ::applyDraftColor) {
-                                Text("Apply")
+                                Text("Appliquer")
                             }
                         }
                     }
@@ -629,10 +629,32 @@ internal fun EnumRow(
                 FilterChip(
                     selected = value == selected,
                     onClick = { onSelect(value) },
-                    label = { Text(value) },
+                    label = { Text(editorOptionLabel(value)) },
                 )
             }
         }
     }
 }
 
+private fun editorOptionLabel(value: String): String = when (value.lowercase()) {
+    "left" -> "Gauche"
+    "center" -> "Centre"
+    "right" -> "Droite"
+    "justify" -> "Justifié"
+    "top" -> "Haut"
+    "middle" -> "Milieu"
+    "bottom" -> "Bas"
+    "normal" -> "Normal"
+    "italic" -> "Italique"
+    "bold" -> "Gras"
+    "solid" -> "Continu"
+    "dashed" -> "Tirets"
+    "dotted" -> "Pointillé"
+    "none" -> "Aucun"
+    "fit" -> "Ajuster"
+    "crop" -> "Recadrer"
+    "stretch" -> "Étirer"
+    "ltr" -> "Gauche à droite"
+    "rtl" -> "Droite à gauche"
+    else -> value
+}

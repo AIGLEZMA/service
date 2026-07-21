@@ -15,9 +15,8 @@ data class TemplateImageBitmap(
     val height: Int,
 )
 
-expect fun chooseTemplateImageFile(): TemplateImageFile?
+expect suspend fun chooseTemplateImageFile(): TemplateImageFile?
 
 expect fun loadTemplateImageBitmap(path: String): TemplateImageBitmap?
-
 
 

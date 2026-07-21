@@ -18,6 +18,7 @@ import me.aiglez.service.ui.help.HelpScreen
 import me.aiglez.service.ui.navigation.AppScreen
 import me.aiglez.service.ui.records.*
 import me.aiglez.service.ui.templates.CompileScreen
+import me.aiglez.service.ui.templates.TemplateScreenMode
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
@@ -41,15 +42,20 @@ fun AppShell(
         }
     }
 
+    fun navigateHome() {
+        navStack.clear()
+        navStack.add(AppScreen.Dashboard)
+    }
+
     WorkspaceScaffold(
         schemas = schemas,
         selectedSchemaId = currentScreen.selectedSchemaId,
         currentRoute = currentScreen.chrome(schemas),
         showFab = currentScreen == AppScreen.Dashboard,
-        showDataChrome = currentScreen !is AppScreen.Compile,
+        showDataChrome = currentScreen !is AppScreen.TemplatePreview && currentScreen !is AppScreen.TemplateEditor,
         onBackClick = if (navStack.size > 1) ::navigateBack else null,
-        onCreateTemplateClick = { navigate(AppScreen.Compile("")) },
-        onHomeClick = { navigate(AppScreen.Dashboard) },
+        onCreateTemplateClick = { navigate(AppScreen.TemplateEditor("")) },
+        onHomeClick = ::navigateHome,
         onHelpClick = { navigate(AppScreen.Help) },
         onCreateSchemaClick = { navigate(AppScreen.SchemaCreate) },
         onSchemaClick = { navigate(AppScreen.RecordList(it)) },
@@ -66,8 +72,8 @@ fun AppShell(
             entryProvider = entryProvider {
                 entry<AppScreen.Dashboard> {
                     DashboardScreen(
-                        onOpenTemplate = { navigate(AppScreen.Compile(it)) },
-                        onCreateTemplate = { navigate(AppScreen.Compile("")) },
+                        onOpenTemplate = { navigate(AppScreen.TemplatePreview(it)) },
+                        onCreateTemplate = { navigate(AppScreen.TemplateEditor("")) },
                     )
                 }
                 entry<AppScreen.Help> {
@@ -104,8 +110,20 @@ fun AppShell(
                         onSaved = { navigate(AppScreen.RecordList(screen.schemaId)) },
                     )
                 }
-                entry<AppScreen.Compile> { screen ->
-                    CompileScreen(templateId = screen.templateId)
+                entry<AppScreen.TemplatePreview> { screen ->
+                    CompileScreen(
+                        templateId = screen.templateId,
+                        mode = TemplateScreenMode.Preview,
+                        onHomeClick = ::navigateHome,
+                        onEditClick = { navigate(AppScreen.TemplateEditor(screen.templateId)) },
+                    )
+                }
+                entry<AppScreen.TemplateEditor> { screen ->
+                    CompileScreen(
+                        templateId = screen.templateId,
+                        mode = TemplateScreenMode.Editor,
+                        onHomeClick = ::navigateHome,
+                    )
                 }
             },
         )
@@ -137,7 +155,7 @@ private fun WorkspaceScaffold(
         floatingActionButton = {
             if (showFab) {
                 ExtendedFloatingActionButton(
-                    text = { Text(text = "Créer une template") },
+                    text = { Text(text = "Créer un modèle") },
                     icon = {
                         Icon(
                             imageVector = Icons.Default.Add,
@@ -231,8 +249,8 @@ private val AppScreen.selectedSchemaId: String?
 
 private fun AppScreen.chrome(schemas: List<DataSchema>): RouteChrome = when (this) {
     AppScreen.Dashboard -> RouteChrome(
-        title = "Templates",
-        description = "Gérez les templates et leurs modèles de donnée",
+        title = "Modèles",
+        description = "Gérez les modèles PDF et leurs modèles de données",
     )
 
     AppScreen.Help -> RouteChrome(
@@ -247,7 +265,7 @@ private fun AppScreen.chrome(schemas: List<DataSchema>): RouteChrome = when (thi
 
     AppScreen.SchemaCreate -> RouteChrome(
         title = "Modèles de données",
-        description = "Créez un modèle de données réutilisable pour les templates",
+        description = "Créez un modèle de données réutilisable pour les modèles PDF",
     )
 
     is AppScreen.SchemaEdit -> RouteChrome(
@@ -265,8 +283,13 @@ private fun AppScreen.chrome(schemas: List<DataSchema>): RouteChrome = when (thi
         description = "Saisissez une nouvelle donnée pour ce modèle de données",
     )
 
-    is AppScreen.Compile -> RouteChrome(
-        title = "Template Editor",
+    is AppScreen.TemplatePreview -> RouteChrome(
+        title = "Aperçu du modèle",
+        description = "Générez un PDF à partir de vos données",
+    )
+
+    is AppScreen.TemplateEditor -> RouteChrome(
+        title = "Éditeur de modèle",
         description = "Composez visuellement le modèle PDF",
     )
 }
@@ -276,5 +299,3 @@ private fun schemaTitle(
     schemaId: String,
     fallback: String,
 ): String = schemas.firstOrNull { it.id == schemaId }?.name ?: fallback
-
-

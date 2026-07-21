@@ -6,6 +6,7 @@ import co.touchlab.kermit.Logger
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.withContext
 import me.aiglez.service.database.AppDatabase
 import me.aiglez.service.domain.models.Template
 import me.aiglez.service.domain.repository.TemplateRepository
@@ -35,7 +36,7 @@ class SqlDelightTemplateRepository(
             }
     }
 
-    override suspend fun saveTemplate(template: Template) {
+    override suspend fun saveTemplate(template: Template) = withContext(Dispatchers.Default) {
         logger.d { "Saving template: ${template.name} (${template.id})" }
         queries.insertTemplate(
             id = template.id,
@@ -45,13 +46,13 @@ class SqlDelightTemplateRepository(
             elements = template.elements,
             isArchived = template.isArchived,
         )
+        Unit
     }
 
-    override suspend fun archiveTemplate(templateId: String) {
+    override suspend fun archiveTemplate(templateId: String) = withContext(Dispatchers.Default) {
         logger.i { "Archiving template: $templateId" }
         queries.archiveTemplate(templateId)
+        Unit
     }
 }
-
-
 
