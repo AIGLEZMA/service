@@ -23,6 +23,7 @@ kotlin {
             implementation(libs.androidx.lifecycle.viewmodelCompose)
             implementation(libs.androidx.lifecycle.runtimeCompose)
             implementation(libs.jetbrains.navigation3.ui)
+            implementation(libs.kotlin.csv)
             implementation(libs.kotlinx.serialization.json)
             implementation(libs.runtime)
             implementation(libs.sqldelight.coroutines)
@@ -48,5 +49,4 @@ sqldelight {
         }
     }
 }
-
 

@@ -6,6 +6,7 @@ junit = "4.13.2"
 kotlin = "2.4.0"
 kotlinx-serialization = "1.7.3"
 kotlinx-coroutines = "1.11.0"
+kotlin-csv = "2.0.0"
 material3 = "1.11.0-alpha07"
 multiplatform-nav3-ui = "1.0.0-alpha05"
 sqlDelight = "2.3.2"
@@ -19,6 +20,7 @@ pdfbox = "2.0.32"
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
 kotlin-testJunit = { module = "org.jetbrains.kotlin:kotlin-test-junit", version.ref = "kotlin" }
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinx-serialization" }
+kotlin-csv = { module = "com.jsoizo:kotlin-csv", version.ref = "kotlin-csv" }
 junit = { module = "junit:junit", version.ref = "junit" }
 androidx-lifecycle-viewmodelCompose = { module = "org.jetbrains.androidx.lifecycle:lifecycle-viewmodel-compose", version.ref = "androidx-lifecycle" }
 androidx-lifecycle-runtimeCompose = { module = "org.jetbrains.androidx.lifecycle:lifecycle-runtime-compose", version.ref = "androidx-lifecycle" }

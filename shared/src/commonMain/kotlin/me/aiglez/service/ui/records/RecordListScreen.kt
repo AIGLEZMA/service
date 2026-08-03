@@ -95,6 +95,19 @@ fun RecordListScreen(
         onArchiveRecord = { pendingArchive = it },
     )
 
+    val schema = state.schema
+    val csvImport = state.csvImport
+    if (schema != null && (csvImport.source != null || csvImport.error != null)) {
+        CsvImportDialog(
+            schema = schema,
+            state = csvImport,
+            onMappingChange = viewModel::updateCsvMapping,
+            onChooseFile = viewModel::onImportCsvClicked,
+            onImport = viewModel::importCsvRecords,
+            onDismiss = viewModel::dismissCsvImport,
+        )
+    }
+
     val record = pendingArchive
     if (record != null) {
         AlertDialog(
@@ -220,12 +233,13 @@ private fun RecordListContent(
                     AppTooltip(text = "Importer des données depuis un fichier CSV") {
                         OutlinedButton(
                             onClick = onImportCsv,
+                            enabled = !state.csvImport.isPicking,
                             shape = RoundedCornerShape(4.dp),
                             contentPadding = PaddingValues(horizontal = 14.dp, vertical = 10.dp),
                         ) {
                             Icon(Icons.Default.UploadFile, contentDescription = null, modifier = Modifier.size(18.dp))
                             Spacer(Modifier.width(8.dp))
-                            Text("Importer CSV")
+                            Text(if (state.csvImport.isPicking) "Ouverture…" else "Importer CSV")
                         }
                     }
 
