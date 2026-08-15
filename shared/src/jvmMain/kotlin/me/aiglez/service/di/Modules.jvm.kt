@@ -7,7 +7,8 @@ import org.koin.dsl.module
 
 actual val platformModule: Module = module {
     single<SqlDriver> {
-        val driver: SqlDriver = JdbcSqliteDriver("jdbc:sqlite:service.db")
+        val databaseFile = applicationDatabaseFile()
+        val driver: SqlDriver = JdbcSqliteDriver("jdbc:sqlite:$databaseFile")
         ensureDatabaseSchema(driver)
         driver
     }
@@ -58,6 +59,5 @@ private fun ensureDatabaseSchema(driver: SqlDriver) {
     driver.execute(null, "CREATE INDEX IF NOT EXISTS RecordEntity_schema_archived_idx ON RecordEntity(schemaId, isArchived)", 0)
     driver.execute(null, "CREATE INDEX IF NOT EXISTS TemplateEntity_schema_archived_idx ON TemplateEntity(targetSchemaId, isArchived)", 0)
 }
-
 
 
