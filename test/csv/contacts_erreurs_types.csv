@@ -1,0 +1,3 @@
+Full Name,Email,Age,Score,Tags,Customer Reference
+Contact invalide,invalid@example.test,trente,excellent,Erreur;Test,client_dupont
+Contact valide,valid@example.test,42,85.5,Contrôle;Test,client_martin

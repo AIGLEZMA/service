@@ -59,6 +59,7 @@ class SeededRecordRepository(
 private const val ServiceOrderSchemaId = "test_service_order"
 private const val CustomerProfileSchemaId = "test_customer_profile"
 private const val ProductCatalogSchemaId = "test_product_catalog"
+private const val CsvImportTestSchemaId = "test_csv_import"
 internal const val ClientSchemaId = "modele_client"
 internal const val IntervenantSchemaId = "modele_intervenant"
 private const val DeprecatedInterventionSchemaId = "modele_intervention"
@@ -116,6 +117,24 @@ private val demoSchemas = listOf(
             SchemaField("field-unit-price", "Unit Price", "unit_price", FieldType.DOUBLE),
             SchemaField("field-stock-count", "Stock Count", "stock_count", FieldType.NUMBER),
             SchemaField("field-features", "Features", "features", FieldType.LIST),
+        ),
+    ),
+    DataSchema(
+        id = CsvImportTestSchemaId,
+        name = "Test Import CSV",
+        fields = listOf(
+            SchemaField("field-csv-full-name", "Full Name", "full_name", FieldType.TEXT),
+            SchemaField("field-csv-email", "Email", "email", FieldType.TEXT),
+            SchemaField("field-csv-age", "Age", "age", FieldType.NUMBER),
+            SchemaField("field-csv-score", "Score", "score", FieldType.DOUBLE),
+            SchemaField("field-csv-tags", "Tags", "tags", FieldType.LIST),
+            SchemaField(
+                "field-csv-customer-reference",
+                "Customer Reference",
+                "customer_reference",
+                FieldType.REFERENCE,
+                ClientSchemaId,
+            ),
         ),
     ),
 )

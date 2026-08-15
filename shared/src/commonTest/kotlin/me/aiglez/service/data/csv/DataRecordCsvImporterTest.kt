@@ -32,6 +32,44 @@ class DataRecordCsvImporterTest {
     }
 
     @Test
+    fun `matches readable headers to schema slugs`() {
+        val schema = DataSchema(
+            id = "contacts",
+            name = "Contacts",
+            fields = listOf(
+                SchemaField("field-full-name", "Nom complet", "full_name", FieldType.TEXT),
+            ),
+        )
+        val source = assertIs<CsvImportReadResult.Success>(
+            DataRecordCsvImporter.read("contacts.csv", "Full Name\nAda Lovelace"),
+        ).source
+
+        assertEquals(
+            mapOf("field-full-name" to "Full Name"),
+            DataRecordCsvImporter.suggestMappings(schema, source),
+        )
+    }
+
+    @Test
+    fun `removes empty list items`() {
+        val schema = personSchema()
+        val source = assertIs<CsvImportReadResult.Success>(
+            DataRecordCsvImporter.read(
+                "people.csv",
+                "Name,Age,Score,Tags\nAda,37,19.5,\"admin; ;editor;\"",
+            ),
+        ).source
+
+        val preview = DataRecordCsvImporter.preview(
+            schema,
+            source,
+            DataRecordCsvImporter.suggestMappings(schema, source),
+        )
+
+        assertEquals("admin\neditor", preview.records.single()["tags"])
+    }
+
+    @Test
     fun `detects semicolon and tab delimiters`() {
         val semicolon = assertIs<CsvImportReadResult.Success>(
             DataRecordCsvImporter.read("people.csv", "Name;Age\nAda;37"),

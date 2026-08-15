@@ -69,17 +69,11 @@ object DataRecordCsvImporter {
     }
 
     fun suggestMappings(schema: DataSchema, source: CsvImportSource): Map<String, String?> {
-        val headersByKey = buildMap {
-            source.headers.forEach { header ->
-                put(header.normalizedForMapping(), header)
-                put(header.slugForMapping(), header)
-            }
-        }
+        val headersByKey = source.headers.associateBy { it.mappingKey() }
         return schema.fields.associate { field ->
             field.id to (
-                headersByKey[field.name.normalizedForMapping()]
-                    ?: headersByKey[field.slug.normalizedForMapping()]
-                    ?: headersByKey[field.slug.slugForMapping()]
+                headersByKey[field.name.mappingKey()]
+                    ?: headersByKey[field.slug.mappingKey()]
                 )
         }
     }
@@ -159,11 +153,17 @@ object DataRecordCsvImporter {
             } else {
                 ParsedValue.Failure("La valeur '$rawValue' n'est pas un nombre entier valide.")
             }
-            FieldType.DOUBLE -> value.replace(',', '.').toDoubleOrNull()?.let {
-                ParsedValue.Success(value.replace(',', '.'))
+            FieldType.DOUBLE -> value.replace(',', '.').let { normalizedValue ->
+                normalizedValue.toDoubleOrNull()?.let {
+                    ParsedValue.Success(normalizedValue)
+                }
             } ?: ParsedValue.Failure("La valeur '$rawValue' n'est pas un nombre décimal valide.")
             FieldType.LIST -> ParsedValue.Success(
-                rawValue.split(';').joinToString("\n") { it.trim() }.trim(),
+                rawValue
+                    .split(';', '\n')
+                    .map { it.trim() }
+                    .filter { it.isNotEmpty() }
+                    .joinToString("\n"),
             )
         }
     }
@@ -191,7 +191,7 @@ object DataRecordCsvImporter {
         if (headers.isEmpty()) return "Le CSV doit contenir une ligne d'en-tête."
         val blankIndex = headers.indexOfFirst { it.isBlank() }
         if (blankIndex >= 0) return "La colonne ${blankIndex + 1} a un en-tête vide."
-        val duplicate = headers.groupBy { it.normalizedForMapping() }
+        val duplicate = headers.groupBy { it.mappingKey() }
             .values.firstOrNull { it.size > 1 }?.firstOrNull()
         return duplicate?.let { "L'en-tête '$it' est présent plusieurs fois dans le CSV." }
     }
@@ -201,9 +201,7 @@ object DataRecordCsvImporter {
         data class Failure(val message: String) : ParsedValue
     }
 
-    private fun String.normalizedForMapping(): String = trim().lowercase()
-
-    private fun String.slugForMapping(): String = trim().lowercase()
+    private fun String.mappingKey(): String = trim().lowercase()
         .replace(Regex("[^a-z0-9]+"), "_")
         .trim('_')
 }

@@ -37,6 +37,8 @@ Les données et les modèles sont enregistrés localement dans une base SQLite.
 ./gradlew check
 ```
 
+Des fichiers prêts à importer sont disponibles dans [`test/csv`](test/csv/README.md).
+
 ## À venir
 
 - Prise en charge d'autres sources de données.
