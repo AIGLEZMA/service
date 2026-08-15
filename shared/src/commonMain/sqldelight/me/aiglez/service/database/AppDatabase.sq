@@ -44,9 +44,14 @@ ON TemplateEntity(targetSchemaId, isArchived);
 getActiveSchemas:
 SELECT * FROM SchemaEntity WHERE isArchived = 0;
 
-insertSchema:
-INSERT OR REPLACE INTO SchemaEntity(id, name, fields, isArchived)
+insertSchemaIfMissing:
+INSERT OR IGNORE INTO SchemaEntity(id, name, fields, isArchived)
 VALUES (?, ?, ?, ?);
+
+updateSchema:
+UPDATE SchemaEntity
+SET name = ?, fields = ?, isArchived = ?
+WHERE id = ?;
 
 archiveSchema:
 UPDATE SchemaEntity SET isArchived = 1 WHERE id = ?;

@@ -30,7 +30,10 @@ class SqlDelightRecordRepository(
 
     override suspend fun saveSchema(schema: DataSchema) = withContext(Dispatchers.Default) {
         logger.d { "Saving Schema: ${schema.name} (${schema.id})" }
-        queries.insertSchema(schema.id, schema.name, schema.fields, schema.isArchived)
+        queries.transaction {
+            queries.updateSchema(schema.name, schema.fields, schema.isArchived, schema.id)
+            queries.insertSchemaIfMissing(schema.id, schema.name, schema.fields, schema.isArchived)
+        }
         Unit
     }
 
