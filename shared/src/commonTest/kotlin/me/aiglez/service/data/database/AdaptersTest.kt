@@ -28,4 +28,13 @@ class AdaptersTest {
         assertEquals(elements, decoded)
         assertIs<TemplateElement.Text>(decoded.first())
     }
+
+    @Test
+    fun schemaFieldsWithoutAliasesRemainReadable() {
+        val decoded = fieldsAdapter.decode(
+            """[{"id":"field-name","name":"Name","slug":"name","type":"TEXT"}]""",
+        )
+
+        assertEquals(emptyList(), decoded.single().aliases)
+    }
 }

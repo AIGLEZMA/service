@@ -18,6 +18,7 @@ data class SchemaCreateUiState(
     val schemaId: String = "",
     val schemaName: String = "",
     val fields: List<SchemaField> = emptyList(),
+    val persistedFieldNames: Map<String, String> = emptyMap(),
     val lockedExistingFieldIds: Set<String> = emptySet(),
     val hasExistingRecords: Boolean = false,
     val isEditing: Boolean = false,
@@ -45,6 +46,7 @@ class SchemaCreateViewModel(
                                 schemaId = schema.id,
                                 schemaName = schema.name,
                                 fields = schema.fields,
+                                persistedFieldNames = schema.fields.associate { it.id to it.name },
                                 lockedExistingFieldIds = schema.fields.map { it.id }.toSet(),
                                 isEditing = true,
                             )
@@ -99,7 +101,11 @@ class SchemaCreateViewModel(
             state.copy(
                 fields = state.fields.map { field ->
                     if (field.id == fieldId) {
-                        field.copy(name = name, slug = slugify(name))
+                        renameSchemaField(
+                            field = field,
+                            name = name,
+                            persistedName = state.persistedFieldNames[field.id],
+                        )
                     } else {
                         field
                     }
@@ -166,11 +172,33 @@ class SchemaCreateViewModel(
                     fields = current.fields,
                 ),
             )
-            _uiState.update { it.copy(isSaving = false, schemaId = id) }
+            _uiState.update {
+                it.copy(
+                    isSaving = false,
+                    schemaId = id,
+                    persistedFieldNames = current.fields.associate { field -> field.id to field.name },
+                )
+            }
             onSaved(id)
         }
     }
 }
 
+internal fun renameSchemaField(
+    field: SchemaField,
+    name: String,
+    persistedName: String?,
+): SchemaField {
+    if (persistedName == null) {
+        return field.copy(name = name, slug = slugify(name))
+    }
+
+    val aliases = if (name != persistedName && persistedName.isNotBlank()) {
+        (field.aliases + persistedName.trim()).distinct()
+    } else {
+        field.aliases
+    }
+    return field.copy(name = name, aliases = aliases)
+}
 
 

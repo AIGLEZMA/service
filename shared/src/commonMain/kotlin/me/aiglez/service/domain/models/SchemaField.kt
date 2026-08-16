@@ -8,7 +8,7 @@ data class SchemaField(
     val name: String,
     val slug: String, // Immutable key generated from name (e.g., "client_age") used for template tags
     val type: FieldType,
-    val referenceSchemaId: String? = null // populates if type == REFERENCE
+    val referenceSchemaId: String? = null, // populates if type == REFERENCE
+    val aliases: List<String> = emptyList(),
 )
-
 

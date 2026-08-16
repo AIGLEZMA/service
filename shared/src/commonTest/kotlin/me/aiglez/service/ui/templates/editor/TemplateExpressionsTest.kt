@@ -124,6 +124,34 @@ class TemplateExpressionsTest {
     }
 
     @Test
+    fun keepsPreviouslySavedFieldNamesAvailableAsAliases() {
+        val schema = DataSchema(
+            id = "schema-customer",
+            name = "Customer Profile",
+            fields = listOf(
+                SchemaField(
+                    id = "field-name",
+                    name = "Customer Name",
+                    slug = "full_name",
+                    type = FieldType.TEXT,
+                    aliases = listOf("Full Name"),
+                ),
+            ),
+        )
+        val record = DataRecord(
+            id = "customer-1",
+            schemaId = schema.id,
+            values = mapOf("full_name" to "Ada Lovelace"),
+        )
+
+        val context = recordExpressionContext(schema, record)
+
+        assertEquals("Ada Lovelace", renderTemplateText("{{ CustomerProfile.FullName }}", context))
+        assertEquals("Ada Lovelace", renderTemplateText("{{ CustomerProfile.CustomerName }}", context))
+        assertEquals("Ada Lovelace", renderTemplateText("{{ CustomerProfile.full_name }}", context))
+    }
+
+    @Test
     fun findsSchemaRootsInTemplateExpressions() {
         assertEquals(
             setOf("CustomerProfile", "Order"),
@@ -131,6 +159,5 @@ class TemplateExpressionsTest {
         )
     }
 }
-
 
 

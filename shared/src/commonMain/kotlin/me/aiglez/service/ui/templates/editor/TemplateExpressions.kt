@@ -98,7 +98,9 @@ fun schemaExpressionAliases(schema: DataSchema): Set<String> {
 }
 
 fun fieldExpressionAliases(field: SchemaField): Set<String> {
-    return expressionAliases(field.name) + expressionAliases(field.slug) + expressionAliases(field.id)
+    return (listOf(field.name, field.slug, field.id) + field.aliases)
+        .flatMap(::expressionAliases)
+        .toSet()
 }
 
 private val TemplateExpressionPattern = Regex("""\{\{\s*(.*?)\s*}}""")
@@ -457,6 +459,5 @@ private fun recordFieldValue(field: SchemaField, rawValue: String): Any? {
         FieldType.REFERENCE -> rawValue
     }
 }
-
 
 

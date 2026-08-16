@@ -390,7 +390,6 @@ private fun FieldDefinitionRow(
                         modifier = Modifier.weight(1.4f),
                         singleLine = true,
                         placeholder = { Text("Nom du champ") },
-                        readOnly = locked,
                         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
                         keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Down) }),
                         shape = RoundedCornerShape(8.dp),
@@ -404,10 +403,10 @@ private fun FieldDefinitionRow(
                     )
 
                     if (locked) {
-                        AppTooltip(text = "Champ existant verrouillé") {
+                        AppTooltip(text = "Type et suppression verrouillés pour protéger les données existantes") {
                             Icon(
                                 imageVector = Icons.Default.Lock,
-                                contentDescription = "Verrouillé",
+                                contentDescription = "Type et suppression verrouillés",
                                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
                                 modifier = Modifier.size(24.dp)
                             )
@@ -665,6 +664,5 @@ private fun getTypeLabel(type: FieldType): String {
         FieldType.LIST -> "Liste"
     }
 }
-
 
 

@@ -211,7 +211,7 @@ class CompileViewModel(
     fun addDataField(schemaName: String, fieldSlug: String, fieldName: String, x: Float = 64f, y: Float = 64f) {
         val state = _uiState.value
         val zIndex = (state.document.elements.maxOfOrNull { it.zIndex } ?: 0) + 1
-        val fieldKey = expressionIdentifier(fieldName).ifBlank { fieldSlug }
+        val fieldKey = expressionIdentifier(fieldSlug).ifBlank { expressionIdentifier(fieldName) }
         val schemaKey = expressionIdentifier(schemaName)
         val textValue = if (schemaKey.isNotBlank() && fieldKey.isNotBlank()) "{{ $schemaKey.$fieldKey }}" else null
         val element = TemplateElement.Text(
