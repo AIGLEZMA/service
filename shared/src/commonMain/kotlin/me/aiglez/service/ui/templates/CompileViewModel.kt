@@ -68,7 +68,7 @@ class CompileViewModel(
                 when {
                     schemas.isEmpty() -> flowOf(Triple(schemas, null, null))
                     templateId.isBlank() -> {
-                        val draftSchema = schemas.firstOrNull { it.id == EditorTestSchemaId } ?: schemas.first()
+                        val draftSchema = schemas.first()
                         flowOf(
                             Triple(
                                 schemas,
@@ -107,7 +107,7 @@ class CompileViewModel(
                         availableSchemas = schemas,
                         showSampleData = current.showSampleData,
                         document = EditorDocument(
-                            elements = ensureStableElementIds(template.elements, ::newId).withEditorTestElementsIfEmpty(),
+                            elements = ensureStableElementIds(template.elements, ::newId),
                         ),
                     )
                 }

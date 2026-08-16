@@ -1,6 +1,15 @@
 # Fichiers de test CSV
 
-Dans l'application, ouvrez le modèle de données **Test Import CSV**, puis cliquez sur **Importer CSV**.
+Créez un modèle de données dédié, puis ajoutez les champs suivants avant de cliquer sur **Importer CSV** :
+
+| Nom | Type |
+| --- | --- |
+| Full Name | Texte |
+| Email | Texte |
+| Age | Nombre entier |
+| Score | Nombre décimal |
+| Tags | Liste |
+| Customer Reference | Texte |
 
 | Fichier | Résultat attendu |
 | --- | --- |
@@ -11,4 +20,4 @@ Dans l'application, ouvrez le modèle de données **Test Import CSV**, puis cliq
 | `contacts_erreurs_types.csv` | Import bloqué : Age et Score sont invalides à la ligne 2. |
 | `contacts_entetes_dupliques.csv` | Fichier rejeté : les en-têtes Email et email sont considérés comme des doublons. |
 
-Les valeurs `client_dupont` et `client_martin` correspondent aux clients de démonstration déjà présents dans l'application.
+Ces fichiers restent réservés aux tests manuels et automatisés ; ils ne sont plus injectés dans la base de production.

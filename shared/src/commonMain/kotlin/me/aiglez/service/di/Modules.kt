@@ -6,8 +6,6 @@ import co.touchlab.kermit.platformLogWriter
 import me.aiglez.service.data.database.elementsAdapter
 import me.aiglez.service.data.database.fieldsAdapter
 import me.aiglez.service.data.database.valuesMapAdapter
-import me.aiglez.service.data.repository.SeededRecordRepository
-import me.aiglez.service.data.repository.SeededTemplateRepository
 import me.aiglez.service.data.repository.SqlDelightRecordRepository
 import me.aiglez.service.data.repository.SqlDelightTemplateRepository
 import me.aiglez.service.database.AppDatabase
@@ -42,8 +40,8 @@ val dataModule = module {
             TemplateEntityAdapter = TemplateEntity.Adapter(elementsAdapter)
         )
     }
-    single<RecordRepository> { SeededRecordRepository(SqlDelightRecordRepository(get(), get()), get()) }
-    single<TemplateRepository> { SeededTemplateRepository(SqlDelightTemplateRepository(get(), get()), get(), get()) }
+    single<RecordRepository> { SqlDelightRecordRepository(get(), get()) }
+    single<TemplateRepository> { SqlDelightTemplateRepository(get(), get()) }
 }
 
 val uiModule = module {
