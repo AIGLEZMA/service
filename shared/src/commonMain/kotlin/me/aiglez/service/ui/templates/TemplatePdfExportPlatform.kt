@@ -9,3 +9,4 @@ sealed interface TemplatePdfExportResult {
 }
 
 expect suspend fun exportTemplatePdf(state: TemplateEditorState): TemplatePdfExportResult
+expect fun templatePdfPreflightWarnings(state: TemplateEditorState): List<String>

@@ -114,5 +114,3 @@ internal fun normalizeRotation(rotation: Float): Float {
     val normalized = rotation % 360f
     return if (normalized < 0f) normalized + 360f else normalized
 }
-
-

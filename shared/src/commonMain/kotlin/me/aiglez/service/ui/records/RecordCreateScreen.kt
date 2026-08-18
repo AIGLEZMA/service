@@ -120,6 +120,7 @@ private fun RecordCreateContent(
                 SaveBar(
                     canSave = canSave,
                     isSaving = state.isSaving,
+                    errorMessage = state.errorMessage,
                     onSave = onSave,
                 )
             }
@@ -322,6 +323,7 @@ private fun ReferenceDropdown(
 private fun SaveBar(
     canSave: Boolean,
     isSaving: Boolean,
+    errorMessage: String?,
     onSave: () -> Unit,
 ) {
     Surface(
@@ -338,10 +340,18 @@ private fun SaveBar(
         ) {
             Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Text(
-                    text = if (isSaving) "Enregistrement en cours..." else "Prêt à enregistrer",
+                    text = when {
+                        isSaving -> "Enregistrement en cours..."
+                        errorMessage != null -> errorMessage
+                        else -> "Prêt à enregistrer"
+                    },
                     style = MaterialTheme.typography.labelLarge,
                     fontWeight = FontWeight.Bold,
-                    color = if (canSave && !isSaving) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = when {
+                        errorMessage != null -> MaterialTheme.colorScheme.error
+                        canSave && !isSaving -> MaterialTheme.colorScheme.primary
+                        else -> MaterialTheme.colorScheme.onSurfaceVariant
+                    },
                 )
                 Text(
                     text = "La donnée sera ajoutée au registre de ce modèle.",
@@ -375,6 +385,3 @@ private fun getFieldTypeLabel(type: FieldType): String {
         FieldType.LIST -> "Liste"
     }
 }
-
-
-

@@ -702,5 +702,3 @@ internal fun VerticalRuler(
         }
     }
 }
-
-

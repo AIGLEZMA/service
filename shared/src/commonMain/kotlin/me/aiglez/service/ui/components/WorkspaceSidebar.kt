@@ -438,5 +438,3 @@ fun QuickActionCard(
         }
     }
 }
-
-

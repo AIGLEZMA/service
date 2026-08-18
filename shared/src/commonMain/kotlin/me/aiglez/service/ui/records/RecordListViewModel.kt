@@ -28,6 +28,15 @@ data class RecordListUiState(
     val schema: DataSchema? = null,
     val records: List<DataRecord> = emptyList(),
     val csvImport: CsvImportUiState = CsvImportUiState(),
+    val isArchiving: Boolean = false,
+    val message: String? = null,
+    val errorMessage: String? = null,
+)
+
+private data class RecordMutationState(
+    val isArchiving: Boolean = false,
+    val message: String? = null,
+    val errorMessage: String? = null,
 )
 
 class RecordListViewModel(
@@ -37,19 +46,40 @@ class RecordListViewModel(
 ) : ViewModel() {
 
     private val csvImport = MutableStateFlow(CsvImportUiState())
+    private val mutationState = MutableStateFlow(RecordMutationState())
 
     val uiState: StateFlow<RecordListUiState> = combine(
         recordRepository.getActiveSchemas().map { schemas -> schemas.firstOrNull { it.id == schemaId } },
         recordRepository.getActiveRecords(schemaId),
         csvImport,
-    ) { schema, records, importState ->
-        RecordListUiState(schema = schema, records = records, csvImport = importState)
+        mutationState,
+    ) { schema, records, importState, mutation ->
+        RecordListUiState(
+            schema = schema,
+            records = records,
+            csvImport = importState,
+            isArchiving = mutation.isArchiving,
+            message = mutation.message,
+            errorMessage = mutation.errorMessage,
+        )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), RecordListUiState())
 
     fun archiveRecord(recordId: String) {
+        if (mutationState.value.isArchiving) return
         viewModelScope.launch {
-            recordRepository.archiveRecord(recordId)
+            mutationState.value = RecordMutationState(isArchiving = true)
+            try {
+                recordRepository.archiveRecord(recordId)
+                mutationState.value = RecordMutationState(message = "Donnée archivée.")
+            } catch (cause: Throwable) {
+                logger.e(cause) { "Record archive failed" }
+                mutationState.value = RecordMutationState(errorMessage = "Impossible d’archiver la donnée. Réessayez.")
+            }
         }
+    }
+
+    fun clearMutationFeedback() {
+        mutationState.value = RecordMutationState()
     }
 
     fun onImportCsvClicked() {
@@ -135,5 +165,3 @@ class RecordListViewModel(
         }
     }
 }
-
-

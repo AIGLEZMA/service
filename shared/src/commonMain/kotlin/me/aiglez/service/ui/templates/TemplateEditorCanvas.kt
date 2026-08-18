@@ -191,6 +191,9 @@ internal fun CanvasWorkspace(
     val focusRequester = remember { FocusRequester() }
     val density = LocalDensity.current.density
     val pageScale = state.canvas.zoom * density
+    val pageDimensions = templatePageDimensions(state.template?.pageSize)
+    val pageWidth = pageDimensions.width
+    val pageHeight = pageDimensions.height
     var pageWindowBounds by remember { mutableStateOf<Rect?>(null) }
     var workspaceWindowBounds by remember { mutableStateOf<Rect?>(null) }
     var cursorPagePoint by remember { mutableStateOf<PagePoint?>(null) }
@@ -437,8 +440,8 @@ internal fun CanvasWorkspace(
             },
     ) {
         val rulerThickness = if (state.canvas.showRulers) RulerThickness else 0.dp
-        val contentWidth = rulerThickness + (PageWidth * state.canvas.zoom).dp
-        val contentHeight = rulerThickness + (PageHeight * state.canvas.zoom).dp
+        val contentWidth = rulerThickness + (pageWidth * state.canvas.zoom).dp
+        val contentHeight = rulerThickness + (pageHeight * state.canvas.zoom).dp
         val centeredHorizontalPadding = if (maxWidth > contentWidth) (maxWidth - contentWidth) / 2f else 72.dp
         val centeredVerticalPadding = if (maxHeight > contentHeight) (maxHeight - contentHeight) / 2f else 48.dp
         val horizontalPadding = if (centeredHorizontalPadding > WorkspacePadding) centeredHorizontalPadding else WorkspacePadding
@@ -502,7 +505,7 @@ internal fun CanvasWorkspace(
             requestViewportFocus(bounds, zoom)
         }
 
-        fun pageBounds(): PageRect = PageRect(0f, 0f, PageWidth, PageHeight)
+        fun pageBounds(): PageRect = PageRect(0f, 0f, pageWidth, pageHeight)
 
         fun selectionBounds(): PageRect? {
             return state.selectedElements
@@ -510,7 +513,7 @@ internal fun CanvasWorkspace(
                 ?.map(GeometryService::getElementBounds)
                 ?.renderUnionBounds()
                 ?.expanded(48f)
-                ?.clampedToPage()
+                ?.clampedToPage(pageWidth, pageHeight)
         }
 
         val latestRequestedZoom by rememberUpdatedState(pendingPointerZoom?.zoom ?: state.canvas.zoom)
@@ -533,7 +536,7 @@ internal fun CanvasWorkspace(
         LaunchedEffect(zoomCommand, maxWidth, maxHeight) {
             when (zoomCommand) {
                 ZoomCommand.FitPage -> applyZoomToBounds(pageBounds(), 0.92f)
-                ZoomCommand.FitWidth -> applyZoomToBounds(PageRect(0f, 0f, PageWidth, 1f), 0.96f)
+                ZoomCommand.FitWidth -> applyZoomToBounds(PageRect(0f, 0f, pageWidth, 1f), 0.96f)
                 ZoomCommand.Reset -> requestViewportFocus(selectionBounds() ?: pageBounds(), 1f)
                 ZoomCommand.Selection -> applyZoomToBounds(selectionBounds() ?: pageBounds(), 0.86f)
                 null -> Unit
@@ -697,12 +700,12 @@ internal fun CanvasWorkspace(
                                     .background(Color(0xFFF8FAFC))
                                     .border(1.dp, Color(0xFFCBD5E1))
                             )
-                            VerticalRuler(height = PageHeight, zoom = state.canvas.zoom, pageScale = pageScale, unit = state.canvas.rulerUnit)
+                            VerticalRuler(height = pageHeight, zoom = state.canvas.zoom, pageScale = pageScale, unit = state.canvas.rulerUnit)
                         }
                     }
                     Column {
                         if (state.canvas.showRulers) {
-                            HorizontalRuler(width = PageWidth, zoom = state.canvas.zoom, pageScale = pageScale, unit = state.canvas.rulerUnit)
+                            HorizontalRuler(width = pageWidth, zoom = state.canvas.zoom, pageScale = pageScale, unit = state.canvas.rulerUnit)
                         }
                         PageCanvas(
                             state = state,
@@ -742,6 +745,7 @@ internal fun CanvasWorkspace(
         }
         MiniMapNavigator(
             elements = state.document.elements,
+            pageDimensions = pageDimensions,
             viewport = PageRect(
                 x = (horizontalScroll.value - horizontalPaddingPx - rulerPx) / pageScale,
                 y = (verticalScroll.value - verticalPaddingPx - rulerPx) / pageScale,
@@ -769,5 +773,3 @@ internal fun CanvasWorkspace(
         }
     }
 }
-
-

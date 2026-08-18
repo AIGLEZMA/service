@@ -16,7 +16,9 @@ import me.aiglez.service.domain.repository.RecordRepository
 import me.aiglez.service.domain.repository.TemplateRepository
 import me.aiglez.service.ui.records.*
 import me.aiglez.service.ui.shell.SidebarViewModel
+import me.aiglez.service.ui.shell.UnsavedChangesController
 import me.aiglez.service.ui.templates.CompileViewModel
+import me.aiglez.service.ui.templates.TemplateCreateViewModel
 import org.koin.core.module.Module
 import org.koin.dsl.module
 
@@ -45,13 +47,15 @@ val dataModule = module {
 }
 
 val uiModule = module {
+    single { UnsavedChangesController() }
     factory { SidebarViewModel(get()) }
-    factory { DashboardViewModel(get(), get()) }
-    factory { SchemaManagementViewModel(get()) }
-    factory { (schemaId: String) -> SchemaCreateViewModel(schemaId, get()) }
+    factory { DashboardViewModel(get(), get(), get()) }
+    factory { SchemaManagementViewModel(get(), get()) }
+    factory { (schemaId: String) -> SchemaCreateViewModel(schemaId, get(), get()) }
     factory { (schemaId: String) -> RecordListViewModel(schemaId, get(), get()) }
-    factory { (schemaId: String) -> RecordCreateViewModel(schemaId, get()) }
+    factory { (schemaId: String) -> RecordCreateViewModel(schemaId, get(), get()) }
     factory { (templateId: String) -> CompileViewModel(templateId, get(), get(), get()) }
+    factory { TemplateCreateViewModel(get(), get(), get()) }
 }
 
 fun initKoin(additionalModules: List<Module> = emptyList()) {

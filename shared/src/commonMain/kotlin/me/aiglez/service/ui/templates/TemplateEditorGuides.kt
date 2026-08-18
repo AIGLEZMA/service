@@ -464,5 +464,3 @@ internal fun effectiveSnapThreshold(
     val precisionScale = zoom.coerceAtLeast(1f)
     return (baseThreshold / precisionScale).coerceAtLeast(0.75f)
 }
-
-

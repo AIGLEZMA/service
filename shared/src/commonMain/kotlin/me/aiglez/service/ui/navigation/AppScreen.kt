@@ -13,6 +13,8 @@ sealed interface AppScreen {
     @Serializable
     data object SchemaCreate : AppScreen
     @Serializable
+    data object TemplateCreate : AppScreen
+    @Serializable
     data class SchemaEdit(val schemaId: String) : AppScreen
     @Serializable
     data class RecordList(val schemaId: String) : AppScreen
@@ -23,5 +25,3 @@ sealed interface AppScreen {
     @Serializable
     data class TemplateEditor(val templateId: String) : AppScreen
 }
-
-

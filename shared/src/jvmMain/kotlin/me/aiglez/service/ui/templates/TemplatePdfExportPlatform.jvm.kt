@@ -9,8 +9,11 @@ import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.roundToInt
 import me.aiglez.service.domain.models.TemplateBarcodeFormat
+import me.aiglez.service.domain.models.TemplateBorderStyle
 import me.aiglez.service.domain.models.TemplateElement
 import me.aiglez.service.domain.models.TemplateImageContentMode
+import me.aiglez.service.domain.models.TemplateTextDirection
+import me.aiglez.service.domain.models.TemplateTextStyle
 import me.aiglez.service.domain.models.templateTableCellKey
 import me.aiglez.service.ui.templates.editor.GeometryService
 import me.aiglez.service.ui.templates.editor.PageRect
@@ -26,6 +29,7 @@ import org.apache.pdfbox.pdmodel.PDPageContentStream
 import org.apache.pdfbox.pdmodel.common.PDRectangle
 import org.apache.pdfbox.pdmodel.font.PDFont
 import org.apache.pdfbox.pdmodel.font.PDType1Font
+import org.apache.pdfbox.pdmodel.font.PDType0Font
 import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject
 import org.apache.pdfbox.util.Matrix
 
@@ -40,6 +44,7 @@ actual suspend fun exportTemplatePdf(state: TemplateEditorState): TemplatePdfExp
                 elements = state.document.elements,
                 expressionContext = context,
                 resolveExpressions = true,
+                pageSize = template.pageSize,
             )
             TemplatePdfExportResult.Exported(outputFile.absolutePath)
         }.getOrElse { error ->
@@ -48,25 +53,111 @@ actual suspend fun exportTemplatePdf(state: TemplateEditorState): TemplatePdfExp
     }
 }
 
+actual fun templatePdfPreflightWarnings(state: TemplateEditorState): List<String> {
+    val elements = state.document.elements.filter { it.visible }
+    val pageDimensions = templatePageDimensions(state.template?.pageSize)
+    return buildSet {
+        if (elements.filterIsInstance<TemplateElement.Image>().any { !File(it.sourcePath).isFile }) {
+            add("Une ou plusieurs images sont introuvables et ne seront pas dessinées.")
+        }
+        if (elements.any { it.opacity < 0.999f }) {
+            add("La transparence partielle n’est pas encore reproduite exactement.")
+        }
+        if (elements.any { it.visibilityExpression.isNotBlank() }) {
+            add("Les conditions de visibilité ne sont pas encore évaluées dans le PDF.")
+        }
+        if (elements.filterIsInstance<TemplateElement.Text>().any { it.letterSpacing != 0f }) {
+            add("L’espacement personnalisé des lettres sera ignoré.")
+        }
+        if (elements.filterIsInstance<TemplateElement.Text>().any { it.textDirection == TemplateTextDirection.Rtl }) {
+            add("La mise en forme de droite à gauche peut différer de l’éditeur.")
+        }
+        if (elements.any(::usesCustomPdfFont)) {
+            add("Les polices personnalisées seront remplacées par une police système compatible PDF.")
+        }
+        if (elements.any(::hasUnsupportedPdfBorder)) {
+            add("Les bordures non pleines et les coins arrondis seront simplifiés.")
+        }
+        if (elements.filterIsInstance<TemplateElement.Text>().any { textLikelyOverflows(it) }) {
+            add("Un ou plusieurs textes risquent d’être tronqués dans leur cadre.")
+        }
+        if (elements.any { element ->
+                val bounds = GeometryService.getElementBounds(element)
+                bounds.x < 0f || bounds.y < 0f ||
+                    bounds.right > pageDimensions.width || bounds.bottom > pageDimensions.height
+            }
+        ) {
+            add("Un ou plusieurs éléments dépassent de la page et seront coupés.")
+        }
+    }.take(7)
+}
+
+private fun usesCustomPdfFont(element: TemplateElement): Boolean = when (element) {
+    is TemplateElement.Text -> !element.fontFamily.equals("Inter", ignoreCase = true)
+    is TemplateElement.List -> !element.fontFamily.equals("Inter", ignoreCase = true)
+    is TemplateElement.Table -> !element.fontFamily.equals("Inter", ignoreCase = true)
+    else -> false
+}
+
+private fun hasUnsupportedPdfBorder(element: TemplateElement): Boolean = when (element) {
+    is TemplateElement.Text -> element.borderStyle != TemplateBorderStyle.Solid || element.borderRadius > 0f
+    is TemplateElement.Image -> element.borderRadius > 0f
+    is TemplateElement.List -> element.borderStyle != TemplateBorderStyle.Solid || element.borderRadius > 0f
+    is TemplateElement.Table -> element.borderStyle != TemplateBorderStyle.Solid || element.borderRadius > 0f
+    is TemplateElement.Rectangle -> element.borderStyle != TemplateBorderStyle.Solid || element.borderRadius > 0f
+    is TemplateElement.Circle -> element.borderStyle != TemplateBorderStyle.Solid
+    else -> false
+}
+
+private fun textLikelyOverflows(element: TemplateElement.Text): Boolean {
+    val text = element.staticText ?: return false
+    val usableWidth = (element.width - element.padding * 2f).coerceAtLeast(1f)
+    val usableHeight = (element.height - element.padding * 2f).coerceAtLeast(1f)
+    val charactersPerLine = (usableWidth / (element.fontSize.coerceAtLeast(1f) * 0.55f)).toInt().coerceAtLeast(1)
+    val availableLines = (usableHeight / (element.fontSize.coerceAtLeast(1f) * element.lineHeight.coerceAtLeast(1f)))
+        .toInt()
+        .coerceAtLeast(1)
+    val requiredLines = text.lines().sumOf { line -> (line.length + charactersPerLine - 1) / charactersPerLine }
+    return requiredLines > availableLines
+}
+
 internal fun writeTemplatePdf(
     outputFile: File,
     elements: List<TemplateElement>,
     expressionContext: TemplateExpressionContext,
     resolveExpressions: Boolean,
+    pageSize: String = "A4",
 ) {
     outputFile.parentFile?.mkdirs()
     PDDocument().use { document ->
-        val page = PDPage(PDRectangle(PageWidth, PageHeight))
+        val pageRectangle = pdfPageRectangle(pageSize)
+        val sourceDimensions = templatePageDimensions(pageSize)
+        val page = PDPage(pageRectangle)
         document.addPage(page)
+        val fonts = loadPdfFonts(document)
         PDPageContentStream(document, page).use { content ->
-            content.drawPageBackground()
-            elements
-                .asSequence()
-                .filter { it.visible }
-                .sortedBy { it.zIndex }
-                .forEach { element ->
-                    content.drawTemplateElement(document, element, expressionContext, resolveExpressions)
-                }
+            content.drawPageBackground(pageRectangle.width, pageRectangle.height)
+            content.saveGraphicsState()
+            content.transform(
+                Matrix.getScaleInstance(
+                    pageRectangle.width / sourceDimensions.width,
+                    pageRectangle.height / sourceDimensions.height,
+                ),
+            )
+            val previousPageHeight = pdfCoordinatePageHeight.get()
+            pdfCoordinatePageHeight.set(sourceDimensions.height)
+            try {
+                elements
+                    .asSequence()
+                    .filter { it.visible }
+                    .sortedBy { it.zIndex }
+                    .forEach { element ->
+                        content.drawTemplateElement(document, fonts, element, expressionContext, resolveExpressions)
+                    }
+            } finally {
+                pdfCoordinatePageHeight.set(previousPageHeight)
+            }
+            content.restoreGraphicsState()
         }
         document.save(outputFile)
     }
@@ -106,14 +197,15 @@ private fun String.safePdfFileName(): String {
         .ifBlank { "template" }
 }
 
-private fun PDPageContentStream.drawPageBackground() {
+private fun PDPageContentStream.drawPageBackground(width: Float, height: Float) {
     setNonStrokingColor(java.awt.Color.WHITE)
-    addRect(0f, 0f, PageWidth, PageHeight)
+    addRect(0f, 0f, width, height)
     fill()
 }
 
 private fun PDPageContentStream.drawTemplateElement(
     document: PDDocument,
+    fonts: PdfFonts,
     element: TemplateElement,
     expressionContext: TemplateExpressionContext,
     resolveExpressions: Boolean,
@@ -121,7 +213,7 @@ private fun PDPageContentStream.drawTemplateElement(
     val bounds = GeometryService.getElementBounds(element)
     when (element) {
         is TemplateElement.Text -> withElementTransform(element, bounds) {
-            drawTextElement(element, bounds, expressionContext, resolveExpressions)
+            drawTextElement(element, bounds, expressionContext, resolveExpressions, fonts)
         }
         is TemplateElement.Rectangle -> withElementTransform(element, bounds) {
             drawFilledRect(bounds, parsePdfColor(element.fillColor).withOpacity(element.opacity))
@@ -138,13 +230,13 @@ private fun PDPageContentStream.drawTemplateElement(
             drawQrElement(element, bounds, expressionContext, resolveExpressions)
         }
         is TemplateElement.Barcode -> withElementTransform(element, bounds) {
-            drawBarcodeElement(element, bounds, expressionContext, resolveExpressions)
+            drawBarcodeElement(element, bounds, expressionContext, resolveExpressions, fonts)
         }
         is TemplateElement.List -> withElementTransform(element, bounds) {
-            drawListElement(element, bounds, expressionContext, resolveExpressions)
+            drawListElement(element, bounds, expressionContext, resolveExpressions, fonts)
         }
         is TemplateElement.Table -> withElementTransform(element, bounds) {
-            drawTableElement(element, bounds, expressionContext, resolveExpressions)
+            drawTableElement(element, bounds, expressionContext, resolveExpressions, fonts)
         }
         is TemplateElement.Line -> drawLineElement(element)
     }
@@ -172,6 +264,7 @@ private fun PDPageContentStream.drawTextElement(
     bounds: PageRect,
     expressionContext: TemplateExpressionContext,
     resolveExpressions: Boolean,
+    fonts: PdfFonts,
 ) {
     val background = parsePdfColor(element.backgroundColor).withOpacity(element.opacity)
     val border = parsePdfColor(element.borderColor).withOpacity(element.opacity)
@@ -186,7 +279,10 @@ private fun PDPageContentStream.drawTextElement(
     drawTextBox(
         text = text,
         bounds = bounds.inset(element.padding),
-        font = fontFor(element.fontWeight),
+        font = fonts.fontFor(
+            weight = element.fontWeight,
+            italic = element.italic || element.fontStyle != TemplateTextStyle.Normal,
+        ),
         fontSize = element.fontSize,
         color = parsePdfColor(element.color).withOpacity(element.opacity),
         align = element.textAlign,
@@ -204,19 +300,17 @@ private fun PDPageContentStream.drawImageElement(
     drawFilledRect(bounds, parsePdfColor(element.backgroundColor).withOpacity(element.opacity))
     val file = File(element.sourcePath)
     if (file.isFile) {
-        runCatching {
-            val image = PDImageXObject.createFromFileByContent(file, document)
-            val frame = if (element.contentMode == TemplateImageContentMode.Stretch) {
-                bounds
-            } else {
-                imageDestinationRect(bounds, image.width, image.height, element.contentMode, element.alignment)
-            }
-            saveGraphicsState()
-            addRect(bounds.x, pdfY(bounds.bottom), bounds.width, bounds.height)
-            clip()
-            drawImage(image, frame.x, pdfY(frame.bottom), frame.width, frame.height)
-            restoreGraphicsState()
+        val image = PDImageXObject.createFromFileByContent(file, document)
+        val frame = if (element.contentMode == TemplateImageContentMode.Stretch) {
+            bounds
+        } else {
+            imageDestinationRect(bounds, image.width, image.height, element.contentMode, element.alignment)
         }
+        saveGraphicsState()
+        addRect(bounds.x, pdfY(bounds.bottom), bounds.width, bounds.height)
+        clip()
+        drawImage(image, frame.x, pdfY(frame.bottom), frame.width, frame.height)
+        restoreGraphicsState()
     }
     drawRectBorder(bounds, parsePdfColor(element.borderColor).withOpacity(element.opacity), element.borderWidth)
 }
@@ -241,6 +335,7 @@ private fun PDPageContentStream.drawBarcodeElement(
     bounds: PageRect,
     expressionContext: TemplateExpressionContext,
     resolveExpressions: Boolean,
+    fonts: PdfFonts,
 ) {
     val text = if (resolveExpressions) renderTemplateText(element.text, expressionContext) else element.text
     val matrix = generateTemplateBarcodeMatrix(text, element.format, element.quietZone)
@@ -254,7 +349,7 @@ private fun PDPageContentStream.drawBarcodeElement(
         drawTextBox(
             text = text,
             bounds = PageRect(bounds.x, bounds.y + codeHeight + 2f, bounds.width, bounds.height - codeHeight - 2f),
-            font = fontFor(400),
+            font = fonts.fontFor(400),
             fontSize = element.fontSize,
             color = parsePdfColor(element.foregroundColor).withOpacity(element.opacity),
             align = "center",
@@ -269,6 +364,7 @@ private fun PDPageContentStream.drawListElement(
     bounds: PageRect,
     expressionContext: TemplateExpressionContext,
     resolveExpressions: Boolean,
+    fonts: PdfFonts,
 ) {
     drawFilledRect(bounds, parsePdfColor(element.backgroundColor).withOpacity(element.opacity))
     drawRectBorder(bounds, parsePdfColor(element.borderColor).withOpacity(element.opacity), element.borderWidth)
@@ -301,7 +397,7 @@ private fun PDPageContentStream.drawListElement(
             drawTextBox(
                 text = items[index],
                 bounds = PageRect(x, y, columnWidth, lineHeight),
-                font = fontFor(element.fontWeight),
+                font = fonts.fontFor(element.fontWeight),
                 fontSize = element.fontSize,
                 color = color,
             )
@@ -315,6 +411,7 @@ private fun PDPageContentStream.drawTableElement(
     bounds: PageRect,
     expressionContext: TemplateExpressionContext,
     resolveExpressions: Boolean,
+    fonts: PdfFonts,
 ) {
     val rows = element.rows.coerceAtLeast(1)
     val columns = element.columns.coerceAtLeast(1)
@@ -347,7 +444,7 @@ private fun PDPageContentStream.drawTableElement(
             drawTextBox(
                 text = text,
                 bounds = cellBounds.inset((cell?.padding ?: element.padding).coerceAtLeast(0f)),
-                font = fontFor(cell?.fontWeight ?: if (isHeader) 700 else element.fontWeight),
+                font = fonts.fontFor(cell?.fontWeight ?: if (isHeader) 700 else element.fontWeight),
                 fontSize = element.fontSize,
                 color = parsePdfColor(textColor).withOpacity(element.opacity),
                 align = cell?.textAlign ?: element.textAlign,
@@ -468,7 +565,7 @@ private fun PDPageContentStream.drawTextBox(
         beginText()
         setFont(font, safeFontSize)
         newLineAtOffset(textX, baselineY)
-        showText(line.toPdfSafeText())
+        showText(line.toPdfSafeText(font))
         endText()
         if (underline) {
             setStrokingColor(color.toAwt())
@@ -516,11 +613,22 @@ private fun findFittingPrefix(value: String, font: PDFont, fontSize: Float, maxW
 }
 
 private fun textWidth(text: String, font: PDFont, fontSize: Float): Float {
-    return runCatching { font.getStringWidth(text.toPdfSafeText()) / 1000f * fontSize }.getOrDefault(text.length * fontSize * 0.55f)
+    return runCatching { font.getStringWidth(text.toPdfSafeText(font)) / 1000f * fontSize }
+        .getOrDefault(text.length * fontSize * 0.55f)
 }
 
-private fun fontFor(weight: Int): PDFont {
-    return if (weight >= 600) PDType1Font.HELVETICA_BOLD else PDType1Font.HELVETICA
+private data class PdfFonts(
+    val regular: PDFont,
+    val bold: PDFont,
+    val italic: PDFont,
+    val boldItalic: PDFont,
+) {
+    fun fontFor(weight: Int, italic: Boolean = false): PDFont = when {
+        weight >= 600 && italic -> boldItalic
+        weight >= 600 -> bold
+        italic -> this.italic
+        else -> regular
+    }
 }
 
 private fun PageRect.inset(amount: Float): PageRect {
@@ -533,7 +641,9 @@ private fun PageRect.inset(amount: Float): PageRect {
     )
 }
 
-private fun pdfY(topLeftY: Float): Float = PageHeight - topLeftY
+private val pdfCoordinatePageHeight = ThreadLocal.withInitial { PageHeight }
+
+private fun pdfY(topLeftY: Float): Float = pdfCoordinatePageHeight.get() - topLeftY
 
 private data class PdfColor(
     val red: Int,
@@ -561,11 +671,50 @@ private fun parsePdfColor(value: String): PdfColor {
     )
 }
 
-private fun String.toPdfSafeText(): String {
-    return map { char -> if (char.code in 32..255 || char == '\n' || char == '\t') char else '?' }.joinToString("")
+private fun String.toPdfSafeText(font: PDFont): String {
+    return map { char ->
+        if (char == '\n' || char == '\t' || runCatching { font.getStringWidth(char.toString()) }.isSuccess) char else '?'
+    }.joinToString("")
 }
 
-@Suppress("unused")
-private fun TemplateBarcodeFormat.isFixedWidthFormat(): Boolean {
-    return this == TemplateBarcodeFormat.Ean13 || this == TemplateBarcodeFormat.Ean8 || this == TemplateBarcodeFormat.UpcA
+private fun pdfPageRectangle(pageSize: String): PDRectangle = when (pageSize.lowercase()) {
+    "a5" -> PDRectangle(PDRectangle.A5.width, PDRectangle.A5.height)
+    "letter" -> PDRectangle(PDRectangle.LETTER.width, PDRectangle.LETTER.height)
+    else -> PDRectangle(PDRectangle.A4.width, PDRectangle.A4.height)
+}
+
+private fun loadPdfFonts(document: PDDocument): PdfFonts {
+    val regular = loadSystemFont(document, "Arial.ttf", "DejaVuSans.ttf", "NotoSans-Regular.ttf")
+        ?: PDType1Font.HELVETICA
+    val bold = loadSystemFont(document, "Arial Bold.ttf", "Arialbd.ttf", "DejaVuSans-Bold.ttf", "NotoSans-Bold.ttf")
+        ?: PDType1Font.HELVETICA_BOLD
+    val italic = loadSystemFont(document, "Arial Italic.ttf", "Ariali.ttf", "DejaVuSans-Oblique.ttf", "NotoSans-Italic.ttf")
+        ?: PDType1Font.HELVETICA_OBLIQUE
+    val boldItalic = loadSystemFont(
+        document,
+        "Arial Bold Italic.ttf",
+        "Arialbi.ttf",
+        "DejaVuSans-BoldOblique.ttf",
+        "NotoSans-BoldItalic.ttf",
+    ) ?: PDType1Font.HELVETICA_BOLD_OBLIQUE
+    return PdfFonts(regular, bold, italic, boldItalic)
+}
+
+private fun loadSystemFont(document: PDDocument, vararg names: String): PDFont? {
+    val roots = buildList {
+        add(File("/System/Library/Fonts/Supplemental"))
+        add(File("/Library/Fonts"))
+        add(File("/usr/share/fonts/truetype/dejavu"))
+        add(File("/usr/share/fonts/truetype/noto"))
+        System.getenv("WINDIR")?.let { add(File(it, "Fonts")) }
+    }
+    names.forEach { name ->
+        roots.forEach { root ->
+            val file = File(root, name)
+            if (file.isFile) {
+                runCatching { PDType0Font.load(document, file) }.getOrNull()?.let { return it }
+            }
+        }
+    }
+    return null
 }

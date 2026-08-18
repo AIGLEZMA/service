@@ -49,4 +49,3 @@ sqldelight {
         }
     }
 }
-

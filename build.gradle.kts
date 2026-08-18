@@ -49,6 +49,7 @@ abstract class FormatKotlinTask : KotlinSourceStyleTask() {
             val formatted = original
                 .lineSequence()
                 .joinToString(separator = "\n") { line -> line.trimEnd() }
+                .trimEnd('\n')
                 .let { text -> if (text.isBlank()) "" else "$text\n" }
 
             if (formatted != original) {

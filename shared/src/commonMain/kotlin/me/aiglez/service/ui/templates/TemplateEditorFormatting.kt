@@ -241,11 +241,11 @@ internal fun PageRect.expanded(amount: Float): PageRect {
     )
 }
 
-internal fun PageRect.clampedToPage(): PageRect {
-    val left = x.coerceIn(0f, PageWidth)
-    val top = y.coerceIn(0f, PageHeight)
-    val right = right.coerceIn(left, PageWidth)
-    val bottom = bottom.coerceIn(top, PageHeight)
+internal fun PageRect.clampedToPage(pageWidth: Float = PageWidth, pageHeight: Float = PageHeight): PageRect {
+    val left = x.coerceIn(0f, pageWidth)
+    val top = y.coerceIn(0f, pageHeight)
+    val right = right.coerceIn(left, pageWidth)
+    val bottom = bottom.coerceIn(top, pageHeight)
     return PageRect(
         x = left,
         y = top,
@@ -653,6 +653,3 @@ internal fun TemplateTextDirection.toComposeTextDirection(): TextDirection {
         TemplateTextDirection.Ltr -> TextDirection.Ltr
     }
 }
-
-
-

@@ -216,7 +216,8 @@ internal fun PageCanvas(
     val latestOnCommitRotation by rememberUpdatedState(onCommitRotation)
     val latestOnPan by rememberUpdatedState(onPan)
     val latestOnCursorPagePointChange by rememberUpdatedState(onCursorPagePointChange)
-    val guideSet = state.canvas.toSnapGuideSet()
+    val pageDimensions = templatePageDimensions(state.template?.pageSize)
+    val guideSet = state.canvas.toSnapGuideSet(pageDimensions)
     val latestGuideSet by rememberUpdatedState(guideSet)
     val effectiveSnapThreshold = effectiveSnapThreshold(state.canvas.snapThreshold, zoom)
     val latestEffectiveSnapThreshold by rememberUpdatedState(effectiveSnapThreshold)
@@ -251,7 +252,7 @@ internal fun PageCanvas(
         )
     }
     val pageModifier = Modifier
-        .size((PageWidth * zoom).dp, (PageHeight * zoom).dp)
+        .size((pageDimensions.width * zoom).dp, (pageDimensions.height * zoom).dp)
         .then(if (state.canvas.showPageShadow) Modifier.shadow(18.dp) else Modifier)
         .background(Color.White)
         .then(
@@ -328,7 +329,10 @@ internal fun PageCanvas(
                 val position = event.changes.firstOrNull()?.position
                 latestOnCursorPagePointChange(
                     position
-                        ?.takeIf { it.x in 0f..(PageWidth * pageScale) && it.y in 0f..(PageHeight * pageScale) }
+                        ?.takeIf {
+                            it.x in 0f..(pageDimensions.width * pageScale) &&
+                                it.y in 0f..(pageDimensions.height * pageScale)
+                        }
                         ?.toPagePoint(pageScale),
                 )
             }
@@ -754,6 +758,3 @@ internal fun PageCanvas(
         }
     }
 }
-
-
-

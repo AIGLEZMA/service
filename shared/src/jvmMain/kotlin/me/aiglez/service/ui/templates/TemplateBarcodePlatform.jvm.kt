@@ -33,6 +33,3 @@ private fun TemplateBarcodeFormat.toZxingFormat(): BarcodeFormat {
         TemplateBarcodeFormat.Itf -> BarcodeFormat.ITF
     }
 }
-
-
-

@@ -343,6 +343,3 @@ private val shortcutNotes = listOf(
     "Arrow keys nudge selected elements.",
     "All Ctrl/Cmd shortcuts work with Ctrl on Windows/Linux and Cmd on macOS.",
 )
-
-
-

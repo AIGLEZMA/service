@@ -190,6 +190,3 @@ class HistoryManager {
         redoStack.clear()
     }
 }
-
-
-

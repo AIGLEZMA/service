@@ -134,6 +134,3 @@ fun AppBrandHeader(
         }
     }
 }
-
-
-

@@ -253,6 +253,7 @@ private fun SchemaCreateContent(
                 SaveStructureBar(
                     canSave = canSave,
                     isSaving = state.isSaving,
+                    errorMessage = state.errorMessage,
                     invalidCount = countInvalidItems(state.schemaName, state.fields),
                     onSave = onSave,
                 )
@@ -598,6 +599,7 @@ private fun RefSelector(
 private fun SaveStructureBar(
     canSave: Boolean,
     isSaving: Boolean,
+    errorMessage: String?,
     invalidCount: Int,
     onSave: () -> Unit,
 ) {
@@ -615,16 +617,19 @@ private fun SaveStructureBar(
         ) {
             Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Text(
-                    text = if (isSaving) {
-                        "Enregistrement en cours..."
-                    } else if (canSave) {
-                        "Prêt à enregistrer"
-                    } else {
-                        "$invalidCount élément(s) à compléter"
+                    text = when {
+                        isSaving -> "Enregistrement en cours..."
+                        errorMessage != null -> errorMessage
+                        canSave -> "Prêt à enregistrer"
+                        else -> "$invalidCount élément(s) à compléter"
                     },
                     style = MaterialTheme.typography.labelLarge,
                     fontWeight = FontWeight.Bold,
-                    color = if (canSave && !isSaving) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = when {
+                        errorMessage != null -> MaterialTheme.colorScheme.error
+                        canSave && !isSaving -> MaterialTheme.colorScheme.primary
+                        else -> MaterialTheme.colorScheme.onSurfaceVariant
+                    },
                 )
                 Text(
                     text = "Le modèle sera disponible dans la liste des modèles de données.",
@@ -664,5 +669,3 @@ private fun getTypeLabel(type: FieldType): String {
         FieldType.LIST -> "Liste"
     }
 }
-
-

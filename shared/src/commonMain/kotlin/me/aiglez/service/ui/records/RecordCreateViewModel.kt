@@ -2,6 +2,7 @@ package me.aiglez.service.ui.records
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import co.touchlab.kermit.Logger
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import me.aiglez.service.domain.models.DataRecord
@@ -15,16 +16,19 @@ data class RecordCreateUiState(
     val values: Map<String, String> = emptyMap(),
     val referenceOptions: Map<String, List<DataRecord>> = emptyMap(),
     val isSaving: Boolean = false,
+    val errorMessage: String? = null,
 )
 
 @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
 class RecordCreateViewModel(
     private val schemaId: String,
     private val recordRepository: RecordRepository,
+    private val logger: Logger,
 ) : ViewModel() {
 
     private val values = MutableStateFlow<Map<String, String>>(emptyMap())
     private val saving = MutableStateFlow(false)
+    private val errorMessage = MutableStateFlow<String?>(null)
 
     val uiState: StateFlow<RecordCreateUiState> = recordRepository.getActiveSchemas()
         .map { schemas -> schemas.firstOrNull { it.id == schemaId } }
@@ -40,12 +44,13 @@ class RecordCreateViewModel(
                     }
                 }) { pairs -> pairs.toMap() }
             }
-            combine(values, saving, referenceOptions) { currentValues, isSaving, options ->
+            combine(values, saving, errorMessage, referenceOptions) { currentValues, isSaving, error, options ->
                 RecordCreateUiState(
                     schema = schema,
                     values = currentValues,
                     referenceOptions = options,
                     isSaving = isSaving,
+                    errorMessage = error,
                 )
             }
         }
@@ -61,24 +66,29 @@ class RecordCreateViewModel(
             else -> value
         }
         values.update { it + (fieldSlug to filtered) }
+        errorMessage.value = null
     }
 
     fun save(onSaved: () -> Unit) {
         val schema = uiState.value.schema ?: return
         viewModelScope.launch {
             saving.value = true
-            recordRepository.saveRecord(
-                DataRecord(
-                    id = newUiId("record"),
-                    schemaId = schema.id,
-                    values = uiState.value.values,
-                ),
-            )
-            saving.value = false
-            onSaved()
+            errorMessage.value = null
+            try {
+                recordRepository.saveRecord(
+                    DataRecord(
+                        id = newUiId("record"),
+                        schemaId = schema.id,
+                        values = uiState.value.values,
+                    ),
+                )
+                onSaved()
+            } catch (cause: Throwable) {
+                logger.e(cause) { "Record save failed" }
+                errorMessage.value = "Impossible d’enregistrer la donnée. Réessayez."
+            } finally {
+                saving.value = false
+            }
         }
     }
 }
-
-
-

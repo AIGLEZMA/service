@@ -17,6 +17,7 @@ import kotlinx.coroutines.withContext
 fun main() = application {
     var isReady by remember { mutableStateOf(false) }
     var showWaitingScreen by remember { mutableStateOf(false) }
+    var exitRequested by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         withContext(Dispatchers.Default) { initKoin() }
@@ -29,15 +30,24 @@ fun main() = application {
 
     val windowState = rememberWindowState(placement = WindowPlacement.Maximized)
     Window(
-        onCloseRequest = ::exitApplication,
+        onCloseRequest = {
+            if (isReady) {
+                exitRequested = true
+            } else {
+                exitApplication()
+            }
+        },
         state = windowState,
         title = "Service",
     ) {
         if (isReady) {
-            App()
+            App(
+                exitRequested = exitRequested,
+                onExitCancelled = { exitRequested = false },
+                onExitConfirmed = ::exitApplication,
+            )
         } else {
             StartupScreen(showWaiting = showWaitingScreen)
         }
     }
 }
-

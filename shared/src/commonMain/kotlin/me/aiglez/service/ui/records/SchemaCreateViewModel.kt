@@ -2,6 +2,7 @@ package me.aiglez.service.ui.records
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import co.touchlab.kermit.Logger
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -23,12 +24,14 @@ data class SchemaCreateUiState(
     val hasExistingRecords: Boolean = false,
     val isEditing: Boolean = false,
     val isSaving: Boolean = false,
+    val errorMessage: String? = null,
     val availableSchemas: List<DataSchema> = emptyList(),
 )
 
 class SchemaCreateViewModel(
     private val schemaId: String,
     private val recordRepository: RecordRepository,
+    private val logger: Logger,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(SchemaCreateUiState(schemaId = schemaId))
@@ -78,7 +81,7 @@ class SchemaCreateViewModel(
     }
 
     fun updateName(name: String) {
-        _uiState.update { it.copy(schemaName = name) }
+        _uiState.update { it.copy(schemaName = name, errorMessage = null) }
     }
 
     fun addField() {
@@ -164,22 +167,28 @@ class SchemaCreateViewModel(
         val id = current.schemaId.ifBlank { newUiId("schema") }
         if (current.schemaName.isBlank()) return
         viewModelScope.launch {
-            _uiState.update { it.copy(isSaving = true) }
-            recordRepository.saveSchema(
-                DataSchema(
-                    id = id,
-                    name = current.schemaName.trim(),
-                    fields = current.fields,
-                ),
-            )
-            _uiState.update {
-                it.copy(
-                    isSaving = false,
-                    schemaId = id,
-                    persistedFieldNames = current.fields.associate { field -> field.id to field.name },
+            _uiState.update { it.copy(isSaving = true, errorMessage = null) }
+            try {
+                recordRepository.saveSchema(
+                    DataSchema(
+                        id = id,
+                        name = current.schemaName.trim(),
+                        fields = current.fields,
+                    ),
                 )
+                _uiState.update {
+                    it.copy(
+                        schemaId = id,
+                        persistedFieldNames = current.fields.associate { field -> field.id to field.name },
+                    )
+                }
+                onSaved(id)
+            } catch (cause: Throwable) {
+                logger.e(cause) { "Schema save failed" }
+                _uiState.update { it.copy(errorMessage = "Impossible d’enregistrer le modèle de données. Réessayez.") }
+            } finally {
+                _uiState.update { it.copy(isSaving = false) }
             }
-            onSaved(id)
         }
     }
 }
@@ -200,5 +209,3 @@ internal fun renameSchemaField(
     }
     return field.copy(name = name, aliases = aliases)
 }
-
-

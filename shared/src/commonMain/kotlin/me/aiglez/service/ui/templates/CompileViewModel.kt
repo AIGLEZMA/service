@@ -52,9 +52,14 @@ class CompileViewModel(
 ) : ViewModel() {
 
     private val history = HistoryManager()
-    private val draftTemplateId = templateId.ifBlank { newId("template") }
     private val _uiState = MutableStateFlow(TemplateEditorState())
     val uiState = _uiState
+    private val pdfExportController = TemplatePdfExportController(
+        scope = viewModelScope,
+        state = { _uiState.value },
+        updateState = { transform -> _uiState.update(transform) },
+        logger = logger,
+    )
     private var clipboardElements: List<TemplateElement> = emptyList()
     private val propertyActions = TemplateEditorPropertyActions(
         selectedElement = { _uiState.value.selectedElement },
@@ -67,21 +72,7 @@ class CompileViewModel(
             recordRepository.getActiveSchemas().flatMapLatest { schemas ->
                 when {
                     schemas.isEmpty() -> flowOf(Triple(schemas, null, null))
-                    templateId.isBlank() -> {
-                        val draftSchema = schemas.first()
-                        flowOf(
-                            Triple(
-                                schemas,
-                                draftSchema,
-                                Template(
-                                    id = draftTemplateId,
-                                    name = "Modèle sans titre",
-                                    targetSchemaId = draftSchema.id,
-                                    elements = emptyList(),
-                                ),
-                            )
-                        )
-                    }
+                    templateId.isBlank() -> flowOf(Triple(schemas, null, null))
                     else -> combine(schemas.map { schema ->
                         templateRepository.getActiveTemplates(schema.id).map { templates ->
                             schema to templates.firstOrNull { it.id == templateId }
@@ -98,7 +89,11 @@ class CompileViewModel(
                     TemplateEditorState(
                         availableSchemas = schemas,
                         showSampleData = current.showSampleData,
-                        message = "Créez un modèle de données avant de modifier des modèles.",
+                        message = if (schemas.isEmpty()) {
+                            "Créez un modèle de données avant de modifier des modèles."
+                        } else {
+                            "Ce modèle est introuvable. Revenez à l’accueil pour en choisir un autre."
+                        },
                     )
                 } else {
                     TemplateEditorState(
@@ -632,8 +627,9 @@ class CompileViewModel(
 
     fun setCanvasMetric(metric: CanvasMetric, value: Float) {
         _uiState.update { state ->
-            val pageHeight = 842f
-            val pageMaxInset = 421f
+            val pageDimensions = templatePageDimensions(state.template?.pageSize)
+            val pageHeight = pageDimensions.height
+            val pageMaxInset = minOf(pageDimensions.width, pageHeight) / 2f
             val nextCanvas = when (metric) {
                 CanvasMetric.PageMargin -> state.canvas.copy(pageMargin = value.coerceIn(0f, pageMaxInset))
                 CanvasMetric.PrintableInset -> state.canvas.copy(printableInset = value.coerceIn(0f, pageMaxInset))
@@ -707,59 +703,47 @@ class CompileViewModel(
     }
 
     fun saveTemplate() {
+        saveTemplate { }
+    }
+
+    fun saveTemplate(onComplete: (Boolean) -> Unit) {
         val state = _uiState.value
-        val template = state.template ?: return
+        val template = state.template
+        if (template == null || state.isSaving) {
+            onComplete(false)
+            return
+        }
         viewModelScope.launch {
             _uiState.update { it.copy(isSaving = true, message = null) }
-            val nextTemplate = template.copy(elements = _uiState.value.document.elements, templateVersion = 1)
-            templateRepository.saveTemplate(nextTemplate)
-            logger.i { "Saved template ${nextTemplate.id} with ${nextTemplate.elements.size} elements" }
-            _uiState.update {
-                it.copy(
-                    template = nextTemplate,
-                    isDirty = false,
-                    isSaving = false,
-                    message = "Modèle enregistré.",
-                )
-            }
-        }
-    }
-
-    fun exportPdf() {
-        val state = _uiState.value
-        if (state.template == null || state.isExporting) return
-        viewModelScope.launch {
-            _uiState.update { it.copy(isExporting = true, message = "Préparation de l’export PDF…") }
             try {
-                when (val result = exportTemplatePdf(state)) {
-                    TemplatePdfExportResult.Cancelled -> _uiState.update { it.copy(message = "Export PDF annulé.") }
-                    is TemplatePdfExportResult.Exported -> {
-                        logger.i { "Exported PDF to ${result.path}" }
-                        _uiState.update { it.copy(message = "PDF exporté : ${result.path}") }
-                    }
-                    is TemplatePdfExportResult.Failed -> {
-                        logger.e(result.cause) { "PDF export failed" }
-                        _uiState.update { it.copy(message = "Échec de l’export PDF : ${result.message}") }
-                    }
+                val nextTemplate = template.copy(elements = _uiState.value.document.elements, templateVersion = 1)
+                templateRepository.saveTemplate(nextTemplate)
+                logger.i { "Saved template ${nextTemplate.id} with ${nextTemplate.elements.size} elements" }
+                _uiState.update {
+                    it.copy(
+                        template = nextTemplate,
+                        isDirty = false,
+                        message = "Modèle enregistré.",
+                    )
                 }
+                onComplete(true)
+            } catch (cause: Throwable) {
+                logger.e(cause) { "Template save failed" }
+                _uiState.update { it.copy(message = "Impossible d’enregistrer le modèle. Réessayez.") }
+                onComplete(false)
             } finally {
-                _uiState.update { it.copy(isExporting = false) }
+                _uiState.update { it.copy(isSaving = false) }
             }
         }
     }
 
-    fun exportPreviewPdf() {
-        val state = _uiState.value
-        when {
-            state.previewSchemaIds.isEmpty() -> _uiState.update {
-                it.copy(message = "Ce modèle ne contient aucun champ de données. Modifiez-le avant de générer un PDF.")
-            }
-            !state.canGeneratePreviewPdf -> _uiState.update {
-                it.copy(message = "Choisissez toutes les données requises avant de générer le PDF.")
-            }
-            else -> exportPdf()
-        }
-    }
+    fun exportPdf() = pdfExportController.export()
+
+    fun confirmPdfExport() = pdfExportController.confirmExport()
+
+    fun cancelPdfExport() = pdfExportController.cancelExport()
+
+    fun exportPreviewPdf() = pdfExportController.exportPreview()
 
     private fun execute(command: me.aiglez.service.ui.templates.editor.EditorCommand) {
         _uiState.update { state ->

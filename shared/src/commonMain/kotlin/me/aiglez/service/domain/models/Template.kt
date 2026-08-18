@@ -458,5 +458,3 @@ data class Template(
     val elements: List<TemplateElement>,
     val isArchived: Boolean = false, // Soft delete flag
 )
-
-

@@ -18,5 +18,3 @@ data class TemplateImageBitmap(
 expect suspend fun chooseTemplateImageFile(): TemplateImageFile?
 
 expect fun loadTemplateImageBitmap(path: String): TemplateImageBitmap?
-
-

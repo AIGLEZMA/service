@@ -9,5 +9,3 @@ data class DataRecord(
     val values: Map<String, String>, // Key is SchemaField.slug or SchemaField.id
     val isArchived: Boolean = false  // Soft delete flag
 )
-
-

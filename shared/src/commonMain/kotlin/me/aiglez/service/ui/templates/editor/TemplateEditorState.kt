@@ -93,6 +93,7 @@ data class TemplateEditorState(
     val isSaving: Boolean = false,
     val isExporting: Boolean = false,
     val isChoosingImage: Boolean = false,
+    val pdfExportWarnings: List<String> = emptyList(),
     val canUndo: Boolean = false,
     val canRedo: Boolean = false,
     val message: String? = null,
@@ -117,4 +118,3 @@ data class TemplateEditorState(
         get() = previewSchemaIds.isNotEmpty() &&
             previewSchemaIds.all { schemaId -> selectedPreviewRecords[schemaId] != null }
 }
-

@@ -18,33 +18,59 @@ import me.aiglez.service.ui.help.HelpScreen
 import me.aiglez.service.ui.navigation.AppScreen
 import me.aiglez.service.ui.records.*
 import me.aiglez.service.ui.templates.CompileScreen
+import me.aiglez.service.ui.templates.TemplateCreateScreen
 import me.aiglez.service.ui.templates.TemplateScreenMode
+import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
 fun AppShell(
     sidebarViewModel: SidebarViewModel = koinViewModel(),
+    unsavedChangesController: UnsavedChangesController = koinInject(),
 ) {
     val schemas by sidebarViewModel.schemas.collectAsState()
+    val unsavedChanges by unsavedChangesController.state.collectAsState()
     val navStack = remember { mutableStateListOf<AppScreen>(AppScreen.Dashboard) }
     val currentScreen = navStack.lastOrNull() ?: AppScreen.Dashboard
     var isSidebarCollapsed by remember { mutableStateOf(false) }
+    var pendingNavigation by remember { mutableStateOf<(() -> Unit)?>(null) }
 
-    fun navigate(screen: AppScreen) {
+    fun navigateUnchecked(screen: AppScreen) {
         if (navStack.lastOrNull() != screen) {
             navStack.add(screen)
         }
     }
 
-    fun navigateBack() {
+    fun navigateBackUnchecked() {
         if (navStack.size > 1) {
             navStack.removeAt(navStack.lastIndex)
         }
     }
 
-    fun navigateHome() {
+    fun navigateHomeUnchecked() {
         navStack.clear()
         navStack.add(AppScreen.Dashboard)
+    }
+
+    fun requestNavigation(action: () -> Unit) {
+        if (unsavedChanges.hasUnsavedChanges) {
+            pendingNavigation = action
+        } else {
+            action()
+        }
+    }
+
+    fun navigate(screen: AppScreen) = requestNavigation { navigateUnchecked(screen) }
+
+    fun navigateBack() = requestNavigation(::navigateBackUnchecked)
+
+    fun navigateHome() = requestNavigation(::navigateHomeUnchecked)
+
+    fun replaceCurrent(screen: AppScreen) {
+        if (navStack.isNotEmpty()) {
+            navStack.removeAt(navStack.lastIndex)
+        }
+        navStack.add(screen)
     }
 
     WorkspaceScaffold(
@@ -54,7 +80,7 @@ fun AppShell(
         showFab = currentScreen == AppScreen.Dashboard,
         showDataChrome = currentScreen !is AppScreen.TemplatePreview && currentScreen !is AppScreen.TemplateEditor,
         onBackClick = if (navStack.size > 1) ::navigateBack else null,
-        onCreateTemplateClick = { navigate(AppScreen.TemplateEditor("")) },
+        onCreateTemplateClick = { navigate(AppScreen.TemplateCreate) },
         onHomeClick = ::navigateHome,
         onHelpClick = { navigate(AppScreen.Help) },
         onCreateSchemaClick = { navigate(AppScreen.SchemaCreate) },
@@ -73,7 +99,14 @@ fun AppShell(
                 entry<AppScreen.Dashboard> {
                     DashboardScreen(
                         onOpenTemplate = { navigate(AppScreen.TemplatePreview(it)) },
-                        onCreateTemplate = { navigate(AppScreen.TemplateEditor("")) },
+                        onCreateTemplate = { navigate(AppScreen.TemplateCreate) },
+                    )
+                }
+                entry<AppScreen.TemplateCreate> {
+                    TemplateCreateScreen(
+                        onCreated = { replaceCurrent(AppScreen.TemplateEditor(it)) },
+                        onCancel = ::navigateBack,
+                        onCreateSchema = { navigate(AppScreen.SchemaCreate) },
                     )
                 }
                 entry<AppScreen.Help> {
@@ -126,6 +159,28 @@ fun AppShell(
                     )
                 }
             },
+        )
+    }
+
+    if (pendingNavigation != null) {
+        UnsavedChangesDialog(
+            isSaving = unsavedChanges.isSaving,
+            onSave = {
+                unsavedChangesController.save { saved ->
+                    if (saved) {
+                        val action = pendingNavigation
+                        pendingNavigation = null
+                        action?.invoke()
+                    }
+                }
+            },
+            onDiscard = {
+                unsavedChangesController.discard()
+                val action = pendingNavigation
+                pendingNavigation = null
+                action?.invoke()
+            },
+            onCancel = { pendingNavigation = null },
         )
     }
 }
@@ -266,6 +321,11 @@ private fun AppScreen.chrome(schemas: List<DataSchema>): RouteChrome = when (thi
     AppScreen.SchemaCreate -> RouteChrome(
         title = "Modèles de données",
         description = "Créez un modèle de données réutilisable pour les modèles PDF",
+    )
+
+    AppScreen.TemplateCreate -> RouteChrome(
+        title = "Nouveau modèle PDF",
+        description = "Définissez le document avant de l’ouvrir dans l’éditeur",
     )
 
     is AppScreen.SchemaEdit -> RouteChrome(

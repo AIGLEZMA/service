@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import me.aiglez.service.database.AppDatabase
+import me.aiglez.service.database.TemplateEntity
 import me.aiglez.service.domain.models.Template
 import me.aiglez.service.domain.repository.TemplateRepository
 
@@ -22,18 +23,14 @@ class SqlDelightTemplateRepository(
         return queries.getActiveTemplatesBySchema(schemaId)
             .asFlow()
             .mapToList(Dispatchers.Default)
-            .map { templates ->
-                templates.map {
-                    Template(
-                        id = it.id,
-                        name = it.name,
-                        targetSchemaId = it.targetSchemaId,
-                        pageSize = it.pageSize,
-                        elements = it.elements,
-                        isArchived = it.isArchived,
-                    )
-                }
-            }
+            .map { templates -> templates.map { it.toDomain() } }
+    }
+
+    override fun getArchivedTemplates(schemaId: String): Flow<List<Template>> {
+        return queries.getArchivedTemplatesBySchema(schemaId)
+            .asFlow()
+            .mapToList(Dispatchers.Default)
+            .map { templates -> templates.map { it.toDomain() } }
     }
 
     override suspend fun saveTemplate(template: Template) = withContext(Dispatchers.Default) {
@@ -54,5 +51,25 @@ class SqlDelightTemplateRepository(
         queries.archiveTemplate(templateId)
         Unit
     }
-}
 
+    override suspend fun restoreTemplate(templateId: String) = withContext(Dispatchers.Default) {
+        logger.i { "Restoring template: $templateId" }
+        queries.restoreTemplate(templateId)
+        Unit
+    }
+
+    override suspend fun deleteTemplate(templateId: String) = withContext(Dispatchers.Default) {
+        logger.i { "Deleting template permanently: $templateId" }
+        queries.deleteTemplate(templateId)
+        Unit
+    }
+
+    private fun TemplateEntity.toDomain() = Template(
+        id = id,
+        name = name,
+        targetSchemaId = targetSchemaId,
+        pageSize = pageSize,
+        elements = elements,
+        isArchived = isArchived,
+    )
+}

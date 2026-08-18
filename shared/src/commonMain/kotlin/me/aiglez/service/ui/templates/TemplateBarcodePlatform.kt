@@ -18,6 +18,3 @@ expect fun generateTemplateBarcodeMatrix(
     format: TemplateBarcodeFormat,
     quietZone: Int,
 ): TemplateBarcodeMatrix?
-
-
-

@@ -168,6 +168,7 @@ import org.koin.core.parameter.parametersOf
 internal fun MiniMapNavigator(
     elements: List<TemplateElement>,
     viewport: PageRect,
+    pageDimensions: TemplatePageDimensions,
     onNavigate: (PagePoint) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -178,10 +179,12 @@ internal fun MiniMapNavigator(
             width = 132f * density,
             height = 188f * density,
             padding = 10f * density,
+            pageWidth = pageDimensions.width,
+            pageHeight = pageDimensions.height,
         )
         return PagePoint(
-            x = ((position.x - transform.left) / transform.scale).coerceIn(0f, PageWidth),
-            y = ((position.y - transform.top) / transform.scale).coerceIn(0f, PageHeight),
+            x = ((position.x - transform.left) / transform.scale).coerceIn(0f, pageDimensions.width),
+            y = ((position.y - transform.top) / transform.scale).coerceIn(0f, pageDimensions.height),
         )
     }
 
@@ -195,12 +198,12 @@ internal fun MiniMapNavigator(
         Canvas(
             modifier = Modifier
                 .size(132.dp, 188.dp)
-                .pointerInput(elements, viewport) {
+                .pointerInput(elements, viewport, pageDimensions) {
                     detectTapGestures { offset ->
                         onNavigate(pagePointForNavigatorPosition(offset))
                     }
                 }
-                .pointerInput(elements, viewport) {
+                .pointerInput(elements, viewport, pageDimensions) {
                     detectDragGestures(
                         onDragStart = { offset ->
                             onNavigate(pagePointForNavigatorPosition(offset))
@@ -216,6 +219,8 @@ internal fun MiniMapNavigator(
                 width = size.width,
                 height = size.height,
                 padding = 10.dp.toPx(),
+                pageWidth = pageDimensions.width,
+                pageHeight = pageDimensions.height,
             )
             drawRoundRect(
                 color = Color(0xFFE5E7EB),
@@ -226,12 +231,12 @@ internal fun MiniMapNavigator(
             drawRect(
                 color = Color.White,
                 topLeft = Offset(transform.left, transform.top),
-                size = Size(PageWidth * transform.scale, PageHeight * transform.scale),
+                size = Size(pageDimensions.width * transform.scale, pageDimensions.height * transform.scale),
             )
             drawRect(
                 color = Color(0xFF94A3B8),
                 topLeft = Offset(transform.left, transform.top),
-                size = Size(PageWidth * transform.scale, PageHeight * transform.scale),
+                size = Size(pageDimensions.width * transform.scale, pageDimensions.height * transform.scale),
                 style = Stroke(width = 1.dp.toPx()),
             )
             elements
@@ -262,7 +267,7 @@ internal fun MiniMapNavigator(
                         ),
                     )
                 }
-            val clampedViewport = viewport.clampedToPage()
+            val clampedViewport = viewport.clampedToPage(pageDimensions.width, pageDimensions.height)
             drawRect(
                 color = Color(0xFFDC2626).copy(alpha = 0.10f),
                 topLeft = Offset(
@@ -346,13 +351,15 @@ internal fun miniMapTransform(
     width: Float,
     height: Float,
     padding: Float,
+    pageWidth: Float = PageWidth,
+    pageHeight: Float = PageHeight,
 ): MiniMapTransform {
     val availableWidth = (width - padding * 2f).coerceAtLeast(1f)
     val availableHeight = (height - padding * 2f).coerceAtLeast(1f)
-    val scale = min(availableWidth / PageWidth, availableHeight / PageHeight)
+    val scale = min(availableWidth / pageWidth, availableHeight / pageHeight)
     return MiniMapTransform(
-        left = (width - PageWidth * scale) / 2f,
-        top = (height - PageHeight * scale) / 2f,
+        left = (width - pageWidth * scale) / 2f,
+        top = (height - pageHeight * scale) / 2f,
         scale = scale,
     )
 }

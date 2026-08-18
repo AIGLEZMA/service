@@ -86,14 +86,26 @@ fun RecordListScreen(
         parameters = { parametersOf(schemaId) },
     )
     val state by viewModel.uiState.collectAsState()
+    val snackbarHostState = remember { SnackbarHostState() }
     var pendingArchive by remember { mutableStateOf<DataRecord?>(null) }
 
-    RecordListContent(
-        state = state,
-        onCreateRecord = onCreateRecord,
-        onImportCsv = viewModel::onImportCsvClicked,
-        onArchiveRecord = { pendingArchive = it },
-    )
+    LaunchedEffect(state.errorMessage, state.message) {
+        val feedback = state.errorMessage ?: state.message
+        if (feedback != null) {
+            snackbarHostState.showSnackbar(feedback)
+            viewModel.clearMutationFeedback()
+        }
+    }
+
+    Box(modifier = Modifier.fillMaxSize()) {
+        RecordListContent(
+            state = state,
+            onCreateRecord = onCreateRecord,
+            onImportCsv = viewModel::onImportCsvClicked,
+            onArchiveRecord = { pendingArchive = it },
+        )
+        SnackbarHost(snackbarHostState, modifier = Modifier.align(Alignment.BottomCenter))
+    }
 
     val schema = state.schema
     val csvImport = state.csvImport
@@ -120,6 +132,7 @@ fun RecordListScreen(
                         viewModel.archiveRecord(record.id)
                         pendingArchive = null
                     },
+                    enabled = !state.isArchiving,
                     colors = ButtonDefaults.buttonColors(
                         containerColor = MaterialTheme.colorScheme.error,
                         contentColor = MaterialTheme.colorScheme.onError

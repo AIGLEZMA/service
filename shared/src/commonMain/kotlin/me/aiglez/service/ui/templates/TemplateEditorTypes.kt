@@ -166,6 +166,13 @@ import org.koin.core.parameter.parametersOf
 
 internal const val PageWidth = 595f
 internal const val PageHeight = 842f
+internal data class TemplatePageDimensions(val width: Float, val height: Float)
+
+internal fun templatePageDimensions(pageSize: String?): TemplatePageDimensions = when (pageSize?.lowercase()) {
+    "a5" -> TemplatePageDimensions(width = 420f, height = 595f)
+    "letter" -> TemplatePageDimensions(width = 612f, height = 792f)
+    else -> TemplatePageDimensions(width = PageWidth, height = PageHeight)
+}
 internal const val MinZoom = 0.25f
 internal const val MaxZoom = 3f
 internal const val WheelZoomSensitivity = 0.0018f
@@ -371,5 +378,3 @@ internal data class LineRenderItem(
     val color: Color,
     val strokeWidth: Float,
 ) : PageRenderItem
-
-

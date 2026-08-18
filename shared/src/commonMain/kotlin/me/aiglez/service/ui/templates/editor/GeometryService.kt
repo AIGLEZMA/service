@@ -662,6 +662,3 @@ object GeometryService {
         }
     }
 }
-
-
-

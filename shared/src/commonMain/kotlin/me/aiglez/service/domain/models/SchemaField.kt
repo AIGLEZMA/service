@@ -11,4 +11,3 @@ data class SchemaField(
     val referenceSchemaId: String? = null, // populates if type == REFERENCE
     val aliases: List<String> = emptyList(),
 )
-

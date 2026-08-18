@@ -491,16 +491,17 @@ internal fun List<Float>.distinctNear(): List<Float> {
         }
 }
 
-internal fun CanvasState.toSnapGuideSet(): SnapGuideSet {
+internal fun CanvasState.toSnapGuideSet(pageSize: TemplatePageDimensions): SnapGuideSet {
+    val maxInset = minOf(pageSize.width, pageSize.height) / 2f
     return SnapGuideSet(
-        pageSize = PageSize(PageWidth, PageHeight),
-        margin = if (snapToMargins) pageMargin else 0f,
-        printableInset = printableInset,
-        bleedInset = if (snapToMargins) bleedInset else 0f,
-        trimInset = trimInset,
-        safeAreaInset = safeAreaInset,
-        headerGuide = headerGuide,
-        footerGuide = footerGuide,
+        pageSize = PageSize(pageSize.width, pageSize.height),
+        margin = if (snapToMargins) pageMargin.coerceIn(0f, maxInset) else 0f,
+        printableInset = printableInset.coerceIn(0f, maxInset),
+        bleedInset = if (snapToMargins) bleedInset.coerceIn(0f, maxInset) else 0f,
+        trimInset = trimInset.coerceIn(0f, maxInset),
+        safeAreaInset = safeAreaInset.coerceIn(0f, maxInset),
+        headerGuide = headerGuide.coerceIn(0f, pageSize.height),
+        footerGuide = footerGuide.coerceIn(0f, pageSize.height),
         gridSize = if (snapToGrid) gridSize else 0f,
         columns = documentColumns,
         rows = documentRows,
@@ -512,5 +513,3 @@ internal fun CanvasState.toSnapGuideSet(): SnapGuideSet {
         includePageCenter = snapToPageCenter,
     )
 }
-
-

@@ -69,9 +69,18 @@ UPDATE RecordEntity SET isArchived = 1 WHERE id = ?;
 getActiveTemplatesBySchema:
 SELECT * FROM TemplateEntity WHERE targetSchemaId = ? AND isArchived = 0;
 
+getArchivedTemplatesBySchema:
+SELECT * FROM TemplateEntity WHERE targetSchemaId = ? AND isArchived = 1;
+
 insertTemplate:
 INSERT OR REPLACE INTO TemplateEntity(id, name, targetSchemaId, pageSize, elements, isArchived)
 VALUES (?, ?, ?, ?, ?, ?);
 
 archiveTemplate:
 UPDATE TemplateEntity SET isArchived = 1 WHERE id = ?;
+
+restoreTemplate:
+UPDATE TemplateEntity SET isArchived = 0 WHERE id = ?;
+
+deleteTemplate:
+DELETE FROM TemplateEntity WHERE id = ?;

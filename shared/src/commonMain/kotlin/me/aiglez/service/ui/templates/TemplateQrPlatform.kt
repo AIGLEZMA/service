@@ -12,6 +12,3 @@ data class TemplateQrMatrix(
 }
 
 expect fun generateTemplateQrMatrix(text: String, quietZone: Int): TemplateQrMatrix?
-
-
-

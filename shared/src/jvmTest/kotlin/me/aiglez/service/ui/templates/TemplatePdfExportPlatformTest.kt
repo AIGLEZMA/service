@@ -4,11 +4,17 @@ import java.io.File
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
+import me.aiglez.service.domain.models.Template
 import me.aiglez.service.domain.models.TemplateElement
 import me.aiglez.service.domain.models.TemplateTableCell
+import me.aiglez.service.domain.models.TemplateTextDirection
 import me.aiglez.service.domain.models.templateTableCellKey
+import me.aiglez.service.ui.templates.editor.EditorDocument
+import me.aiglez.service.ui.templates.editor.TemplateEditorState
 import me.aiglez.service.ui.templates.editor.TemplateExpressionContext
 import org.apache.pdfbox.pdmodel.PDDocument
+import org.apache.pdfbox.pdmodel.common.PDRectangle
+import org.apache.pdfbox.text.PDFTextStripper
 
 class TemplatePdfExportPlatformTest {
     @Test
@@ -23,7 +29,7 @@ class TemplatePdfExportPlatformTest {
                 y = 48f,
                 width = 260f,
                 height = 48f,
-                staticText = "Invoice {{ data.invoice }}",
+                staticText = "Facture été – {{ data.invoice }}",
                 fontSize = 18f,
                 fontWeight = 700,
             ),
@@ -85,6 +91,63 @@ class TemplatePdfExportPlatformTest {
         assertTrue(output.length() > 1_000)
         PDDocument.load(output).use { document ->
             assertEquals(1, document.numberOfPages)
+            assertEquals(PDRectangle.A4.width, document.getPage(0).mediaBox.width, 0.1f)
+            assertTrue("Facture été" in PDFTextStripper().getText(document))
         }
+    }
+
+    @Test
+    fun writesSelectedPageFormat() {
+        val formats = mapOf(
+            "A5" to PDRectangle.A5,
+            "Letter" to PDRectangle.LETTER,
+        )
+
+        formats.forEach { (pageSize, expected) ->
+            val output = File("build/tmp/pdf-export-smoke/page-$pageSize.pdf")
+            writeTemplatePdf(
+                outputFile = output,
+                elements = emptyList(),
+                expressionContext = TemplateExpressionContext(),
+                resolveExpressions = false,
+                pageSize = pageSize,
+            )
+
+            PDDocument.load(output).use { document ->
+                assertEquals(expected.width, document.getPage(0).mediaBox.width, 0.1f)
+                assertEquals(expected.height, document.getPage(0).mediaBox.height, 0.1f)
+            }
+        }
+    }
+
+    @Test
+    fun reportsUnsupportedAndMissingContentBeforeExport() {
+        val text = TemplateElement.Text(
+            id = "text",
+            x = 10f,
+            y = 10f,
+            width = 40f,
+            height = 10f,
+            staticText = "A very long text that cannot fit",
+            letterSpacing = 2f,
+            textDirection = TemplateTextDirection.Rtl,
+        )
+        val image = TemplateElement.Image(
+            id = "image",
+            x = 10f,
+            y = 40f,
+            sourcePath = "build/does-not-exist.png",
+        )
+        val state = TemplateEditorState(
+            template = Template("template", "Test", "schema", elements = listOf(text, image)),
+            document = EditorDocument(elements = listOf(text, image)),
+        )
+
+        val warnings = templatePdfPreflightWarnings(state)
+
+        assertTrue(warnings.any { "images" in it })
+        assertTrue(warnings.any { "lettres" in it })
+        assertTrue(warnings.any { "droite à gauche" in it })
+        assertTrue(warnings.any { "tronqués" in it })
     }
 }

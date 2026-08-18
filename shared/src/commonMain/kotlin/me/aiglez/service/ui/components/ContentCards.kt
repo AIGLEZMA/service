@@ -13,13 +13,21 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.NorthEast
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -78,11 +86,13 @@ fun TemplateCard(
     title: String,
     description: String,
     icon: ImageVector,
-    onClick: () -> Unit,
+    onClick: (() -> Unit)?,
     modifier: Modifier = Modifier,
+    actions: List<TemplateCardAction> = emptyList(),
 ) {
+    var menuExpanded by remember { mutableStateOf(false) }
     Card(
-        modifier = modifier.clickable(onClick = onClick),
+        modifier = if (onClick == null) modifier else modifier.clickable(onClick = onClick),
         shape = RoundedCornerShape(2.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface,
@@ -125,12 +135,34 @@ fun TemplateCard(
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                     )
-                    Icon(
-                        imageVector = Icons.Default.NorthEast,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.size(14.dp),
-                    )
+                    if (actions.isEmpty()) {
+                        Icon(
+                            imageVector = Icons.Default.NorthEast,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(14.dp),
+                        )
+                    } else {
+                        Box {
+                            IconButton(onClick = { menuExpanded = true }, modifier = Modifier.size(30.dp)) {
+                                Icon(Icons.Default.MoreVert, contentDescription = "Actions du modèle")
+                            }
+                            DropdownMenu(
+                                expanded = menuExpanded,
+                                onDismissRequest = { menuExpanded = false },
+                            ) {
+                                actions.forEach { action ->
+                                    DropdownMenuItem(
+                                        text = { Text(action.label) },
+                                        onClick = {
+                                            menuExpanded = false
+                                            action.onClick()
+                                        },
+                                    )
+                                }
+                            }
+                        }
+                    }
                 }
                 Text(
                     text = description,
@@ -143,6 +175,11 @@ fun TemplateCard(
         }
     }
 }
+
+data class TemplateCardAction(
+    val label: String,
+    val onClick: () -> Unit,
+)
 
 @Composable
 fun EmptyRoutePlaceholder(
@@ -181,6 +218,3 @@ fun EmptyRoutePlaceholder(
         }
     }
 }
-
-
-

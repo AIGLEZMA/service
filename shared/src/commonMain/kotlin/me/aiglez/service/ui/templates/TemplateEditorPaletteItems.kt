@@ -400,4 +400,3 @@ internal fun componentPaletteItems(): List<ComponentPaletteItem> {
         ComponentPaletteItem("Zone", "Zone", TemplateElementType.Area, group = "Mise en page", enabled = false),
     )
 }
-

@@ -23,6 +23,3 @@ actual fun generateTemplateQrMatrix(text: String, quietZone: Int): TemplateQrMat
         )
     }.getOrNull()
 }
-
-
-

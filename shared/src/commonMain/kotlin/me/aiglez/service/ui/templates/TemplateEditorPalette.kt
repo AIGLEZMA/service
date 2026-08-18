@@ -634,5 +634,3 @@ internal fun fieldGlyphColor(field: SchemaField): Color {
         else -> Color(0xFF374151)
     }
 }
-
-

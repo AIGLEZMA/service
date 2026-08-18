@@ -52,6 +52,7 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -161,6 +162,8 @@ import me.aiglez.service.ui.templates.editor.renderLegacyPlaceholder
 import me.aiglez.service.ui.templates.editor.renderTemplateText
 import me.aiglez.service.ui.templates.editor.sampleExpressionContext
 import me.aiglez.service.ui.templates.editor.sampleSchemaExpressionContext
+import me.aiglez.service.ui.shell.UnsavedChangesController
+import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 
@@ -177,6 +180,16 @@ fun CompileScreen(
     )
     val state by viewModel.uiState.collectAsState()
     val previewOnly = mode == TemplateScreenMode.Preview
+    val unsavedChangesController: UnsavedChangesController = koinInject()
+    if (!previewOnly) {
+        DisposableEffect(viewModel, unsavedChangesController) {
+            unsavedChangesController.attach(viewModel, viewModel::saveTemplate)
+            onDispose { unsavedChangesController.detach(viewModel) }
+        }
+        LaunchedEffect(state.isDirty, state.isSaving) {
+            unsavedChangesController.update(viewModel, state.isDirty, state.isSaving)
+        }
+    }
     TemplateEditorContent(
         state = if (previewOnly) state.copy(isPreviewMode = true) else state,
         previewOnly = previewOnly,
@@ -329,6 +342,24 @@ fun CompileScreen(
         onAdjustSelectedTextFontSize = viewModel::adjustSelectedTextFontSize,
         onAlignSelectedText = viewModel::alignSelectedText,
     )
+    if (state.pdfExportWarnings.isNotEmpty()) {
+        AlertDialog(
+            onDismissRequest = viewModel::cancelPdfExport,
+            title = { Text("Vérification avant export") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("Le PDF peut différer de l’éditeur sur les points suivants :")
+                    state.pdfExportWarnings.forEach { warning -> Text("• $warning") }
+                }
+            },
+            confirmButton = {
+                Button(onClick = viewModel::confirmPdfExport) { Text("Continuer l’export") }
+            },
+            dismissButton = {
+                TextButton(onClick = viewModel::cancelPdfExport) { Text("Annuler") }
+            },
+        )
+    }
 }
 
 enum class TemplateScreenMode {
@@ -539,13 +570,14 @@ internal fun TemplateEditorContent(
                     },
                 )
             }
-            CanvasWorkspace(
+            if (previewOnly) {
+                LockedTemplatePreview(
+                    state = state,
+                    modifier = Modifier.weight(1f).fillMaxHeight(),
+                )
+            } else CanvasWorkspace(
                 state = state,
-                workspaceColor = if (previewOnly) {
-                    MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.28f)
-                } else {
-                    Color(0xFFE5E7EB)
-                },
+                workspaceColor = Color(0xFFE5E7EB),
                 zoomCommand = zoomCommand,
                 onConsumeZoomCommand = { zoomCommand = null },
                 paletteDrop = paletteDrop,

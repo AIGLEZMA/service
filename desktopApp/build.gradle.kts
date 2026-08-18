@@ -26,5 +26,3 @@ compose.desktop {
         }
     }
 }
-
-

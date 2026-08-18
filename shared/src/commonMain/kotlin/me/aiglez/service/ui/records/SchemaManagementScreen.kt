@@ -76,15 +76,30 @@ fun SchemaManagementScreen(
     viewModel: SchemaManagementViewModel = koinViewModel(),
 ) {
     val schemas by viewModel.schemas.collectAsState()
+    val isArchiving by viewModel.isArchiving.collectAsState()
+    val errorMessage by viewModel.errorMessage.collectAsState()
+    val message by viewModel.message.collectAsState()
+    val snackbarHostState = remember { SnackbarHostState() }
     var pendingArchive by remember { mutableStateOf<DataSchema?>(null) }
 
-    SchemaManagementContent(
-        schemas = schemas,
-        onEditSchema = onEditSchema,
-        onOpenRecords = onOpenRecords,
-        onCreateSchema = onCreateSchema,
-        onArchiveRequested = { pendingArchive = it },
-    )
+    LaunchedEffect(errorMessage, message) {
+        val feedback = errorMessage ?: message
+        if (feedback != null) {
+            snackbarHostState.showSnackbar(feedback)
+            viewModel.clearFeedback()
+        }
+    }
+
+    Box(modifier = Modifier.fillMaxSize()) {
+        SchemaManagementContent(
+            schemas = schemas,
+            onEditSchema = onEditSchema,
+            onOpenRecords = onOpenRecords,
+            onCreateSchema = onCreateSchema,
+            onArchiveRequested = { pendingArchive = it },
+        )
+        SnackbarHost(snackbarHostState, modifier = Modifier.align(Alignment.BottomCenter))
+    }
 
     val schema = pendingArchive
     if (schema != null) {
@@ -98,6 +113,7 @@ fun SchemaManagementScreen(
                         viewModel.archiveSchema(schema.id)
                         pendingArchive = null
                     },
+                    enabled = !isArchiving,
                     colors = ButtonDefaults.buttonColors(
                         containerColor = MaterialTheme.colorScheme.error,
                         contentColor = MaterialTheme.colorScheme.onError
@@ -601,4 +617,3 @@ private fun getTypeLabelAbbrev(type: FieldType): String {
         FieldType.LIST -> "Liste"
     }
 }
-

@@ -166,6 +166,3 @@ private fun Window.contentOriginOnScreen(): Point? {
 private fun Component.locationOnScreenOrNull(): Point? {
     return runCatching { locationOnScreen }.getOrNull()
 }
-
-
-

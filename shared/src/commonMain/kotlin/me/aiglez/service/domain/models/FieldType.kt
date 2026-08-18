@@ -7,5 +7,3 @@ enum class FieldType {
     REFERENCE,
     LIST
 }
-
-
